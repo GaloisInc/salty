@@ -8,4 +8,4 @@ import qualified Data.Text.Lazy.IO as L
 main =
   do bytes <- L.readFile "test.salt"
      mapM_ print (lexWithLayout "test.salt" bytes)
-     print (parseProgram "test.salt" bytes)
+     print (parseController "test.salt" bytes)

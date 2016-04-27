@@ -6,6 +6,7 @@
 
 module Syntax.Lexer (
     Token(..),
+    TokenType(..),
     Keyword(..),
     Virtual(..),
     lexer, Lexeme,
@@ -41,6 +42,8 @@ $white+ ;
 
 "controller" { keyword Kcontroller }
 "where"      { keyword Kwhere      }
+"input"      { keyword Kinput      }
+"output"     { keyword Koutput     }
 
 "if"    { keyword Kif   }
 "then"  { keyword Kthen }
@@ -49,9 +52,28 @@ $white+ ;
 "enum"  { keyword Kenum }
 "|"     { keyword Kpipe }
 
-"="     { keyword Keq }
+":"     { keyword Kcolon  }
+"="     { keyword Keq     }
 "("     { keyword Klparen }
-")"     { keyword Klparen }
+")"     { keyword Krparen }
+","     { keyword Kcomma  }
+
+"\/"    { keyword Kor }
+"||"    { keyword Kor }
+"/\\"   { keyword Kand }
+"&&"    { keyword Kand }
+"!"     { keyword Kand }
+
+"otherwise" { keyword Kotherwise }
+
+-- Built-in Types
+"Bool"  { keyword KBool  }
+"Int"   { keyword KInt   }
+"->"    { keyword Karrow }
+
+-- Built-in constants
+"True"  { keyword KTrue  }
+"False" { keyword KFalse }
 
 "'"     { keyword Kprime }
 
@@ -68,14 +90,18 @@ $white+ ;
 
 type Lexeme = Located FilePath Token
 
-data Token = TLineComment !L.Text
-           | TIdent !L.Text
-           | TConIdent !L.Text
-           | TLexicalError
-           | TNum !Integer
-           | TKeyword !Keyword
-           | TVirt !Virtual
-             deriving (Eq,Show)
+data Token = Token { tokText :: !L.Text
+                   , tokType :: !TokenType
+                   } deriving (Eq,Show)
+
+data TokenType = TLineComment !L.Text
+               | TIdent !L.Text
+               | TConIdent !L.Text
+               | TLexicalError
+               | TNum !Integer
+               | TKeyword !Keyword
+               | TVirt !Virtual
+                 deriving (Eq,Show)
 
 data Keyword = Kif
              | Kthen
@@ -88,6 +114,19 @@ data Keyword = Kif
              | Kpipe
              | Kcontroller
              | Kwhere
+             | Kcomma
+             | Kotherwise
+             | Kor
+             | Kand
+             | Knot
+             | Kinput
+             | Koutput
+             | KBool
+             | KInt
+             | Kcolon
+             | Karrow
+             | KTrue
+             | KFalse
                deriving (Eq,Show)
 
 data Virtual = VBegin
@@ -96,10 +135,10 @@ data Virtual = VBegin
                deriving (Eq,Show)
 
 isComment :: Token -> Bool
-isComment TLineComment{} = True
-isComment _              = False
+isComment Token { tokType = TLineComment{} } = True
+isComment _                                  = False
 
-mkTNum :: L.Text -> Token
+mkTNum :: L.Text -> TokenType
 mkTNum  = TNum . L.foldl' (\acc i -> 10 * acc + read [i]) 0
 
 ignoreComments :: [Lexeme] -> [Lexeme]
@@ -112,14 +151,14 @@ lexWithLayout :: FilePath -> L.Text -> [Lexeme]
 lexWithLayout src bytes =
   layout Layout { .. } (ignoreComments (lexer src Nothing bytes))
   where
-  beginsLayout (TKeyword Kwhere) = True
-  beginsLayout _                 = False
+  beginsLayout Token { tokType = TKeyword Kwhere } = True
+  beginsLayout _                                   = False
 
   endsLayout _ = False
 
-  start = TVirt VBegin
-  sep   = TVirt VSep
-  end   = TVirt VEnd
+  start = Token { tokText = L.empty, tokType = TVirt VBegin }
+  sep   = Token { tokText = L.empty, tokType = TVirt VSep   }
+  end   = Token { tokText = L.empty, tokType = TVirt VEnd   }
 
 lexer :: FilePath -> Maybe Position -> L.Text -> [Lexeme]
 lexer src mbPos bytes = go AlexInput { aiPos = start, aiText = bytes } Normal
@@ -137,7 +176,7 @@ lexer src mbPos bytes = go AlexInput { aiPos = start, aiText = bytes } Normal
             pos'    = L.foldl' (flip move) (aiPos ai') as
             ai2     = AlexInput { aiPos = pos', aiText = bs }
             loc     = Range { rangeStart = aiPos ai', rangeEnd = pos', .. }
-         in (TLexicalError `at` loc) : go ai2 st
+         in (Token { tokText = as, tokType = TLexicalError } `at` loc) : go ai2 st
 
       AlexSkip ai' _ ->
         go ai' st
@@ -170,16 +209,17 @@ type AlexAction = Maybe FilePath -> Int -> AlexInput -> Mode -> (Mode,[Lexeme])
 move :: Char -> Position -> Position
 move  = movePos 8
 
-withInput :: (L.Text -> Token) -> Maybe FilePath -> Int -> AlexInput
+withInput :: (L.Text -> TokenType) -> Maybe FilePath -> Int -> AlexInput
           -> Lexeme
 withInput mk rangeSource len AlexInput { .. } =
-  mk txt `at` Range { rangeStart = aiPos
-                    , rangeEnd   = L.foldl' (flip move) aiPos txt
-                    , .. }
+  Token { .. } `at` Range { rangeStart = aiPos
+                          , rangeEnd   = L.foldl' (flip move) aiPos tokText
+                          , .. }
   where
-  txt = L.take (fromIntegral len) aiText
+  tokText = L.take (fromIntegral len) aiText
+  tokType = mk tokText
 
-emits :: (L.Text -> Token) -> AlexAction
+emits :: (L.Text -> TokenType) -> AlexAction
 emits mk src len ai st = (st, [withInput mk src len ai])
 
 keyword :: Keyword -> AlexAction
