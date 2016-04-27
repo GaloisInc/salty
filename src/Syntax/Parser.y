@@ -52,6 +52,11 @@ import           Text.Location.Layout
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
+  'sys_liveness' { Keyword Ksys_liveness $$ }
+  'env_liveness' { Keyword Ksys_liveness $$ }
+  'sys_trans'    { Keyword Ksys_trans    $$ }
+  'env_trans'    { Keyword Ksys_trans    $$ }
+
   '&&'         { Keyword Kand        $$ }
   '||'         { Keyword Kor         $$ }
   '!'          { Keyword Knot        $$ }
@@ -92,6 +97,18 @@ top_decl :: { TopDecl PName }
 
   | 'output' state_var_decl
     { TDLoc (fmap TDOutput $2) }
+
+  | 'sys_trans' expr
+    { TDLoc (TDSysTrans $2 `at` getLoc $2) }
+
+  | 'sys_liveness' expr
+    { TDLoc (TDSysLiveness $2 `at` getLoc $2) }
+
+  | 'env_trans' expr
+    { TDLoc (TDEnvTrans $2 `at` getLoc $2) }
+
+  | 'env_liveness' expr
+    { TDLoc (TDEnvLiveness $2 `at` getLoc $2) }
 
 
 -- Functions -------------------------------------------------------------------
@@ -149,7 +166,7 @@ expr :: { Expr PName }
 app_expr :: { Expr PName }
   : list1(bexpr)
     { mkEApp $1 }
-  
+
 bexpr :: { Expr PName }
   : bexpr '||' bexpr
     { ELoc (EOr $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }

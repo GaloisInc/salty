@@ -46,6 +46,11 @@ $white+ ;
 "input"      { keyword Kinput      }
 "output"     { keyword Koutput     }
 
+"sys_trans"    { keyword Ksys_trans    }
+"env_trans"    { keyword Ksys_trans    }
+"sys_liveness" { keyword Ksys_liveness }
+"env_liveness" { keyword Ksys_liveness }
+
 "if"    { keyword Kif   }
 "then"  { keyword Kthen }
 "else"  { keyword Kelse }
@@ -128,6 +133,10 @@ data Keyword = Kif
              | Karrow
              | KTrue
              | KFalse
+             | Ksys_trans
+             | Kenv_trans
+             | Kenv_liveness
+             | Ksys_liveness
                deriving (Eq,Show)
 
 data Virtual = VBegin
