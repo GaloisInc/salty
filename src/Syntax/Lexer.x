@@ -62,7 +62,7 @@ $white+ ;
 "||"    { keyword Kor }
 "/\\"   { keyword Kand }
 "&&"    { keyword Kand }
-"!"     { keyword Kand }
+"!"     { keyword Knot }
 
 "otherwise" { keyword Kotherwise }
 
