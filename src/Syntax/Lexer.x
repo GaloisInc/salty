@@ -16,6 +16,7 @@ module Syntax.Lexer (
 import           Data.Char (ord,isAscii,isSpace)
 import           Data.Maybe (fromMaybe)
 import qualified Data.Text.Lazy as L
+import qualified Data.Text.Lazy.Read as L
 import           Data.Word (Word8)
 import           Text.Location
 import           Text.Location.Layout
@@ -139,7 +140,9 @@ isComment Token { tokType = TLineComment{} } = True
 isComment _                                  = False
 
 mkTNum :: L.Text -> TokenType
-mkTNum  = TNum . L.foldl' (\acc i -> 10 * acc + read [i]) 0
+mkTNum txt = TNum $! case L.decimal txt of
+                       Right (n,_) -> n
+                       Left err    -> error ("mkTNum: " ++ err)
 
 ignoreComments :: [Lexeme] -> [Lexeme]
 ignoreComments  = filter (not . isComment . thing)

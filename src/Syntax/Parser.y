@@ -42,6 +42,9 @@ import           Text.Location.Layout
   'otherwise'  { Keyword Kotherwise  $$ }
   'input'      { Keyword Kinput      $$ }
   'output'     { Keyword Koutput     $$ }
+  'if'         { Keyword Kif         $$ }
+  'then'       { Keyword Kthen       $$ }
+  'else'       { Keyword Kelse       $$ }
   '='          { Keyword Keq         $$ }
   '|'          { Keyword Kpipe       $$ }
   '('          { Keyword Klparen     $$ }
@@ -94,8 +97,8 @@ top_decl :: { TopDecl PName }
 -- Functions -------------------------------------------------------------------
 
 fun_decl :: { Loc (Fun PName) }
-  : IDENT '(' sep1(',', IDENT) ')' fun_body
-    { Fun $1 $3 $5 `at` mconcat [getLoc $1, getLoc $4, getLoc $5] }
+  : IDENT list1(IDENT) fun_body
+    { Fun $1 $2 $3 `at` mconcat [getLoc $1, getLoc $2, getLoc $3] }
 
 fun_body :: { Guard PName }
   : '=' expr
@@ -120,6 +123,7 @@ state_var_decl :: { Loc (StateVar PName) }
                , svType = $3
                , svInit = $4 } `at` mconcat [getLoc $1, getLoc $3, getLoc $4] }
 
+-- XXX should these be restricted to values?
 state_var_init :: { Expr PName }
   : '=' expr { $2 }
 
@@ -136,13 +140,24 @@ type :: { Type PName }
 -- Expressions -----------------------------------------------------------------
 
 expr :: { Expr PName }
-  : expr '||' expr
+  : 'if' app_expr 'then' app_expr 'else' app_expr
+    { ELoc (EIf $2 $4 $6 `at` mappend $1 (getLoc $6)) }
+
+  | app_expr
+    { $1 }
+
+app_expr :: { Expr PName }
+  : list1(bexpr)
+    { mkEApp $1 }
+  
+bexpr :: { Expr PName }
+  : bexpr '||' bexpr
     { ELoc (EOr $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
-  | expr '&&' expr
+  | bexpr '&&' bexpr
     { ELoc (EAnd $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
-  | '!' expr %prec NOT
+  | '!' bexpr %prec NOT
     { ELoc (ENot $2 `at` mappend $1 (getLoc $2)) }
 
   | aexpr
@@ -183,6 +198,17 @@ sep1(p,q)
 sep1_body(p,q)
   : q                  { [$1]  }
   | sep1_body(p,q) p q { $3:$1 }
+
+list(p)
+  : {- empty -}  { []         }
+  | list_body(p) { reverse $1 }
+
+list1(p)
+  : list_body(p) { reverse $1 }
+
+list_body(p)
+  : p              { [$1]    }
+  | list_body(p) p { $2 : $1 }
 
 opt(p)
   : {- empty -}        { Nothing }
@@ -235,4 +261,8 @@ pattern Virt v range <- Located { locValue = Token { tokType = TVirt v }
 mkChoose :: [Guard PName] -> Guard PName
 mkChoose [x] = x
 mkChoose xs  = GLoc (foldl1 GChoose xs `at` xs)
+
+mkEApp :: [Expr PName] -> Expr PName
+mkEApp [e] = e
+mkEApp es  = ELoc (foldl1 EApp es `at` es)
 }

@@ -63,6 +63,9 @@ data Expr name = EVar name
                | EAnd (Expr name) (Expr name)
                | EOr  (Expr name) (Expr name)
                | ENot (Expr name)
+               | EIf (Expr name) (Expr name) (Expr name)
+               | EApp (Expr name) (Expr name)
+                 -- ^ Function application
                | ELoc (Loc (Expr name))
                  deriving (Functor,Show)
 
