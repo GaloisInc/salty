@@ -10,16 +10,21 @@ cabal-version:       >=1.10
 
 
 library
-  exposed-modules:     Syntax.AST
+  exposed-modules:     Scope.Check
+                       Scope.Name
+                       Syntax.AST
                        Syntax.Lexer
                        Syntax.Parser
   build-depends:       base >=4.8 && <4.9,
                        language-slugs,
                        located,
                        array,
+                       containers,
+                       monadLib,
                        text
   hs-source-dirs:      src
   default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable salty
   main-is:             Main.hs
@@ -29,3 +34,4 @@ executable salty
                        salty
   hs-source-dirs:      salty
   default-language:    Haskell2010
+  ghc-options:         -Wall

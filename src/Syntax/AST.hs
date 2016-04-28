@@ -54,7 +54,7 @@ data Guard name = GChoose (Guard name) (Guard name)
 
 data Type name = TBool
                | TInt
-               | TEnum L.Text
+               | TEnum name
                | TFun (Type name) (Type name)
                | TLoc (Loc (Type name))
                  deriving (Functor,Show)
@@ -75,6 +75,10 @@ data Expr name = EVar name
 
 
 -- Location Helpers ------------------------------------------------------------
+
+instance HasLoc (Controller name) where
+  type LocSource (Controller name) = FilePath
+  getLoc Controller { .. } = mappend (getLoc cName) (getLoc cDecls)
 
 instance HasLoc (TopDecl name) where
   type LocSource (TopDecl name) = FilePath

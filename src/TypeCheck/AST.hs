@@ -1,3 +1,7 @@
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveFunctor #-}
+
 module TypeCheck.AST where
 
 import Data.Function (on)
@@ -19,3 +23,20 @@ data Type = TFree TVar
           | TEnum String
           | TFun Type Type
             deriving (Eq,Ord,Show)
+
+data Controller = Controller { cName        :: !Name
+                             , cEnvTrans    :: Expr
+                             , cEnvLiveness :: Expr
+                             , cSysTrans    :: Expr
+                             , cSysLiveness :: Expr
+                             , cFuns        :: [Group Fun]
+                             , cEnums       :: [Enum]
+                             } deriving (Show)
+
+data Group a = NonRecursive a
+             | Recursive [a]
+               deriving (Functor,Foldable,Traversable,Show)
+
+data Enum = Enum { eName :: !Name
+                 , eCons :: [Name]
+                 } deriving (Show)
