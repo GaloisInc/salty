@@ -16,8 +16,6 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           MonadLib
 
-import Debug.Trace
-
 
 -- External Interface ----------------------------------------------------------
 
@@ -75,13 +73,6 @@ runUnify_ m env =
     Right (_,env') -> Right env'
     Left  err      -> Left err
 
-
--- | Given a type variable, insert it into the canonical name map.
-nameVar :: TVar -> Int -> Unify ()
-nameVar var ix =
-  do Env { .. } <- get
-     set $! Env { envCanon = Map.insert var ix envCanon, .. }
-
 -- | Yield the next canonical name.
 nextIx :: Unify Int
 nextIx  =
@@ -123,6 +114,7 @@ instance Types Type where
        unify' y1 y2
 
   unify' TBool TBool = return ()
+  unify' TNum  TNum  = return ()
 
   unify' (TEnum x) (TEnum y) | x == y = return ()
 

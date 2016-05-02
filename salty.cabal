@@ -15,12 +15,19 @@ library
                        Syntax.AST
                        Syntax.Lexer
                        Syntax.Parser
+                       TypeCheck
+                       TypeCheck.AST
+                       TypeCheck.Groups
+                       TypeCheck.Infer
+                       TypeCheck.Monad
+                       TypeCheck.Unify
   build-depends:       base >=4.8 && <4.9,
                        language-slugs,
                        located,
                        array,
                        containers,
                        monadLib,
+                       GraphSCC,
                        text
   hs-source-dirs:      src
   default-language:    Haskell2010

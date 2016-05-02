@@ -1,9 +1,10 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Syntax.AST where
 
+import qualified Data.Set as Set
 import qualified Data.Text.Lazy as L
 import           Text.Location
 
@@ -29,6 +30,12 @@ data TopDecl name = TDEnum (EnumDef name)
                   | TDEnvLiveness (Expr name)
                   | TDLoc (Loc (TopDecl name))
                     deriving (Functor,Show)
+
+
+isFun :: TopDecl name -> Bool
+isFun (TDLoc loc) = isFun (thing loc)
+isFun TDFun{}     = True
+isFun _           = False
 
 
 data EnumDef name = EnumDef { eName :: Loc name
@@ -78,7 +85,7 @@ data Expr name = EVar name
 
 instance HasLoc (Controller name) where
   type LocSource (Controller name) = FilePath
-  getLoc Controller { .. } = mappend (getLoc cName) (getLoc cDecls)
+  getLoc Controller { cName, cDecls } = mappend (getLoc cName) (getLoc cDecls)
 
 instance HasLoc (TopDecl name) where
   type LocSource (TopDecl name) = FilePath
@@ -87,7 +94,7 @@ instance HasLoc (TopDecl name) where
 
 instance HasLoc (EnumDef name) where
   type LocSource (EnumDef name) = FilePath
-  getLoc EnumDef { .. } = foldMap getLoc (eName : eCons)
+  getLoc EnumDef { eName, eCons } = foldMap getLoc (eName : eCons)
 
 instance HasLoc (Guard name) where
   type LocSource (Guard name) = FilePath
@@ -106,6 +113,81 @@ instance HasLoc (Type name) where
 
 instance HasLoc (StateVar name) where
   type LocSource (StateVar name) = FilePath
-  getLoc StateVar { .. } = mconcat [ getLoc svName
-                                   , getLoc svType
-                                   , getLoc svInit ]
+  getLoc StateVar { svName, svType, svInit } =
+    mconcat [ getLoc svName, getLoc svType, getLoc svInit ]
+
+
+-- Name Functions --------------------------------------------------------------
+
+-- | Give the value-level names introduced by this declaration.
+topDeclDs :: Ord name => TopDecl name -> Set.Set name
+topDeclDs (TDEnum enum)   = enumDs enum
+topDeclDs (TDFun fun)     = funDs fun
+topDeclDs (TDInput sv)    = stateVarDs sv
+topDeclDs (TDOutput sv)   = stateVarDs sv
+topDeclDs TDSysTrans   {} = Set.empty
+topDeclDs TDSysLiveness{} = Set.empty
+topDeclDs TDEnvTrans   {} = Set.empty
+topDeclDs TDEnvLiveness{} = Set.empty
+topDeclDs (TDLoc loc)     = topDeclDs (thing loc)
+
+
+-- | The names of all the constructors.
+enumDs :: Ord name => EnumDef name -> Set.Set name
+enumDs EnumDef { eCons } = Set.fromList [ thing con | con <- eCons ]
+
+
+-- | The name of this function.
+funDs :: Ord name => Fun name -> Set.Set name
+funDs Fun { fName } = Set.singleton (thing fName)
+
+
+-- | The name of this state var
+stateVarDs :: Ord name => StateVar name -> Set.Set name
+stateVarDs StateVar { svName } = Set.singleton (thing svName)
+
+
+-- | Free variables in this top-level declaration.
+topDeclFvs :: Ord name => TopDecl name -> Set.Set name
+topDeclFvs TDEnum {}         = Set.empty
+topDeclFvs (TDFun fun)       = funFvs fun
+topDeclFvs (TDInput sv)      = stateVarFvs sv
+topDeclFvs (TDOutput sv)     = stateVarFvs sv
+topDeclFvs (TDSysTrans    e) = exprFvs e
+topDeclFvs (TDSysLiveness e) = exprFvs e
+topDeclFvs (TDEnvTrans    e) = exprFvs e
+topDeclFvs (TDEnvLiveness e) = exprFvs e
+topDeclFvs (TDLoc loc)       = topDeclFvs (thing loc)
+
+-- | The free variables of the function body.
+funFvs :: Ord name => Fun name -> Set.Set name
+funFvs Fun { fParams, fBody } = 
+  let fvs = guardFvs fBody
+      bvs = Set.fromList (map thing fParams)
+   in fvs Set.\\ bvs
+
+guardFvs :: Ord name => Guard name -> Set.Set name
+guardFvs (GChoose l r) = Set.union (guardFvs l) (guardFvs r)
+guardFvs (GGuard p e)  = Set.union (exprFvs p)  (exprFvs e)
+guardFvs (GExpr e)     = exprFvs e
+guardFvs (GLoc loc)    = guardFvs (thing loc)
+
+-- | The free variables of the state-variable initializer.
+stateVarFvs :: Ord name => StateVar name -> Set.Set name
+stateVarFvs StateVar { svName, svInit } =
+  let fvs = maybe Set.empty exprFvs svInit
+   in Set.delete (thing svName) fvs
+
+-- | The names that appear free in this expression.
+exprFvs :: Ord name => Expr name -> Set.Set name
+exprFvs (EVar name) = Set.singleton name
+exprFvs (ECon name) = Set.singleton name
+exprFvs ENum{}      = Set.empty
+exprFvs ETrue       = Set.empty
+exprFvs EFalse      = Set.empty
+exprFvs (EAnd l r)  = Set.union (exprFvs l) (exprFvs r)
+exprFvs (EOr  l r)  = Set.union (exprFvs l) (exprFvs r)
+exprFvs (ENot e)    = exprFvs e
+exprFvs (EIf a b c) = Set.unions [ exprFvs a, exprFvs b, exprFvs c ]
+exprFvs (EApp f x)  = Set.union (exprFvs f) (exprFvs x)
+exprFvs (ELoc loc)  = exprFvs (thing loc)
