@@ -25,11 +25,13 @@ data Type = TFree TVar
           | TStateVar Type
           | TBool
           | TNum
-          | TEnum String
+          | TEnum Name
           | TFun Type Type
             deriving (Eq,Ord,Show)
 
 data Controller = Controller { cName        :: !Name
+                             , cInputs      :: [StateVar]
+                             , cEnv         :: [StateVar]
                              , cEnvTrans    :: Expr
                              , cEnvLiveness :: Expr
                              , cSysTrans    :: Expr
@@ -55,6 +57,11 @@ data Group a = NonRecursive a
 data EnumDef = EnumDef { eName :: !Name
                        , eCons :: [Name]
                        } deriving (Show)
+
+data StateVar = StateVar { svName :: !Name
+                         , svType :: !Type
+                         , svInit :: !(Maybe Expr)
+                         } deriving (Show)
 
 data Fun = Fun { fName   :: !Name
                , fParams :: [(Name,Type)]

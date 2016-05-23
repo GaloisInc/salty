@@ -42,16 +42,26 @@ mkLocFun  = go mempty
 
 simpleTopDecl :: AST.TopDecl Name -> TC (Controller -> Controller)
 
-simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
+simpleTopDecl (AST.TDEnum enum) = checkEnum enum
 
 simpleTopDecl (AST.TDFun fun) =
   do loc <- askLoc
      inferFunGroup False [fun `at` loc]
 
-simpleTopDecl _ = return id
+simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
 
-simpleTopDecl (AST.TDFun fun) = undefined
 
+-- | Add all of the constructors to the typing environment.
+checkEnum :: AST.EnumDef Name -> TC (Controller -> Controller)
+checkEnum AST.EnumDef { eName, eCons } =
+  do let ty   = TEnum (thing eName)
+         cons = map thing eCons
+
+     addTypes (zip cons (repeat ty))
+
+     return $ \ c -> c { cEnums = EnumDef { eName = thing eName
+                                          , eCons = cons
+                                          } : cEnums c }
 
 
 -- | Check a recursive group of functions:
