@@ -5,14 +5,17 @@ import Syntax.Parser
 import TypeCheck
 
 import qualified Data.Text.Lazy.IO as L
+import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 
 main :: IO ()
 main  =
-  do bytes <- L.readFile "test.salt"
+  do [file] <- getArgs
+
+     bytes <- L.readFile file
 
      pCont <-
-       case parseController "test.salt" bytes of
+       case parseController file bytes of
          Right p  -> return p
          Left err -> do print err
                         exitFailure
