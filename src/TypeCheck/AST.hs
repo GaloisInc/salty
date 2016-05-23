@@ -10,7 +10,7 @@ import Scope.Name (Name)
 import Data.Function (on)
 
 
-data TVar = TVar { tvHint   :: !(Maybe String)
+data TVar = TVar { tvOrigin :: !(Maybe Name)
                  , tvUnique :: !Int
                  } deriving (Show)
 
@@ -22,6 +22,7 @@ instance Ord TVar where
   compare = compare `on` tvUnique
 
 data Type = TFree TVar
+          | TStateVar Type
           | TBool
           | TNum
           | TEnum String
@@ -63,6 +64,8 @@ data Fun = Fun { fName   :: !Name
 
 data Expr = ETrue
           | EFalse
+          | EVar Name
+          | ECon Name
           | ENum Integer
           | EApp Expr Expr
           | EAnd Expr Expr
@@ -70,3 +73,10 @@ data Expr = ETrue
           | ENot Expr
           | EIf  Expr Expr Expr
             deriving (Show)
+
+
+destTFun :: Type -> ([Type],Type)
+destTFun (TFun l r) =
+  let (args,res) = destTFun r
+   in (l:args,res)
+destTFun ty = ([],ty)

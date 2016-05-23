@@ -114,15 +114,15 @@ top_decl :: { TopDecl PName }
 -- Functions -------------------------------------------------------------------
 
 fun_decl :: { Loc (Fun PName) }
-  : IDENT list1(IDENT) fun_body
+  : IDENT list(IDENT) fun_body
     { Fun $1 $2 $3 `at` mconcat [getLoc $1, getLoc $2, getLoc $3] }
 
-fun_body :: { Guard PName }
+fun_body :: { [Guard PName] }
   : '=' expr
-    { GExpr $2 }
+    { [GExpr $2] }
 
   | '|' sep1('|', guard_body)
-    { mkChoose $2 }
+    { $2 }
 
 guard_body :: { Guard PName }
   : expr '=' expr
@@ -273,11 +273,6 @@ pattern Keyword kw range <- Located { locValue = Token { tokType = TKeyword kw }
 
 pattern Virt v range <- Located { locValue = Token { tokType = TVirt v }
                                 , locRange = range }
-
-
-mkChoose :: [Guard PName] -> Guard PName
-mkChoose [x] = x
-mkChoose xs  = GLoc (foldl1 GChoose xs `at` xs)
 
 mkEApp :: [Expr PName] -> Expr PName
 mkEApp [e] = e

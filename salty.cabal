@@ -21,7 +21,7 @@ library
                        TypeCheck.Infer
                        TypeCheck.Monad
                        TypeCheck.Unify
-  build-depends:       base >=4.8 && <4.9,
+  build-depends:       base >=4.8 && <5,
                        language-slugs,
                        located,
                        array,
@@ -35,7 +35,7 @@ library
 
 executable salty
   main-is:             Main.hs
-  build-depends:       base >=4.8 && <4.9,
+  build-depends:       base >=4.8 && <5,
                        language-slugs,
                        text,
                        salty

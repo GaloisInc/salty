@@ -140,3 +140,10 @@ instance Types Type where
          return (TFun a' b')
 
     go _ ty = return ty
+
+
+instance Types a => Types [a] where
+  unify' as bs | length as == length bs = sequence_ (zipWith unify' as bs)
+               | otherwise              = fail "Can't unify different length lists"
+
+  zonk' as = traverse zonk' as

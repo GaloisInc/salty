@@ -15,10 +15,11 @@ import           Text.Location (HasLoc(..),Located(..),Range,at,thing)
 
 
 -- | Resolve names to their binding sites.
-scopeCheck :: Controller PName -> Either [ScopeError] (Controller Name)
-scopeCheck c =
+scopeCheck :: Supply -> Controller PName
+           -> Either [ScopeError] (Controller Name,Supply)
+scopeCheck sup c =
   let origin    = FromController (getLoc c)
-      (cont,s') = mkName origin (locValue (cName c)) emptySupply
+      (cont,s') = mkName origin (locValue (cName c)) sup
       (ds',rw)  = runM (unSC (checkTopDecls (cDecls c)))
                        RW { rwEnv  = Map.empty
                           , rwErrs = []
@@ -26,7 +27,7 @@ scopeCheck c =
                           , rwLoc  = locRange (cName c)
                           , rwCont = cont }
   in case rwErrs rw of
-       [] -> Right (Controller (cont `at` cName c) ds')
+       [] -> Right (Controller (cont `at` cName c) ds', rwSup rw)
        es -> Left es
 
 
@@ -210,7 +211,7 @@ checkFun :: Check Fun
 checkFun Fun { .. } =
   do n' <- checkLoc fName resolve
      withParams (thing n') fParams $ \ps' ->
-       do b' <- checkGuard fBody
+       do b' <- traverse checkGuard fBody
           return Fun { fName   = n'
                      , fParams = ps'
                      , fBody   = b' }
@@ -239,7 +240,6 @@ withParams fun ps k = go [] ps
 
 
 checkGuard :: Check Guard
-checkGuard (GChoose l r) = GChoose `fmap` checkGuard l <*> checkGuard r
 checkGuard (GGuard p e)  = GGuard  `fmap` checkExpr p  <*> checkExpr e
 checkGuard (GExpr e)     = GExpr   `fmap` checkExpr e
 checkGuard (GLoc loc)    = GLoc    `fmap` checkLoc loc checkGuard

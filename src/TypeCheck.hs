@@ -3,12 +3,13 @@ module TypeCheck (
     TCError(..)
   ) where
 
-import           Scope.Name (Name)
+import           Scope.Name (Name,Supply)
 import qualified Syntax.AST as AST
 import qualified TypeCheck.AST as Core
 import           TypeCheck.Infer (inferController)
 import           TypeCheck.Monad
 
 
-typeCheck :: AST.Controller Name -> Either [TCError] Core.Controller
-typeCheck c = runTC (inferController c)
+typeCheck :: Supply -> AST.Controller Name
+          -> Either [TCError] (Core.Controller,Supply)
+typeCheck sup c = runTC sup (inferController c)

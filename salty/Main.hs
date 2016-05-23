@@ -1,5 +1,6 @@
 
 import Scope.Check
+import Scope.Name (emptySupply)
 import Syntax.Parser
 import TypeCheck
 
@@ -16,16 +17,14 @@ main  =
          Left err -> do print err
                         exitFailure
 
-     scCont <-
-       case scopeCheck pCont of
+     (scCont,scSup) <-
+       case scopeCheck emptySupply pCont of
          Right sc  -> return sc
          Left errs -> do mapM_ print errs
                          exitFailure
 
-     print scCont
-
-     tcCont <-
-       case typeCheck scCont of
+     (tcCont,tcSup) <-
+       case typeCheck scSup scCont of
          Right tc  -> return tc
          Left errs -> do mapM_ print errs
                          exitFailure

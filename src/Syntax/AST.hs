@@ -45,7 +45,7 @@ data EnumDef name = EnumDef { eName :: Loc name
 
 data Fun name = Fun { fName :: Loc name
                     , fParams :: [Loc name]
-                    , fBody :: Guard name
+                    , fBody :: [Guard name]
                     } deriving (Functor,Show)
 
 data StateVar name = StateVar { svName :: Loc name
@@ -53,8 +53,7 @@ data StateVar name = StateVar { svName :: Loc name
                               , svInit :: Maybe (Expr name)
                               } deriving (Functor,Show)
 
-data Guard name = GChoose (Guard name) (Guard name)
-                | GGuard (Expr name) (Expr name)
+data Guard name = GGuard (Expr name) (Expr name)
                 | GExpr (Expr name)
                 | GLoc (Loc (Guard name))
                   deriving (Functor,Show)
@@ -138,12 +137,12 @@ enumDs EnumDef { eCons } = Set.fromList [ thing con | con <- eCons ]
 
 
 -- | The name of this function.
-funDs :: Ord name => Fun name -> Set.Set name
+funDs :: Fun name -> Set.Set name
 funDs Fun { fName } = Set.singleton (thing fName)
 
 
 -- | The name of this state var
-stateVarDs :: Ord name => StateVar name -> Set.Set name
+stateVarDs :: StateVar name -> Set.Set name
 stateVarDs StateVar { svName } = Set.singleton (thing svName)
 
 
@@ -162,12 +161,11 @@ topDeclFvs (TDLoc loc)       = topDeclFvs (thing loc)
 -- | The free variables of the function body.
 funFvs :: Ord name => Fun name -> Set.Set name
 funFvs Fun { fParams, fBody } = 
-  let fvs = guardFvs fBody
+  let fvs = Set.unions (map guardFvs fBody)
       bvs = Set.fromList (map thing fParams)
    in fvs Set.\\ bvs
 
 guardFvs :: Ord name => Guard name -> Set.Set name
-guardFvs (GChoose l r) = Set.union (guardFvs l) (guardFvs r)
 guardFvs (GGuard p e)  = Set.union (exprFvs p)  (exprFvs e)
 guardFvs (GExpr e)     = exprFvs e
 guardFvs (GLoc loc)    = guardFvs (thing loc)
