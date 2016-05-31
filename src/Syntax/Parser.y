@@ -52,6 +52,8 @@ import           Text.Location.Layout
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
+  'prime'      { Keyword Kprime      $$ }
+
   'sys_liveness' { Keyword Ksys_liveness $$ }
   'env_liveness' { Keyword Ksys_liveness $$ }
   'sys_trans'    { Keyword Ksys_trans    $$ }
@@ -70,6 +72,7 @@ import           Text.Location.Layout
 %right '||'
 %right '&&'
 %right NOT
+%nonassoc '='
 %right '->'
 
 
@@ -177,12 +180,18 @@ bexpr :: { Expr PName }
   | '!' bexpr %prec NOT
     { ELoc (ENot $2 `at` mappend $1 (getLoc $2)) }
 
+  | bexpr '=' bexpr
+    { ELoc (EEq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+
   | aexpr
     { $1 }
 
 aexpr :: { Expr PName }
-  : IDENT
-    { ELoc (fmap EVar $1) }
+  : IDENT opt('prime')
+    { let var = ELoc (fmap EVar $1)
+       in case $2 of
+            Just p  -> ELoc (ENext var `at` mappend (getLoc var) p)
+            Nothing -> var }
 
   | CONIDENT
     { ELoc (fmap ECon $1) }

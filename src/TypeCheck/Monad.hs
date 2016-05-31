@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RecursiveDo #-}
 
 module TypeCheck.Monad (
     -- * Type-checking Monad
@@ -34,10 +35,10 @@ import qualified TypeCheck.Unify as Unify
 import           Data.Either (partitionEithers)
 import qualified Data.Map.Strict as Map
 import           MonadLib
-import           Text.Location (HasLoc(..),Range,thing)
+import           Text.Location (HasLoc(..),Range,thing,at)
 
 
-newtype TC a = TC { unTC :: StateT RW (ExceptionT [TCError] Lift) a
+newtype TC a = TC { unTC :: StateT RW (ExceptionT [Loc TCError] Lift) a
                   } deriving (Functor,Applicative,Monad)
 
 data RW = RW { rwSubst :: !Unify.Env
@@ -62,7 +63,7 @@ data TCError = UnifyError Unify.UnifyError
                deriving (Show)
 
 -- | Run a TC action.
-runTC :: Supply -> TC a -> Either [TCError] (a,Supply)
+runTC :: Supply -> TC a -> Either [Loc TCError] (a,Supply)
 runTC sup (TC m) =
   case runM m (emptyRW sup) of
     Right (a,i) -> Right (a,rwSupply i)
@@ -90,19 +91,19 @@ askLoc  = TC $
 
 -- | Unify two types.
 unify :: Unify.Types ty => ty -> ty -> TC ()
-unify a b = TC $
-  do RW { .. } <- get
+unify a b =
+  do RW { .. } <- TC get
      case Unify.unify a b rwSubst of
-       Right rwSubst' -> set $! RW { rwSubst = rwSubst', .. }
-       Left err       -> raise [UnifyError err]
+       Right rwSubst' -> TC (set $! RW { rwSubst = rwSubst', .. })
+       Left err       -> addErr (UnifyError err)
 
 -- | Remove type variables from a type.
 zonk :: Unify.Types ty => ty -> TC ty
-zonk ty = TC $
-  do RW { .. } <- get
+zonk ty =
+  do RW { .. } <- TC get
      case Unify.zonk ty rwSubst of
        Right ty' -> return ty'
-       Left  err -> raise [UnifyError err]
+       Left  err -> addErr (UnifyError err)
 
 
 -- Type Environment ------------------------------------------------------------
@@ -141,8 +142,13 @@ addTypes tys =
    in TC (sets_ (\ RW { .. } -> RW { rwEnv = Map.union binds rwEnv, .. }))
 
 
-
 -- Errors ----------------------------------------------------------------------
+
+addErr :: TCError -> TC a
+addErr err =
+  do loc <- askLoc
+     TC (raise [err `at` loc])
+
 
 -- | Run all the sub-computations, yielding either a list of results, or pushing
 -- out a list of errors.
@@ -156,8 +162,8 @@ collectErrors ms = TC $
 
 -- | A recursive group that does not consist of just functions.
 invalidRecursiveGroup :: [AST.TopDecl Name] -> TC a
-invalidRecursiveGroup g = TC (raise [InvalidRecursiveGroup g])
+invalidRecursiveGroup g = addErr (InvalidRecursiveGroup g)
 
 -- | These guarded cases are unreachable.
 unreachableCases :: [AST.Guard Name] -> TC a
-unreachableCases gs = TC (raise [UnreachableCases gs])
+unreachableCases gs = addErr (UnreachableCases gs)

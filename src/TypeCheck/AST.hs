@@ -22,16 +22,15 @@ instance Ord TVar where
   compare = compare `on` tvUnique
 
 data Type = TFree TVar
-          | TStateVar Type
           | TBool
-          | TNum
+          | TInt
           | TEnum Name
           | TFun Type Type
             deriving (Eq,Ord,Show)
 
 data Controller = Controller { cName        :: !Name
                              , cInputs      :: [StateVar]
-                             , cEnv         :: [StateVar]
+                             , cOutputs     :: [StateVar]
                              , cEnvTrans    :: Expr
                              , cEnvLiveness :: Expr
                              , cSysTrans    :: Expr
@@ -43,6 +42,8 @@ data Controller = Controller { cName        :: !Name
 emptyController :: Name -> Controller
 emptyController cName =
   Controller { cName
+             , cInputs      = []
+             , cOutputs     = []
              , cEnvTrans    = ETrue
              , cEnvLiveness = ETrue
              , cSysTrans    = ETrue
@@ -79,6 +80,10 @@ data Expr = ETrue
           | EOr  Expr Expr
           | ENot Expr
           | EIf  Expr Expr Expr
+          | ENext Expr
+          | EEq Expr Expr
+          | EFromStateVar Name
+            -- ^ Coerce from a state var to a value
             deriving (Show)
 
 

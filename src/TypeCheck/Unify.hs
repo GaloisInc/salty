@@ -6,11 +6,13 @@ module TypeCheck.Unify (
     UnifyError(..),
     Types(),
     unify,
+    match,
     zonk
   ) where
 
 import TypeCheck.AST
 
+import           Control.Monad (zipWithM_)
 import qualified Data.IntMap.Strict as IntMap
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -23,6 +25,10 @@ import           MonadLib
 unify :: Types ty => ty -> ty -> Env -> Either UnifyError Env
 unify a b = runUnify_ (unify' a b)
 
+-- | Matching unification, allowing variables on the LHS to be bound.
+match :: Types ty => ty -> ty -> Env -> Either UnifyError Env
+match a b = runUnify_ (match' a b)
+
 -- | Remove type variables from this type.
 zonk :: Types ty => ty -> Env -> Either UnifyError ty
 zonk a env =
@@ -32,6 +38,9 @@ zonk a env =
 
 data UnifyError = UnifyError Type Type
                   -- ^ Unification failed -- these two types don't unify.
+
+                | MatchError Type Type
+                  -- ^ Matching failed -- can't turn the left into the right.
 
                 | OccursCheckFailure
                   -- ^ The occurs check failed during zonking.
@@ -101,11 +110,15 @@ class Types ty where
   -- | Unify two types, effecting the environment.
   unify' :: ty -> ty -> Unify ()
 
+  -- | Matching unification. Only allow variables on the LHS to bind.
+  match' :: ty -> ty -> Unify ()
+
   -- | Remove type variables by looking them up in the environment.
   zonk' :: ty -> Unify ty
 
 
 instance Types Type where
+
   unify' (TFree x) y = bindVar x y
   unify' y (TFree x) = bindVar x y
 
@@ -114,11 +127,25 @@ instance Types Type where
        unify' y1 y2
 
   unify' TBool TBool = return ()
-  unify' TNum  TNum  = return ()
+  unify' TInt  TInt  = return ()
 
   unify' (TEnum x) (TEnum y) | x == y = return ()
 
   unify' x y = raise (UnifyError x y)
+
+
+  match' (TFree x) y = bindVar x y
+  match' (TFun x1 y1) (TFun x2 y2) =
+    do match' x1 x2
+       match' y1 y2
+
+  match' TBool TBool = return ()
+  match' TInt  TInt  = return ()
+
+  match' (TEnum x) (TEnum y) | x == y = return ()
+
+  match' x y = raise (MatchError x y)
+
 
   zonk'  = go Set.empty
     where
@@ -143,7 +170,10 @@ instance Types Type where
 
 
 instance Types a => Types [a] where
-  unify' as bs | length as == length bs = sequence_ (zipWith unify' as bs)
+  unify' as bs | length as == length bs = zipWithM_ unify' as bs
                | otherwise              = fail "Can't unify different length lists"
+
+  match' as bs | length as == length bs = zipWithM_ match' as bs
+               | otherwise              = fail "Can't match different length lists"
 
   zonk' as = traverse zonk' as

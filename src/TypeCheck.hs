@@ -11,5 +11,5 @@ import           TypeCheck.Monad
 
 
 typeCheck :: Supply -> AST.Controller Name
-          -> Either [TCError] (Core.Controller,Supply)
+          -> Either [AST.Loc TCError] (Core.Controller,Supply)
 typeCheck sup c = runTC sup (inferController c)

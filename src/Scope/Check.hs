@@ -259,6 +259,8 @@ checkExpr (ENot e)    = ENot `fmap` checkExpr e
 checkExpr (EIf p t f) = EIf  `fmap` checkExpr p <*> checkExpr t <*> checkExpr f
 checkExpr (EApp f x)  = EApp `fmap` checkExpr f <*> checkExpr x
 checkExpr (ELoc loc)  = ELoc `fmap` checkLoc loc checkExpr
+checkExpr (ENext e)   = ENext `fmap` checkExpr e
+checkExpr (EEq a b)   = EEq  `fmap` checkExpr a <*> checkExpr b
 
 
 checkType :: Check Type
