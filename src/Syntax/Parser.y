@@ -45,7 +45,10 @@ import           Text.Location.Layout
   'if'         { Keyword Kif         $$ }
   'then'       { Keyword Kthen       $$ }
   'else'       { Keyword Kelse       $$ }
+  'case'       { Keyword Kcase       $$ }
+  'of'         { Keyword Kof         $$ }
   '='          { Keyword Keq         $$ }
+  '!='         { Keyword Kneq        $$ }
   '|'          { Keyword Kpipe       $$ }
   '('          { Keyword Klparen     $$ }
   ')'          { Keyword Krparen     $$ }
@@ -69,11 +72,11 @@ import           Text.Location.Layout
   'v}'  { Virt VEnd   $$ }
 
 
+%right '->'
 %right '||'
 %right '&&'
 %right NOT
-%nonassoc '='
-%right '->'
+%nonassoc '=' '!='
 
 
 %monad { Either Error }
@@ -128,7 +131,7 @@ fun_body :: { [Guard PName] }
     { $2 }
 
 guard_body :: { Guard PName }
-  : expr '=' expr
+  : bexpr '=' expr
     { GLoc (GGuard $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
   | 'otherwise' '=' expr
@@ -160,15 +163,21 @@ type :: { Type PName }
 -- Expressions -----------------------------------------------------------------
 
 expr :: { Expr PName }
-  : 'if' app_expr 'then' app_expr 'else' app_expr
+  : 'if' app_expr 'then' expr 'else' expr
     { ELoc (EIf $2 $4 $6 `at` mappend $1 (getLoc $6)) }
 
-  | app_expr
+  | 'case' app_expr 'of' layout(case_arm)
+    { ELoc (ECase $4 `at` mappend $1 (getLoc $4)) }
+
+  | bexpr
     { $1 }
 
-app_expr :: { Expr PName }
-  : list1(bexpr)
-    { mkEApp $1 }
+case_arm :: { Guard PName }
+  : aexpr '->' expr
+    { GLoc (GGuard $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+
+  | 'otherwise' '->' expr
+    { GLoc (GExpr $3 `at` mappend $1 (getLoc $3)) }
 
 bexpr :: { Expr PName }
   : bexpr '||' bexpr
@@ -180,11 +189,21 @@ bexpr :: { Expr PName }
   | '!' bexpr %prec NOT
     { ELoc (ENot $2 `at` mappend $1 (getLoc $2)) }
 
+  | bexpr '->' bexpr
+    { ELoc (EImp $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+
+  | bexpr '!=' bexpr
+    { ELoc (EImp $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+
   | bexpr '=' bexpr
     { ELoc (EEq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
-  | aexpr
+  | app_expr
     { $1 }
+
+app_expr :: { Expr PName }
+  : list1(aexpr)
+    { mkEApp $1 }
 
 aexpr :: { Expr PName }
   : IDENT opt('prime')

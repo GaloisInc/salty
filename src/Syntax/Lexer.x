@@ -55,11 +55,15 @@ $white+ ;
 "then"  { keyword Kthen }
 "else"  { keyword Kelse }
 
+"case"  { keyword Kcase }
+"of"    { keyword Kof   }
+
 "enum"  { keyword Kenum }
 "|"     { keyword Kpipe }
 
 ":"     { keyword Kcolon  }
 "="     { keyword Keq     }
+"!="    { keyword Kneq    }
 "("     { keyword Klparen }
 ")"     { keyword Krparen }
 ","     { keyword Kcomma  }
@@ -112,7 +116,10 @@ data TokenType = TLineComment !L.Text
 data Keyword = Kif
              | Kthen
              | Kelse
+             | Kcase
+             | Kof
              | Keq
+             | Kneq
              | Klparen
              | Krparen
              | Kprime
@@ -164,6 +171,7 @@ lexWithLayout src bytes =
   layout Layout { .. } (ignoreComments (lexer src Nothing bytes))
   where
   beginsLayout Token { tokType = TKeyword Kwhere } = True
+  beginsLayout Token { tokType = TKeyword Kof    } = True
   beginsLayout _                                   = False
 
   endsLayout _ = False
