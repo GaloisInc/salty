@@ -261,6 +261,9 @@ checkExpr (EApp f x)  = EApp `fmap` checkExpr f <*> checkExpr x
 checkExpr (ELoc loc)  = ELoc `fmap` checkLoc loc checkExpr
 checkExpr (ENext e)   = ENext `fmap` checkExpr e
 checkExpr (EEq a b)   = EEq  `fmap` checkExpr a <*> checkExpr b
+checkExpr (ENeq a b)  = ENeq `fmap` checkExpr a <*> checkExpr b
+checkExpr (EImp a b)  = EImp `fmap` checkExpr a <*> checkExpr b
+checkExpr (ECase cs)  = ECase `fmap` traverse checkGuard cs
 
 
 checkType :: Check Type

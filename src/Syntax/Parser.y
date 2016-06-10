@@ -172,6 +172,7 @@ expr :: { Expr PName }
   | bexpr
     { $1 }
 
+-- XXX: this should be a pattern, not an `aexpr`
 case_arm :: { Guard PName }
   : aexpr '->' expr
     { GLoc (GGuard $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
