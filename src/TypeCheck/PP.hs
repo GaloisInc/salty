@@ -51,14 +51,19 @@ instance PP Controller where
            , hang (text "sys_trans")    2 (pp cSysTrans)
            , hang (text "sys_liveness") 2 (pp cSysLiveness) ]
 
+instance PP EnumDef where
+  ppPrec _ EnumDef { .. } =
+    hang (text "enum" <+> pp eName)
+       2 (vcat (zipWith (\c con -> pp c <+> pp con) ('=' : repeat '|') eCons))
+
 ppStateVar :: String -> StateVar -> Doc
 ppStateVar lab StateVar { .. } =
   hang (text lab <+> pp svName <+> char ':' <+> pp svType)
-     2 (maybe empty pp svInit)
+     2 (maybe empty (\i -> char '=' <+> pp i) svInit)
 
 instance PP Fun where
   ppPrec _ Fun { .. } =
-    hang (text fName
+    hang (pp fName
           <+> parens (fsep (punctuate comma (map ppParam fParams)))
           <> colon
           <+> pp fResult
@@ -83,9 +88,12 @@ instance PP Expr where
 ppBinop :: (PP a, PP b) => Int -> a -> Doc -> b -> Doc
 ppBinop p a x b = optParens (p >= 10) (sep [ppPrec 10 a, x, ppPrec 10 b])
 
+instance PP TVar where
+  ppPrec _ TVar { .. } = char '?' <> pp tvUnique
+
 instance PP Type where
-  ppPrec _ (TFree v)  = char '?' <> pp v
+  ppPrec _ (TFree v)  = pp v
   ppPrec _ TBool      = text "Bool"
   ppPrec _ TInt       = text "Num"
   ppPrec _ (TEnum n)  = pp n
-  ppPrec p (TFun a b) = optParens (p >= 10) (sep [ ppPrec a 10 <+> text "->", pp b ])
+  ppPrec p (TFun a b) = optParens (p >= 10) (sep [ ppPrec 10 a <+> text "->", pp b ])

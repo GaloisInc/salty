@@ -10,7 +10,8 @@ cabal-version:       >=1.10
 
 
 library
-  exposed-modules:     Scope.Check
+  exposed-modules:     Opt.Simpl
+                       Scope.Check
                        Scope.Name
                        Slugs.Translate
                        Syntax.AST

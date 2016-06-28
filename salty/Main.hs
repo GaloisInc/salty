@@ -1,4 +1,5 @@
 
+import Opt.Simpl
 import Scope.Check
 import Scope.Name (emptySupply)
 import Slugs.Translate (translateController)
@@ -34,5 +35,7 @@ main  =
                          exitFailure
 
      print (pp tcCont)
+     putStrLn "----"
+     print (pp (simp tcCont))
 
      print (translateController tcCont)

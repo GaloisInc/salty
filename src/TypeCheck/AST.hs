@@ -8,6 +8,7 @@ module TypeCheck.AST where
 import Scope.Name (Name)
 
 import Data.Function (on)
+import Language.Slugs.Lens
 
 
 data TVar = TVar { tvOrigin :: !(Maybe Name)
@@ -82,7 +83,7 @@ data Expr = ETrue
           | ENext Expr
           | EEq Expr Expr
             -- ^ Coerce from a state var to a value
-            deriving (Show)
+            deriving (Show,Eq,Ord)
 
 
 destTFun :: Type -> ([Type],Type)
@@ -105,3 +106,19 @@ eImp a b = eOr [ eNot a, b ]
 
 eIf :: Expr -> Expr -> Expr -> Expr
 eIf p t f = eAnd [ eImp p t, eImp (eNot p) f ]
+
+
+-- Traversals ------------------------------------------------------------------
+
+traverseExpr :: Traversal' Expr Expr
+traverseExpr _ ETrue      = pure ETrue
+traverseExpr _ EFalse     = pure EFalse
+traverseExpr _ e@EVar{}   = pure e
+traverseExpr _ e@ECon{}   = pure e
+traverseExpr _ e@ENum{}   = pure e
+traverseExpr f (EApp a b) = EApp  <$> f a <*> f b
+traverseExpr f (EAnd a b) = EAnd  <$> f a <*> f b
+traverseExpr f (EOr  a b) = EOr   <$> f a <*> f b
+traverseExpr f (ENot a)   = ENot  <$> f a
+traverseExpr f (ENext a)  = ENext <$> f a
+traverseExpr f (EEq a b)  = EEq   <$> f a <*> f b
