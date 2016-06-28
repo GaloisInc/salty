@@ -167,18 +167,22 @@ expr :: { Expr PName }
     { ELoc (EIf $2 $4 $6 `at` mappend $1 (getLoc $6)) }
 
   | 'case' app_expr 'of' layout(case_arm)
-    { ELoc (ECase $4 `at` mappend $1 (getLoc $4)) }
+    { ELoc (ECase $2 $4 `at` mappend $1 (getLoc $4)) }
 
   | bexpr
     { $1 }
 
 -- XXX: this should be a pattern, not an `aexpr`
-case_arm :: { Guard PName }
-  : aexpr '->' expr
-    { GLoc (GGuard $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+case_arm :: { Case PName }
+  : pat '->' expr
+    { CLoc (CPat $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
   | 'otherwise' '->' expr
-    { GLoc (GExpr $3 `at` mappend $1 (getLoc $3)) }
+    { CLoc (CDefault $3 `at` mappend $1 (getLoc $3)) }
+
+pat :: { Pat PName }
+  : CONIDENT    { PLoc (PCon `fmap` $1) }
+  | NUM         { PLoc (PNum `fmap` $1) }
 
 bexpr :: { Expr PName }
   : bexpr '||' bexpr

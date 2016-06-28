@@ -1,6 +1,7 @@
 
 import Scope.Check
 import Scope.Name (emptySupply)
+import Slugs.Translate (translateController)
 import Syntax.Parser
 import TypeCheck
 
@@ -32,4 +33,6 @@ main  =
          Left errs -> do mapM_ print errs
                          exitFailure
 
-     print tcCont
+     print (pp tcCont)
+
+     print (translateController tcCont)

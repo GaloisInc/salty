@@ -79,10 +79,8 @@ data Expr = ETrue
           | EAnd Expr Expr
           | EOr  Expr Expr
           | ENot Expr
-          | EIf  Expr Expr Expr
           | ENext Expr
           | EEq Expr Expr
-          | EFromStateVar Name
             -- ^ Coerce from a state var to a value
             deriving (Show)
 
@@ -92,3 +90,18 @@ destTFun (TFun l r) =
   let (args,res) = destTFun r
    in (l:args,res)
 destTFun ty = ([],ty)
+
+eAnd :: [Expr] -> Expr
+eAnd  = foldl1 EAnd
+
+eNot :: Expr -> Expr
+eNot  = ENot
+
+eOr :: [Expr] -> Expr
+eOr  = foldl1 EOr
+
+eImp :: Expr -> Expr -> Expr
+eImp a b = eOr [ eNot a, b ]
+
+eIf :: Expr -> Expr -> Expr -> Expr
+eIf p t f = eAnd [ eImp p t, eImp (eNot p) f ]

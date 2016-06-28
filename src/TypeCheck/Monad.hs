@@ -2,6 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module TypeCheck.Monad (
     -- * Type-checking Monad
@@ -20,10 +21,18 @@ module TypeCheck.Monad (
     withTypes,
     addTypes,
 
-    -- ** Errors
+    -- ** Error handling
+    record,
+    failErrors,
+    failWith,
+    try,
+    tryAll,
     collectErrors,
+
+    -- ** Errors
     invalidRecursiveGroup,
     unreachableCases,
+    tooManyDefaultCases,
   ) where
 
 import           Scope.Name (Name,Supply,nextUnique)
@@ -34,9 +43,9 @@ import qualified TypeCheck.Unify as Unify
 
 import           Data.Either (partitionEithers)
 import qualified Data.Map.Strict as Map
-import           MonadLib
+import qualified MonadLib
+import           MonadLib hiding (try)
 import           Text.Location (HasLoc(..),Range,thing,at)
-
 
 newtype TC a = TC { unTC :: StateT RW (ExceptionT [Loc TCError] Lift) a
                   } deriving (Functor,Applicative,Monad)
@@ -45,12 +54,14 @@ data RW = RW { rwSubst :: !Unify.Env
              , rwLoc   :: !(Range FilePath)
              , rwEnv   :: Map.Map Name TCType
              , rwSupply:: !Supply
+             , rwErrs  :: ![Loc TCError]
              }
 
 emptyRW :: Supply -> RW
 emptyRW rwSupply = RW { rwSubst = Unify.emptyEnv
                       , rwLoc   = mempty
                       , rwEnv   = Map.empty
+                      , rwErrs  = []
                       , .. }
 
 data TCType = Checking Type
@@ -60,15 +71,17 @@ data TCType = Checking Type
 data TCError = UnifyError Unify.UnifyError
              | InvalidRecursiveGroup [AST.TopDecl Name]
              | UnreachableCases [AST.Guard Name]
+             | TooManyDefaultCases [AST.Case Name]
                deriving (Show)
 
 -- | Run a TC action.
 runTC :: Supply -> TC a -> Either [Loc TCError] (a,Supply)
-runTC sup (TC m) =
-  case runM m (emptyRW sup) of
-    Right (a,i) -> Right (a,rwSupply i)
-    Left  err   -> Left err
+runTC sup m =
+  case runM (unTC (failErrors m)) (emptyRW sup) of
+    Right (a,rw) -> Right (a,rwSupply rw)
+    Left errs    -> Left errs
 
+-- | Decorate errors generated in the action with location information provided.
 addLoc :: (LocSource loc ~ FilePath, HasLoc loc) => loc -> TC a -> TC a
 addLoc loc m = TC $
   do rw  <- get
@@ -95,7 +108,7 @@ unify a b =
   do RW { .. } <- TC get
      case Unify.unify a b rwSubst of
        Right rwSubst' -> TC (set $! RW { rwSubst = rwSubst', .. })
-       Left err       -> addErr (UnifyError err)
+       Left err       -> record (UnifyError err)
 
 -- | Remove type variables from a type.
 zonk :: Unify.Types ty => ty -> TC ty
@@ -103,7 +116,7 @@ zonk ty =
   do RW { .. } <- TC get
      case Unify.zonk ty rwSubst of
        Right ty' -> return ty'
-       Left  err -> addErr (UnifyError err)
+       Left  err -> failWith (UnifyError err)
 
 
 -- Type Environment ------------------------------------------------------------
@@ -144,26 +157,63 @@ addTypes tys =
 
 -- Errors ----------------------------------------------------------------------
 
-addErr :: TCError -> TC a
-addErr err =
+record :: TCError -> TC ()
+record err =
   do loc <- askLoc
-     TC (raise [err `at` loc])
+     addErrs [err `at` loc]
+
+addErrs :: [Loc TCError] -> TC ()
+addErrs errs = TC (sets_ (\rw -> rw { rwErrs = errs ++ rwErrs rw }))
+
+getErrs :: TC [Loc TCError]
+getErrs  = TC (sets (\rw -> (rwErrs rw, rw { rwErrs = [] })))
+
+setErrs :: [Loc TCError] -> TC ()
+setErrs errs = TC (sets_ (\rw -> rw { rwErrs = errs }))
+
+-- | Fails when the given action has added errors to the environment.
+failErrors :: TC a -> TC a
+failErrors m =
+  do (a,errs)<- collectErrors m
+     unless (null errs) (TC (raise errs))
+
+     return a
+
+-- | When we'd like to fail right away.
+failWith :: TCError -> TC a
+failWith err = TC $
+  do rw <- get
+     raise ((err `at` rwLoc rw) : rwErrs rw)
+
+try :: TC a -> TC (Either [Loc TCError] a)
+try m = TC (MonadLib.try (unTC m))
+
+tryAll :: [TC a] -> TC [a]
+tryAll ms = TC $
+  do es <- mapM (MonadLib.try . unTC) ms
+     let (as,bs) = partitionEithers es
+     unless (null as) (raise (concat as))
+     return bs
 
 
--- | Run all the sub-computations, yielding either a list of results, or pushing
--- out a list of errors.
-collectErrors :: [TC a] -> TC [a]
-collectErrors ms = TC $
-  do es <- traverse (try . unTC) ms
-     let (errs,as) = partitionEithers es
-     case concat errs of
-       [] -> return as
-       ls -> raise ls
+-- | Collect any errors that get recorded when running the given action.
+-- Failures will still propagate through.
+collectErrors :: TC a -> TC (a,[Loc TCError])
+collectErrors m =
+  do errs  <- getErrs
+     a     <- m
+     errs' <- getErrs
+     setErrs errs
+     return (a,errs')
 
 -- | A recursive group that does not consist of just functions.
-invalidRecursiveGroup :: [AST.TopDecl Name] -> TC a
-invalidRecursiveGroup g = addErr (InvalidRecursiveGroup g)
+invalidRecursiveGroup :: [AST.TopDecl Name] -> TCError
+invalidRecursiveGroup g = InvalidRecursiveGroup g
 
 -- | These guarded cases are unreachable.
-unreachableCases :: [AST.Guard Name] -> TC a
-unreachableCases gs = addErr (UnreachableCases gs)
+unreachableCases :: [AST.Guard Name] -> TCError
+unreachableCases gs = UnreachableCases gs
+
+-- | Too many default cases in a case expression.
+tooManyDefaultCases :: [AST.Case Name] -> TCError
+tooManyDefaultCases arms = TooManyDefaultCases arms

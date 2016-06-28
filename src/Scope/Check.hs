@@ -263,7 +263,17 @@ checkExpr (ENext e)   = ENext `fmap` checkExpr e
 checkExpr (EEq a b)   = EEq  `fmap` checkExpr a <*> checkExpr b
 checkExpr (ENeq a b)  = ENeq `fmap` checkExpr a <*> checkExpr b
 checkExpr (EImp a b)  = EImp `fmap` checkExpr a <*> checkExpr b
-checkExpr (ECase cs)  = ECase `fmap` traverse checkGuard cs
+checkExpr (ECase e cs)= ECase `fmap` checkExpr e <*> traverse checkCase cs
+
+checkCase :: Check Case
+checkCase (CPat p e)   = CPat     `fmap` checkPat p <*> checkExpr e
+checkCase (CDefault e) = CDefault `fmap` checkExpr e
+checkCase (CLoc loc)   = CLoc     `fmap` checkLoc loc checkCase
+
+checkPat :: Check Pat
+checkPat (PCon n)   = PCon `fmap` resolve n
+checkPat (PNum n)   = pure (PNum n)
+checkPat (PLoc loc) = PLoc `fmap` checkLoc loc checkPat
 
 
 checkType :: Check Type

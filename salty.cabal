@@ -12,6 +12,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Scope.Check
                        Scope.Name
+                       Slugs.Translate
                        Syntax.AST
                        Syntax.Lexer
                        Syntax.Parser
@@ -20,6 +21,7 @@ library
                        TypeCheck.Groups
                        TypeCheck.Infer
                        TypeCheck.Monad
+                       TypeCheck.PP
                        TypeCheck.Unify
   build-depends:       base >=4.8 && <5,
                        language-slugs,
@@ -28,7 +30,8 @@ library
                        containers,
                        monadLib,
                        GraphSCC,
-                       text
+                       text,
+                       pretty
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall

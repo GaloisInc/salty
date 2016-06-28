@@ -9,7 +9,8 @@ import           TypeCheck.AST
 import           TypeCheck.Groups
 import           TypeCheck.Monad
 
-import           Control.Monad (unless)
+import           Control.Monad (unless,when)
+import           Data.Either (partitionEithers,isRight)
 import           Data.List (foldl')
 import           Text.Location (thing,getLoc,at)
 
@@ -28,7 +29,7 @@ inferTopGroup (NonRecursive td) =
 inferTopGroup (Recursive tds)   =
   case traverse mkLocFun tds of
     Just funs -> inferFunGroup True funs
-    _         -> invalidRecursiveGroup tds
+    _         -> failWith (invalidRecursiveGroup tds)
 
 
 mkLocFun :: AST.TopDecl Name -> Maybe (AST.Loc (AST.Fun Name))
@@ -107,7 +108,7 @@ inferFunGroup :: Bool -> [AST.Loc (AST.Fun Name)] -> TC (Controller -> Controlle
 inferFunGroup isRec funs =
   do let names = [ thing (AST.fName (thing locFun)) | locFun <- funs ]
      tys   <- traverse guessType funs
-     funs' <- withTypes (zip names tys) (collectErrors (zipWith checkFun tys funs))
+     funs' <- withTypes (zip names tys) (tryAll (zipWith checkFun tys funs))
      tys'  <- traverse zonk tys
 
      addTypes (zip names tys')
@@ -144,7 +145,7 @@ checkGuard ty = go
   -- translates to no conditionals on the RHS.
   go (AST.GExpr e:gs) =
     do e' <- checkExpr ty e
-       unless (null gs) (unreachableCases gs)
+       unless (null gs) (record (unreachableCases gs))
        return e'
 
   go (AST.GGuard p e:gs) =
@@ -154,7 +155,7 @@ checkGuard ty = go
                 then return EFalse
                 else go gs
   
-       return (EIf p' e' k)
+       return (eIf p' e' k)
   
   go (AST.GLoc loc:gs) =
     withLoc loc (\g -> go (g:gs))
@@ -209,7 +210,7 @@ checkExpr ty (AST.EIf p t f) =
   do p' <- checkExpr TBool p
      t' <- checkExpr ty t
      f' <- checkExpr ty f
-     return (EIf p' t' f')
+     return (eIf p' t' f')
 
 checkExpr ty (AST.EApp f x) =
   do xtv <- newTVar Nothing
@@ -226,6 +227,26 @@ checkExpr ty (AST.EEq a b) =
      unify ty TBool
      return (EEq a' b')
 
+checkExpr ty (AST.ENeq a b) =
+  do atv <- newTVar Nothing
+     let aty = TFree atv
+     a' <- checkExpr aty a
+     b' <- checkExpr aty b
+     unify ty TBool
+     return (ENot (EEq a' b'))
+
+checkExpr ty (AST.EImp a b) =
+  do a' <- checkExpr TBool a
+     b' <- checkExpr TBool b
+     unify ty TBool
+     return (eImp a' b')
+
+checkExpr ty (AST.ECase e cs) =
+  do etv <- newTVar Nothing
+     let ety = TFree etv
+     e' <- checkExpr ety e
+     checkCases ety e' ty cs
+
 -- using `ENext` is an explicit coercion into a value type, so the argument is
 -- required to be `TStateVar a`
 checkExpr ty (AST.ENext e) =
@@ -233,6 +254,61 @@ checkExpr ty (AST.ENext e) =
      return (ENext e')
 
 checkExpr ty (AST.ELoc loc) = withLoc loc (checkExpr ty)
+
+
+-- | Turn a case expression into one big disjunction of implications.
+--
+-- INVARIANT: this expects that there is at most one default present.
+checkCases :: Type -> Expr -> Type -> [AST.Case Name] -> TC Expr
+checkCases ety e ty cases =
+  do pats' <- traverse mkImp pats
+     let (ps,rs) = unzip pats'
+
+     let neg = eAnd (map eNot ps)
+     defs' <- traverse (mkDefault neg) defs
+
+     when (length defs' > 1)
+          (record (tooManyDefaultCases (map fst defs)))
+
+     let imps = [ eImp p c | (p,c) <- pats' ]
+     return (eAnd (defs' ++ imps))
+
+  where
+
+  (defs,pats) = partitionEithers (map isDefault cases)
+
+  isDefault c = go mempty c
+    where
+    go loc (AST.CPat p rhs)   = Right ((p,rhs) `at` loc)
+    go loc (AST.CDefault rhs) = Left (c, rhs `at` loc)
+    go _   (AST.CLoc loc)     = go (getLoc loc) (thing loc)
+
+  mkImp loc = withLoc loc $ \ (pat,rhs) ->
+    do pat' <- checkPat ety e pat
+       rhs' <- checkExpr ty rhs
+       return (pat',rhs')
+
+  -- the condition for the default case to fire is when all of the implication
+  -- conditions are false
+  mkDefault cond (_,loc) = withLoc loc $ \ body ->
+    do body' <- checkExpr ty body
+       return (eImp cond body')
+
+
+-- | Guard that a pattern matches the type given, and rewrite to a core
+-- representation that implements the match.
+checkPat :: Type -> Expr -> AST.Pat Name -> TC Expr
+
+checkPat ty e (AST.PCon n) =
+  do nty <- lookupVar n
+     unify ty nty
+     return (EEq e (ECon n))
+
+-- XXX make sure to check that the number fits in the bounds expected
+checkPat ty e (AST.PNum n) =
+  do return (EEq e (ENum n))
+
+checkPat ty e (AST.PLoc loc) = withLoc loc (checkPat ty e)
 
 
 -- | Locally introduce types for function parameters, and run the body.

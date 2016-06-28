@@ -74,7 +74,7 @@ data Expr name = EVar name
                | EOr  (Expr name) (Expr name)
                | ENot (Expr name)
                | EIf (Expr name) (Expr name) (Expr name)
-               | ECase [Guard name]
+               | ECase (Expr name) [Case name]
                | EApp (Expr name) (Expr name)
                  -- ^ Function application
                | ENext (Expr name)
@@ -83,6 +83,16 @@ data Expr name = EVar name
                | EImp (Expr name) (Expr name)
                | ELoc (Loc (Expr name))
                  deriving (Functor,Show)
+
+data Case name = CPat (Pat name) (Expr name)
+               | CDefault (Expr name)
+               | CLoc (Loc (Case name))
+                 deriving (Functor,Show)
+
+data Pat name = PCon name
+              | PNum Integer
+              | PLoc (Loc (Pat name))
+                deriving (Functor,Show)
 
 
 -- Location Helpers ------------------------------------------------------------
@@ -119,6 +129,16 @@ instance HasLoc (StateVar name) where
   type LocSource (StateVar name) = FilePath
   getLoc StateVar { svName, svType, svInit } =
     mconcat [ getLoc svName, getLoc svType, getLoc svInit ]
+
+instance HasLoc (Case name) where
+  type LocSource (Case name) = FilePath
+  getLoc (CLoc loc) = getLoc loc
+  getLoc _          = mempty
+
+instance HasLoc (Pat name) where
+  type LocSource (Pat name) = FilePath
+  getLoc (PLoc loc) = getLoc loc
+  getLoc _          = mempty
 
 
 -- Name Functions --------------------------------------------------------------
@@ -195,4 +215,17 @@ exprFvs (EIf a b c) = Set.unions [ exprFvs a, exprFvs b, exprFvs c ]
 exprFvs (EApp f x)  = Set.union (exprFvs f) (exprFvs x)
 exprFvs (ENext e)   = exprFvs e
 exprFvs (EEq a b)   = Set.union (exprFvs a) (exprFvs b)
+exprFvs (ENeq a b)  = Set.union (exprFvs a) (exprFvs b)
+exprFvs (EImp a b)  = Set.union (exprFvs a) (exprFvs b)
+exprFvs (ECase e gs) = Set.union (exprFvs e) (foldMap caseFvs gs)
 exprFvs (ELoc loc)  = exprFvs (thing loc)
+
+caseFvs :: Ord name => Case name -> Set.Set name
+caseFvs (CPat p e)   = Set.union (patFvs p) (exprFvs e)
+caseFvs (CDefault e) = exprFvs e
+caseFvs (CLoc loc)   = caseFvs (thing loc)
+
+patFvs :: Ord name => Pat name -> Set.Set name
+patFvs (PCon p)   = Set.singleton p
+patFvs (PNum _)   = Set.empty
+patFvs (PLoc loc) = patFvs (thing loc)
