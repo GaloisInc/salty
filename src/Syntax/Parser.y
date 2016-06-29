@@ -170,10 +170,10 @@ bounds :: { Loc (Int,Int) }
 -- Expressions -----------------------------------------------------------------
 
 expr :: { Expr PName }
-  : 'if' app_expr 'then' expr 'else' expr
+  : 'if' bexpr 'then' expr 'else' expr
     { ELoc (EIf $2 $4 $6 `at` mappend $1 (getLoc $6)) }
 
-  | 'case' app_expr 'of' layout(case_arm)
+  | 'case' bexpr 'of' layout(case_arm)
     { ELoc (ECase $2 $4 `at` mappend $1 (getLoc $4)) }
 
   | bexpr
