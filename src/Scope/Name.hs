@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Scope.Name (
-    Name(), nameText, nameOrigin,
+    Name(), nameText, nameOrigin, nameUnique,
     Origin(..),
     Supply(), emptySupply, nextUnique,
     mkName,
@@ -46,6 +46,9 @@ nameOrigin  = nOrigin
 
 nameText :: Name -> L.Text
 nameText  = nText
+
+nameUnique :: Name -> Int
+nameUnique  = nUnique
 
 
 -- Name Supply -----------------------------------------------------------------

@@ -15,7 +15,7 @@ expand :: Controller -> Controller
 expand Controller { .. } =
   Controller { cFuns        = []
              , cInputs      = expand' env cInputs
-             , cOutputs     = expand' env cInputs
+             , cOutputs     = expand' env cOutputs
              , cEnvTrans    = expand' env cEnvTrans
              , cEnvLiveness = expand' env cEnvLiveness
              , cSysTrans    = expand' env cSysTrans

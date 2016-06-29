@@ -7,6 +7,7 @@ import Syntax.Parser
 import TypeCheck
 
 import qualified Data.Text.Lazy.IO as L
+import           Language.Slugs.PP (ppSpec)
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 
@@ -38,4 +39,4 @@ main  =
      putStrLn "----"
      print (pp (simp (expand tcCont)))
 
-     print (translateController tcCont)
+     print (ppSpec (translateController tcCont))
