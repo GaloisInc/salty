@@ -15,8 +15,9 @@ import qualified Language.Slugs as Slugs
 
 -- Translation -----------------------------------------------------------------
 
-data Env = Env { envEnums :: Map.Map Name EnumDef
-               , envVars  :: Map.Map Name Slugs.Var
+data Env = Env { envEnums   :: Map.Map Name EnumDef
+               , envConstrs :: Map.Map Name Int
+               , envVars    :: Map.Map Name Slugs.Var
                }
 
 panic :: String -> a
@@ -25,8 +26,11 @@ panic str = error ("PANIC: " ++ str)
 mkEnv :: Controller -> (Env,[Slugs.Var],[Slugs.Var])
 mkEnv Controller { .. } = (env, map snd inps, map snd outs)
   where
-  env = Env { envEnums = Map.fromList [ (eName e, e) | e <- cEnums ]
-            , envVars  = Map.fromList (inps ++ outs) }
+  env = Env { envEnums   = Map.fromList [ (eName e, e) | e <- cEnums ]
+            , envConstrs = Map.fromList constrs
+            , envVars    = Map.fromList (inps ++ outs) }
+
+  constrs = concat [ zip eCons [0 .. ] | EnumDef { .. } <- cEnums ]
 
   inps = [ (svName sv, mkVar env sv) | sv <- cInputs  ]
   outs = [ (svName sv, mkVar env sv) | sv <- cOutputs ]
@@ -61,6 +65,10 @@ lookupVar n Env { .. } = Map.findWithDefault missing n envVars
   where
   missing = panic ("lookupVar: Var missing from environment: " ++ show n)
 
+lookupConstr :: Name -> Env -> Int
+lookupConstr n Env { .. } = Map.findWithDefault missing n envConstrs
+  where
+  missing = panic ("lookupConstr: Constr missing from environment: " ++ show n)
 
 constrNum :: Name -> EnumDef -> Int
 constrNum n EnumDef { .. } = fromMaybe missing (elemIndex n eCons)
@@ -82,9 +90,13 @@ mkState env vars trans liveness =
                 do guard (not (null vars))
                    return (foldl1 Slugs.EAnd inits)
 
-                -- XXX finish these two
-              , Slugs.stTrans    = Nothing
-              , Slugs.stLiveness = Nothing
+              , Slugs.stTrans =
+                do guard (trans /= ETrue)
+                   return (mkExpr env trans)
+
+              , Slugs.stLiveness =
+                do guard (liveness /= ETrue)
+                   return (mkExpr env liveness)
               }
 
   where
@@ -113,10 +125,27 @@ mkInit env StateVar { .. } e =
 
 mkExpr :: Env -> Expr -> Slugs.Expr
 
-mkExpr _ ETrue = Slugs.ETrue
-mkExpr _ EFalse = Slugs.EFalse
+mkExpr _   ETrue      = Slugs.ETrue
+mkExpr _   EFalse     = Slugs.EFalse
+mkExpr env (EVar v)   = Slugs.EVar (lookupVar v env)
+mkExpr env (EEq l r)  = mkAssign env l r
+mkExpr env (ENot a)   = Slugs.ENeg (mkExpr env a)
+mkExpr env (EAnd a b) = Slugs.EAnd (mkExpr env a) (mkExpr env b)
+mkExpr env (EOr  a b) = Slugs.EOr  (mkExpr env a) (mkExpr env b)
 
-mkExpr env (EVar v) = Slugs.EVar (lookupVar v env)
+mkAssign :: Env -> Expr -> Expr -> Slugs.Expr
+
+mkAssign env (EVar n) (ECon c) =
+  Slugs.assignConst (lookupVar n env) (lookupConstr c env)
+
+mkAssign env (ECon c) (EVar n) =
+  Slugs.assignConst (lookupVar n env) (lookupConstr c env)
+
+mkAssign env (EVar n) ETrue  = Slugs.EVar (lookupVar n env)
+mkAssign env (EVar n) EFalse = Slugs.EVar (lookupVar n env)
+
+mkAssign env ETrue  (EVar n) = Slugs.EVar (lookupVar n env)
+mkAssign env EFalse (EVar n) = Slugs.EVar (lookupVar n env)
 
 mangleName :: Name -> String
 mangleName n = T.unpack (nameText n) ++ "_" ++ show (nameUnique n)
