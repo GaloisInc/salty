@@ -61,6 +61,8 @@ $white+ ;
 "enum"  { keyword Kenum }
 "|"     { keyword Kpipe }
 
+"..."   { keyword Krange }
+
 ":"     { keyword Kcolon  }
 "="     { keyword Keq     }
 "!="    { keyword Kneq    }
@@ -125,6 +127,7 @@ data Keyword = Kif
              | Kprime
              | Kenum
              | Kpipe
+             | Krange
              | Kcontroller
              | Kwhere
              | Kcomma

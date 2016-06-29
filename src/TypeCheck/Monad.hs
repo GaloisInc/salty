@@ -30,6 +30,7 @@ module TypeCheck.Monad (
     collectErrors,
 
     -- ** Errors
+    ppTCError,
     invalidRecursiveGroup,
     unreachableCases,
     tooManyDefaultCases,
@@ -39,6 +40,7 @@ import           Scope.Name (Name,Supply,nextUnique)
 import           Syntax.AST (Loc)
 import qualified Syntax.AST as AST
 import           TypeCheck.AST (Type(..),TVar(..))
+import           TypeCheck.PP
 import qualified TypeCheck.Unify as Unify
 
 import           Data.Either (partitionEithers)
@@ -72,7 +74,36 @@ data TCError = UnifyError Unify.UnifyError
              | InvalidRecursiveGroup [AST.TopDecl Name]
              | UnreachableCases [AST.Guard Name]
              | TooManyDefaultCases [AST.Case Name]
+             | MissingBounds (AST.Loc Name)
                deriving (Show)
+
+ppTCError :: Loc TCError -> Doc
+ppTCError err =
+  vcat [ banner, nest 2 body, text " " ]
+
+  where
+  
+  banner = text "[error]" <+> pp (getLoc err)
+
+  body =
+    case thing err of
+      UnifyError ue ->
+        pp ue
+
+      -- XXX print more information
+      InvalidRecursiveGroup _ ->
+        text "Recursive group contains non-functions"
+
+      -- XXX print more information
+      UnreachableCases _ ->
+        text "Unreachable cases in macro definition"
+
+      -- XXX print more information
+      TooManyDefaultCases _ ->
+        text "Too many default cases in case expression"
+
+      MissingBounds n ->
+        text "Numeric state variable" <+> ticks (pp (thing n)) <+> text "is missing bounds"
 
 -- | Run a TC action.
 runTC :: Supply -> TC a -> Either [Loc TCError] (a,Supply)

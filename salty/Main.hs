@@ -31,11 +31,11 @@ main  =
      (tcCont,tcSup) <-
        case typeCheck scSup scCont of
          Right tc  -> return tc
-         Left errs -> do mapM_ print errs
+         Left errs -> do mapM_ (print . ppTCError) errs
                          exitFailure
 
      print (pp tcCont)
      putStrLn "----"
-     print (pp (simp tcCont))
+     print (pp (simp (expand tcCont)))
 
      print (translateController tcCont)

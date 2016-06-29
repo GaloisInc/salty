@@ -47,7 +47,6 @@ svEnv StateVar { .. } = undefined
 
 translateController :: Controller -> Slugs.Spec
 translateController cont =
-  let 
-      env = controllerEnv cont
-   in Slugs.Spec { 
+  let env = controllerEnv cont
+   in Slugs.Spec {
                  }

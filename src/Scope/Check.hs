@@ -222,7 +222,7 @@ checkStateVar StateVar { .. } =
   do n'    <- checkLoc svName resolve
      ty'   <- checkType svType
      init' <- traverse checkExpr svInit
-     return $! StateVar { svName = n', svType = ty', svInit = init' }
+     return $! StateVar { svName = n', svType = ty', svInit = init', .. }
 
 
 withParams :: Name -> [Loc PName] -> ([Loc Name] -> SC a) -> SC a

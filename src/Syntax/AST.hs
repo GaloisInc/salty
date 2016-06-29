@@ -48,9 +48,10 @@ data Fun name = Fun { fName :: Loc name
                     , fBody :: [Guard name]
                     } deriving (Functor,Show)
 
-data StateVar name = StateVar { svName :: Loc name
-                              , svType :: Type name
-                              , svInit :: Maybe (Expr name)
+data StateVar name = StateVar { svName   :: Loc name
+                              , svType   :: Type name
+                              , svBounds :: Maybe (Loc (Int,Int))
+                              , svInit   :: Maybe (Expr name)
                               } deriving (Functor,Show)
 
 data Guard name = GGuard (Expr name) (Expr name)

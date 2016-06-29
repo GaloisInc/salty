@@ -1,12 +1,15 @@
 module TypeCheck (
     typeCheck,
-    TCError(..),
-    module TypeCheck.PP
+    TCError(..), ppTCError,
+    PP(..), pp,
+    Doc,
+    expand,
   ) where
 
 import           Scope.Name (Name,Supply)
 import qualified Syntax.AST as AST
 import qualified TypeCheck.AST as Core
+import           TypeCheck.Expand
 import           TypeCheck.Infer (inferController)
 import           TypeCheck.Monad
 import           TypeCheck.PP

@@ -19,6 +19,7 @@ library
                        Syntax.Parser
                        TypeCheck
                        TypeCheck.AST
+                       TypeCheck.Expand
                        TypeCheck.Groups
                        TypeCheck.Infer
                        TypeCheck.Monad

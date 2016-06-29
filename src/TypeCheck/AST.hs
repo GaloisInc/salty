@@ -60,9 +60,12 @@ data EnumDef = EnumDef { eName :: !Name
                        , eCons :: [Name]
                        } deriving (Show)
 
-data StateVar = StateVar { svName :: !Name
-                         , svType :: !Type
-                         , svInit :: !(Maybe Expr)
+data StateVar = StateVar { svName   :: !Name
+                         , svType   :: !Type
+                         , svBounds :: !(Maybe (Int,Int))
+                           -- ^ When the state var is of type TInt, the bounds
+                           -- are the min and max values that can appear.
+                         , svInit   :: !(Maybe Expr)
                          } deriving (Show)
 
 data Fun = Fun { fName   :: !Name
@@ -91,6 +94,13 @@ destTFun (TFun l r) =
   let (args,res) = destTFun r
    in (l:args,res)
 destTFun ty = ([],ty)
+
+destEApp :: Expr -> (Expr,[Expr])
+destEApp = go []
+  where
+  go acc (EApp f x) = go (x:acc) f
+  go acc e          = (e, acc)
+
 
 eAnd :: [Expr] -> Expr
 eAnd  = foldl1 EAnd

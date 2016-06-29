@@ -11,6 +11,7 @@ module TypeCheck.Unify (
   ) where
 
 import TypeCheck.AST
+import TypeCheck.PP
 
 import           Control.Monad (zipWithM_)
 import qualified Data.IntMap.Strict as IntMap
@@ -42,9 +43,25 @@ data UnifyError = UnifyError Type Type
                 | MatchError Type Type
                   -- ^ Matching failed -- can't turn the left into the right.
 
-                | OccursCheckFailure
+                | OccursCheckFailure Type
                   -- ^ The occurs check failed during zonking.
                   deriving (Show)
+
+instance PP UnifyError where
+
+  ppPrec _ (UnifyError a b) =
+    hang (text "Unable to unify the types:")
+       2 (vcat [ char '*' <+> pp a
+               , char '*' <+> pp b ])
+
+  ppPrec _ (MatchError a b) =
+    hang (text "Types do not match:")
+       2 (vcat [ char '*' <+> pp a
+               , char '*' <+> pp b ])
+
+  ppPrec _ (OccursCheckFailure ty) =
+    hang (text "Cannot construct the infinite type:")
+       2 (pp ty)
 
 
 -- Environment -----------------------------------------------------------------
@@ -147,7 +164,7 @@ instance Types Type where
   match' x y = raise (MatchError x y)
 
 
-  zonk'  = go Set.empty
+  zonk' t0 = go Set.empty t0
     where
 
     go seen ty@(TFree x) =
@@ -155,7 +172,7 @@ instance Types Type where
          case Map.lookup x envCanon of
            Just ix ->
              case IntMap.lookup ix envVars of
-               Just ty' | ix `Set.member` seen -> raise OccursCheckFailure
+               Just ty' | ix `Set.member` seen -> raise (OccursCheckFailure t0)
                         | otherwise            -> go (Set.insert ix seen) ty'
 
                Nothing -> return ty

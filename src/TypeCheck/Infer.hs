@@ -10,7 +10,7 @@ import           TypeCheck.Groups
 import           TypeCheck.Monad
 
 import           Control.Monad (unless,when)
-import           Data.Either (partitionEithers,isRight)
+import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import           Text.Location (thing,getLoc,at)
 
@@ -90,13 +90,25 @@ checkEnum AST.EnumDef { eName, eCons } =
 
 
 checkStateVar :: AST.StateVar Name -> TC StateVar
-checkStateVar AST.StateVar { svName, svType, svInit } =
+checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
   do ty' <- translateType svType
      e'  <- traverse (checkExpr ty') svInit
 
+     bounds <- case svBounds of
+                 Just loc -> withLoc loc (return . Just)
+                 Nothing  -> return Nothing
+
      addTypes [(thing svName, ty')]
 
-     return StateVar { svName = thing svName, svType = ty', svInit = e' }
+     -- when the type of the state var is Int, make sure that it has bounds
+     -- defined.
+     when (ty' == TInt && bounds == Nothing)
+          (record (MissingBounds svName))
+
+     return StateVar { svName   = thing svName
+                     , svType   = ty'
+                     , svBounds = bounds
+                     , svInit   = e' }
 
 
 -- | Check a recursive group of functions:
@@ -262,7 +274,7 @@ checkExpr ty (AST.ELoc loc) = withLoc loc (checkExpr ty)
 checkCases :: Type -> Expr -> Type -> [AST.Case Name] -> TC Expr
 checkCases ety e ty cases =
   do pats' <- traverse mkImp pats
-     let (ps,rs) = unzip pats'
+     let ps = map fst pats'
 
      let neg = eAnd (map eNot ps)
      defs' <- traverse (mkDefault neg) defs
@@ -305,7 +317,7 @@ checkPat ty e (AST.PCon n) =
      return (EEq e (ECon n))
 
 -- XXX make sure to check that the number fits in the bounds expected
-checkPat ty e (AST.PNum n) =
+checkPat _ e (AST.PNum n) =
   do return (EEq e (ENum n))
 
 checkPat ty e (AST.PLoc loc) = withLoc loc (checkPat ty e)

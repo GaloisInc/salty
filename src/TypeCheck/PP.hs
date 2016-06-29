@@ -1,13 +1,22 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module TypeCheck.PP where
+module TypeCheck.PP (
+    PP(..),
+    pp,
+    optParens,
+    ticks,
+
+    module Text.PrettyPrint.HughesPJ
+  ) where
 
 import Scope.Name
 import TypeCheck.AST
 
 import qualified Data.Foldable as F
 import qualified Data.Text.Lazy as L
+import           Data.Int (Int64)
 import           Text.PrettyPrint.HughesPJ
+import           Text.Location
 
 
 pp :: PP a => a -> Doc
@@ -17,14 +26,24 @@ optParens :: Bool -> Doc -> Doc
 optParens True  = parens
 optParens False = id
 
+ticks :: Doc -> Doc
+ticks d = char '`' <> d <> char '`'
+
 class PP a where
   ppPrec :: Int -> a -> Doc
 
   ppList :: [a] -> Doc
   ppList as = brackets (fsep (punctuate comma (map pp as)))
 
+instance PP a => PP [a] where
+  ppPrec _ = ppList
+  ppList   = ppList
+
 instance PP Int where
   ppPrec _ = int
+
+instance PP Int64 where
+  ppPrec _ = integer . toInteger
 
 instance PP Char where
   ppPrec _ = char
@@ -81,7 +100,7 @@ instance PP Expr where
   ppPrec p (EAnd l r) = ppBinop p l (text "&&") r
   ppPrec p (EOr  l r) = ppBinop p l (text "||") r
   ppPrec p (EEq l r)  = ppBinop p l (text "=")  r
-  ppPrec p (ENot a)   = optParens (p >= 10) (text "!" <+> ppPrec 10 a)
+  ppPrec _ (ENot a)   = text "!" <> ppPrec 10 a
   ppPrec p (EApp f x) = optParens (p >= 10) (hang (pp f) 2 (ppPrec 10 x))
   ppPrec _ (ENext e)  = char 'X' <> parens (pp e)
 
@@ -97,3 +116,12 @@ instance PP Type where
   ppPrec _ TInt       = text "Num"
   ppPrec _ (TEnum n)  = pp n
   ppPrec p (TFun a b) = optParens (p >= 10) (sep [ ppPrec 10 a <+> text "->", pp b ])
+
+instance PP Position where
+  ppPrec _ Position { .. } =
+    pp posRow <> char ',' <> pp posCol
+
+instance PP src => PP (Range src) where
+  ppPrec _ Range { .. } =
+    maybe (text "<no location>") pp rangeSource <> char ':'
+    <> pp rangeStart <> char '-' <> pp rangeEnd

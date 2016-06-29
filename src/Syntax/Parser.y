@@ -55,6 +55,8 @@ import           Text.Location.Layout
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
+  '...'        { Keyword Krange      $$ }
+
   'prime'      { Keyword Kprime      $$ }
 
   'sys_liveness' { Keyword Ksys_liveness $$ }
@@ -141,10 +143,11 @@ guard_body :: { Guard PName }
 -- State Var Declarations ------------------------------------------------------
 
 state_var_decl :: { Loc (StateVar PName) }
-  : IDENT ':' type opt(state_var_init)
+  : IDENT ':' type opt(bounds) opt(state_var_init)
     { StateVar { svName = $1
                , svType = $3
-               , svInit = $4 } `at` mconcat [getLoc $1, getLoc $3, getLoc $4] }
+               , svBounds = $4
+               , svInit = $5 } `at` mconcat [getLoc $1, getLoc $3, getLoc $4, getLoc $5] }
 
 -- XXX should these be restricted to values?
 state_var_init :: { Expr PName }
@@ -158,6 +161,10 @@ type :: { Type PName }
   | 'Bool'           { TLoc (TBool `at` $1) }
   | 'Int'            { TLoc (TInt  `at` $1) }
   | CONIDENT         { TLoc (fmap TEnum $1) }
+
+bounds :: { Loc (Int,Int) }
+  : NUM '...' NUM { (fromInteger (thing $1), fromInteger (thing $3))
+                    `at` mappend (getLoc $1) (getLoc $3) }
 
 
 -- Expressions -----------------------------------------------------------------
