@@ -110,10 +110,7 @@ mkInit env StateVar { .. } e =
       let enum = lookupEnum n env
        in Slugs.assignConst (lookupVar svName env) (constrNum c enum)
 
-    (TInt, ENum n) ->
-      case svBounds of
-        Nothing      -> panic "mkDecl: Missing bounds for Int-typed state var"
-        Just (lo,hi) -> Slugs.assignConst (lookupVar svName env) n
+    (TInt, ENum n) -> Slugs.assignConst (lookupVar svName env) n
 
     (TBool, ETrue) ->
       Slugs.EVar (lookupVar svName env)
@@ -123,16 +120,23 @@ mkInit env StateVar { .. } e =
 
     _ -> panic ("mkDecl: " ++ show e ++ " : " ++ show svType)
 
+-- | Translate a boolean-valued expression.
 mkExpr :: Env -> Expr -> Slugs.Expr
+mkExpr _   ETrue            = Slugs.ETrue
+mkExpr _   EFalse           = Slugs.EFalse
+mkExpr env (EVar v)         = Slugs.EVar (lookupVar v env)
+mkExpr env (EEq l r)        = mkAssign env l r
+mkExpr env (ENot a)         = Slugs.ENeg (mkExpr env a)
+mkExpr env (EAnd a b)       = Slugs.EAnd (mkExpr env a) (mkExpr env b)
+mkExpr env (EOr  a b)       = Slugs.EOr  (mkExpr env a) (mkExpr env b)
+mkExpr _   (ECon _)         = panic "mkExpr: Constructor used outside of assignment"
+mkExpr _   (EApp _ _)       = panic "mkExpr: Unexpected EApp"
+mkExpr _   (ENum _)         = panic "mkExpr: Unexpected ENum"
+mkExpr env (ENext (EVar v)) = Slugs.ENext (lookupVar v env)
+mkExpr _   (ENext _)        = panic "mkExpr: Unexpected ENext"
 
-mkExpr _   ETrue      = Slugs.ETrue
-mkExpr _   EFalse     = Slugs.EFalse
-mkExpr env (EVar v)   = Slugs.EVar (lookupVar v env)
-mkExpr env (EEq l r)  = mkAssign env l r
-mkExpr env (ENot a)   = Slugs.ENeg (mkExpr env a)
-mkExpr env (EAnd a b) = Slugs.EAnd (mkExpr env a) (mkExpr env b)
-mkExpr env (EOr  a b) = Slugs.EOr  (mkExpr env a) (mkExpr env b)
 
+-- | Translate a use of equality.
 mkAssign :: Env -> Expr -> Expr -> Slugs.Expr
 
 mkAssign env (EVar n) (ECon c) =
@@ -146,6 +150,8 @@ mkAssign env (EVar n) EFalse = Slugs.EVar (lookupVar n env)
 
 mkAssign env ETrue  (EVar n) = Slugs.EVar (lookupVar n env)
 mkAssign env EFalse (EVar n) = Slugs.EVar (lookupVar n env)
+
+mkAssign _ a b = panic ("mkAssign: Invalid arguments: " ++ show (EEq a b))
 
 mangleName :: Name -> String
 mangleName n = T.unpack (nameText n) ++ "_" ++ show (nameUnique n)

@@ -8,6 +8,7 @@ import TypeCheck
 
 import qualified Data.Text.Lazy.IO as L
 import           Language.Slugs.PP (ppSpec)
+import           Language.Slugs.Run (runSlugs)
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 
@@ -37,6 +38,11 @@ main  =
 
      print (pp tcCont)
      putStrLn "----"
-     print (pp (simp (expand tcCont)))
 
-     print (ppSpec (translateController tcCont))
+     let tcCont' = simp (expand tcCont)
+     print (pp tcCont')
+
+     let slugsin = translateController tcCont'
+     print (ppSpec slugsin)
+
+     print =<< runSlugs "../slugs/src/slugs" slugsin
