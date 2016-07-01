@@ -89,5 +89,7 @@ mkAssign env (EVar n) EFalse = Slugs.EVar (lookupVar n env)
 mkAssign env ETrue  (EVar n) = Slugs.EVar (lookupVar n env)
 mkAssign env EFalse (EVar n) = Slugs.EVar (lookupVar n env)
 
-mkAssign _ a b = panic ("mkAssign: Invalid arguments: " ++ show (EEq a b))
+mkAssign env (EVar n) (ENum a) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
+mkAssign env (ENum a) (EVar n) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
 
+mkAssign _ a b = panic ("mkAssign: Invalid arguments: " ++ show (EEq a b))

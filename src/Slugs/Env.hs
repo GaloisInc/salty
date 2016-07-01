@@ -4,6 +4,7 @@ module Slugs.Env (
     Env(),
     mkEnv,
     lookupVar, lookupVarName, lookupConstr,
+    lowerBound,
     lookupEnum,
   ) where
 
@@ -17,6 +18,7 @@ import qualified Language.Slugs as Slugs
 
 data Env = Env { envEnums   :: Map.Map Name EnumDef
                , envConstrs :: Map.Map Name Int
+               , envBounds  :: Map.Map Name Integer
                , envVars    :: Map.Map Name Slugs.Var
                , envVars'   :: Map.Map String Name
                } deriving (Show)
@@ -31,6 +33,7 @@ mkEnv Controller { .. } = (env, map snd inps, map snd outs)
   where
   env = Env { envEnums   = Map.fromList [ (eName e, e) | e <- cEnums ]
             , envConstrs = Map.fromList constrs
+            , envBounds  = Map.fromList bounds
             , envVars    = Map.fromList (inps ++ outs)
             , envVars'   = Map.fromList (map swap (inps ++ outs)) }
 
@@ -42,6 +45,8 @@ mkEnv Controller { .. } = (env, map snd inps, map snd outs)
   inps = [ (svName sv, mkVar env sv) | sv <- cInputs  ]
   outs = [ (svName sv, mkVar env sv) | sv <- cOutputs ]
 
+  bounds = [ (svName, toInteger lo) | StateVar { svBounds = Just (lo,_), .. } <- cInputs ++ cOutputs ]
+
 mkVar :: Env -> StateVar -> Slugs.Var
 mkVar env StateVar { .. } =
   case svType of
@@ -50,9 +55,10 @@ mkVar env StateVar { .. } =
       let EnumDef { .. } = lookupEnum n env
        in Slugs.VarNum (mangleName svName) 0 (length eCons - 1)
 
+    -- always adjust down to [0,hi-lo] to avoid extra bits
     TInt ->
       case svBounds of
-        Just (lo,hi) -> Slugs.VarNum (mangleName svName) lo hi
+        Just (lo,hi) -> Slugs.VarNum (mangleName svName) 0 (hi - lo)
         Nothing      -> panic "mkDecl: Missing bounds for Int-typed state var"
 
     TBool ->
@@ -71,6 +77,9 @@ lookupVar :: Name -> Env -> Slugs.Var
 lookupVar n Env { .. } = Map.findWithDefault missing n envVars
   where
   missing = panic ("lookupVar: Var missing from environment: " ++ show n)
+
+lowerBound :: Name -> Env -> Integer
+lowerBound n Env { .. } = Map.findWithDefault 0 n envBounds
 
 -- | Take the mangled version of the variable name, and translate it back to the
 -- original name.
