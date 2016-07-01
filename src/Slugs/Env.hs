@@ -1,10 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Slugs.Env (
-    Env(..),
+    Env(),
     mkEnv,
-    lookupVar,
-    lookupConstr,
+    lookupVar, lookupVarName, lookupConstr,
     lookupEnum,
   ) where
 
@@ -72,6 +71,13 @@ lookupVar :: Name -> Env -> Slugs.Var
 lookupVar n Env { .. } = Map.findWithDefault missing n envVars
   where
   missing = panic ("lookupVar: Var missing from environment: " ++ show n)
+
+-- | Take the mangled version of the variable name, and translate it back to the
+-- original name.
+lookupVarName :: String -> Env -> Name
+lookupVarName n Env { .. } = Map.findWithDefault missing n envVars'
+  where
+  missing = panic ("lookupVarName: Var missing from environment: " ++ n)
 
 lookupConstr :: Name -> Env -> Int
 lookupConstr n Env { .. } = Map.findWithDefault missing n envConstrs
