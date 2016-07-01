@@ -11,8 +11,12 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Opt.Simpl
+                       PP
                        Scope.Check
                        Scope.Name
+                       Slugs
+                       Slugs.Env
+                       Slugs.FSM
                        Slugs.Translate
                        Syntax.AST
                        Syntax.Lexer
@@ -23,7 +27,6 @@ library
                        TypeCheck.Groups
                        TypeCheck.Infer
                        TypeCheck.Monad
-                       TypeCheck.PP
                        TypeCheck.Unify
   build-depends:       base >=4.8 && <5,
                        language-slugs,

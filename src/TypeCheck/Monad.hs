@@ -36,11 +36,11 @@ module TypeCheck.Monad (
     tooManyDefaultCases,
   ) where
 
+import           PP
 import           Scope.Name (Name,Supply,nextUnique)
 import           Syntax.AST (Loc)
 import qualified Syntax.AST as AST
 import           TypeCheck.AST (Type(..),TVar(..))
-import           TypeCheck.PP
 import qualified TypeCheck.Unify as Unify
 
 import           Data.Either (partitionEithers)

@@ -10,8 +10,8 @@ module TypeCheck.Unify (
     zonk
   ) where
 
+import PP
 import TypeCheck.AST
-import TypeCheck.PP
 
 import           Control.Monad (zipWithM_)
 import qualified Data.IntMap.Strict as IntMap

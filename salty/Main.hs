@@ -1,14 +1,13 @@
 
 import Opt.Simpl
+import PP
 import Scope.Check
 import Scope.Name (emptySupply)
-import Slugs.Translate (translateController)
+import Slugs (runSlugs)
 import Syntax.Parser
 import TypeCheck
 
 import qualified Data.Text.Lazy.IO as L
-import           Language.Slugs.PP (ppSpec)
-import           Language.Slugs.Run (runSlugs)
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 
@@ -36,13 +35,4 @@ main  =
          Left errs -> do mapM_ (print . ppTCError) errs
                          exitFailure
 
-     print (pp tcCont)
-     putStrLn "----"
-
-     let tcCont' = simp (expand tcCont)
-     print (pp tcCont')
-
-     let slugsin = translateController tcCont'
-     print (ppSpec slugsin)
-
-     print =<< runSlugs "../slugs/src/slugs" slugsin
+     print =<< runSlugs "../slugs/src/slugs" tcCont

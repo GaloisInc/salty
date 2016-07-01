@@ -2,13 +2,16 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module TypeCheck.AST where
 
 import Scope.Name (Name)
+import PP
 
-import Data.Function (on)
-import Language.Slugs.Lens
+import qualified Data.Foldable as F
+import           Data.Function (on)
+import           Language.Slugs.Lens
 
 
 data TVar = TVar { tvOrigin :: !(Maybe Name)
@@ -132,3 +135,65 @@ traverseExpr f (EOr  a b) = EOr   <$> f a <*> f b
 traverseExpr f (ENot a)   = ENot  <$> f a
 traverseExpr f (ENext a)  = ENext <$> f a
 traverseExpr f (EEq a b)  = EEq   <$> f a <*> f b
+
+
+-- Pretty-printing -------------------------------------------------------------
+
+instance PP Controller where
+  ppPrec _ Controller { .. } =
+    vcat $ [ text "controller" <+> pp cName <+> text "where" ]
+        ++ map pp cEnums
+        ++ concatMap (map pp . F.toList) cFuns
+        ++ map (ppStateVar "input")  cInputs
+        ++ map (ppStateVar "output") cOutputs
+        ++ [ hang (text "env_trans")    2 (pp cEnvTrans)
+           , hang (text "env_liveness") 2 (pp cEnvLiveness)
+           , hang (text "sys_trans")    2 (pp cSysTrans)
+           , hang (text "sys_liveness") 2 (pp cSysLiveness) ]
+
+instance PP EnumDef where
+  ppPrec _ EnumDef { .. } =
+    hang (text "enum" <+> pp eName)
+       2 (vcat (zipWith (\c con -> pp c <+> pp con) ('=' : repeat '|') eCons))
+
+ppStateVar :: String -> StateVar -> Doc
+ppStateVar lab StateVar { .. } =
+  hang (text lab <+> pp svName <+> char ':' <+> pp svType)
+     2 (maybe empty (\i -> char '=' <+> pp i) svInit)
+
+instance PP Fun where
+  ppPrec _ Fun { .. } =
+    hang (pp fName
+          <+> parens (fsep (punctuate comma (map ppParam fParams)))
+          <> colon
+          <+> pp fResult
+          <+> char '=')
+       2 (pp fBody)
+    where
+    ppParam (p,ty) = pp p <> colon <+> pp ty
+
+instance PP Expr where
+  ppPrec _ ETrue      = text "True"
+  ppPrec _ EFalse     = text "False"
+  ppPrec _ (EVar n)   = pp n
+  ppPrec _ (ECon n)   = pp n
+  ppPrec _ (ENum i)   = pp i
+  ppPrec p (EAnd l r) = ppBinop p l (text "&&") r
+  ppPrec p (EOr  l r) = ppBinop p l (text "||") r
+  ppPrec p (EEq l r)  = ppBinop p l (text "=")  r
+  ppPrec _ (ENot a)   = text "!" <> ppPrec 10 a
+  ppPrec p (EApp f x) = optParens (p >= 10) (hang (pp f) 2 (ppPrec 10 x))
+  ppPrec _ (ENext e)  = char 'X' <> parens (pp e)
+
+ppBinop :: (PP a, PP b) => Int -> a -> Doc -> b -> Doc
+ppBinop p a x b = optParens (p >= 10) (sep [ppPrec 10 a, x, ppPrec 10 b])
+
+instance PP TVar where
+  ppPrec _ TVar { .. } = char '?' <> pp tvUnique
+
+instance PP Type where
+  ppPrec _ (TFree v)  = pp v
+  ppPrec _ TBool      = text "Bool"
+  ppPrec _ TInt       = text "Num"
+  ppPrec _ (TEnum n)  = pp n
+  ppPrec p (TFun a b) = optParens (p >= 10) (sep [ ppPrec 10 a <+> text "->", pp b ])

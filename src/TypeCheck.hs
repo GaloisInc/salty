@@ -1,8 +1,6 @@
 module TypeCheck (
     typeCheck,
     TCError(..), ppTCError,
-    PP(..), pp,
-    Doc,
     expand,
   ) where
 
@@ -12,7 +10,6 @@ import qualified TypeCheck.AST as Core
 import           TypeCheck.Expand
 import           TypeCheck.Infer (inferController)
 import           TypeCheck.Monad
-import           TypeCheck.PP
 
 
 typeCheck :: Supply -> AST.Controller Name
