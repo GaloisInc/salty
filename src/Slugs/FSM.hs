@@ -25,7 +25,8 @@ data VarInfo = VarInfo { viType :: !VType
                        , viBits :: !Int
                        } deriving (Show)
 
-data FSM = FSM { fsmInputs  :: StateVars
+data FSM = FSM { fsmName    :: Name
+               , fsmInputs  :: StateVars
                , fsmOutputs :: StateVars
                , fsmNodes   :: Map.Map Int Node
                } deriving (Show)
@@ -49,7 +50,8 @@ data Value = VBool Bool
 -- code for.
 fromSlugs :: Env -> Controller -> Slugs.FSM -> FSM
 fromSlugs env cont Slugs.FSM { .. } =
-  FSM { fsmInputs  = Map.fromList inpVars
+  FSM { fsmName    = cName cont
+      , fsmInputs  = Map.fromList inpVars
       , fsmOutputs = Map.fromList outVars
       , fsmNodes   = Map.map (mkNode env inpVars outVars) fsmNodes
       }
@@ -121,12 +123,13 @@ mkNode env inps outs = \ Slugs.Node { .. } ->
 decodeValue :: Env -> [Int] -> (Name,VarInfo) -> ([Int],Value)
 decodeValue env bits (n,VarInfo { .. }) = (rest,e)
   where
-  (bs,rest) = splitAt viBits bits
+  (used,rest) = splitAt viBits bits
 
-  e = case (viType,bs) of
+  e = case (viType,used) of
         (VTBool, [b])               -> VBool (b == 1)
         (VTEnum EnumDef { .. }, bs) -> VCon (eCons !! decodeNum bs)
         (VTInt _ _, bs)             -> VNum (toInteger (decodeNum bs) + lowerBound n env)
+        _                           -> panic "Invalid state!"
 
 
 -- | Given a little-endian list of ints in '[0,1]', decode a number
