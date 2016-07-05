@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Scope.Name (
     Name(), nameText, nameOrigin, nameUnique,
@@ -9,7 +10,7 @@ module Scope.Name (
 
 import           Data.Function (on)
 import qualified Data.Text.Lazy as L
-import           Text.Location (Range)
+import           Text.Location (HasLoc(..),Range)
 
 
 -- Names -----------------------------------------------------------------------
@@ -25,11 +26,21 @@ data Origin = FromController !(Range FilePath)
 
               deriving (Show)
 
+instance HasLoc Origin where
+  type LocSource Origin = String
+  getLoc (FromController r) = r
+  getLoc (FromDecl r _)     = r
+  getLoc (FromParam r _)    = r
+
 
 data Name = Name { nText   :: !L.Text
                  , nUnique :: !Int
                  , nOrigin :: !Origin
                  } deriving (Show)
+
+instance HasLoc Name where
+  type LocSource Name = String
+  getLoc n = getLoc (nameOrigin n)
 
 instance Eq Name where
   (==) = (==) `on` nUnique

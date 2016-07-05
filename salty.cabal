@@ -10,7 +10,8 @@ cabal-version:       >=1.10
 
 
 library
-  exposed-modules:     Opt.Simpl
+  exposed-modules:     CodeGen.Java
+                       Opt.Simpl
                        PP
                        Scope.Check
                        Scope.Name

@@ -1,4 +1,5 @@
 
+import CodeGen.Java (javaFSM)
 import Scope.Check
 import Scope.Name (emptySupply)
 import Slugs (runSlugs)
@@ -48,4 +49,4 @@ main  =
               Nothing  -> do putStrLn "Unrealizable"
                              exitFailure
 
-     print fsm
+     print (javaFSM fsm)

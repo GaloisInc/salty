@@ -2,8 +2,11 @@
 
 module Slugs.FSM (
     fromSlugs,
-    FSM(..),
+    FSM(..), StateVars,
     Node(..),
+    VarInfo(..),
+    VType(..),
+    Value(..)
   ) where
 
 import           Scope.Name (Name)
@@ -28,6 +31,7 @@ data VarInfo = VarInfo { viType :: !VType
 data FSM = FSM { fsmName    :: Name
                , fsmInputs  :: StateVars
                , fsmOutputs :: StateVars
+               , fsmEnums   :: [EnumDef]
                , fsmNodes   :: Map.Map Int Node
                } deriving (Show)
 
@@ -53,6 +57,7 @@ fromSlugs env cont Slugs.FSM { .. } =
   FSM { fsmName    = cName cont
       , fsmInputs  = Map.fromList inpVars
       , fsmOutputs = Map.fromList outVars
+      , fsmEnums   = cEnums cont
       , fsmNodes   = Map.map (mkNode env inpVars outVars) fsmNodes
       }
 

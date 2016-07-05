@@ -5,6 +5,7 @@ module PP (
     pp,
     optParens,
     ticks,
+    semicolon,
 
     module Text.PrettyPrint.HughesPJ
   ) where
@@ -26,6 +27,9 @@ optParens False = id
 
 ticks :: Doc -> Doc
 ticks d = char '`' <> d <> char '`'
+
+semicolon :: Doc
+semicolon  = char ';'
 
 class PP a where
   ppPrec :: Int -> a -> Doc
