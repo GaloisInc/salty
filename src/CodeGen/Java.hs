@@ -8,46 +8,80 @@ import PP
 import Slugs.FSM
 import TypeCheck.AST (EnumDef(..))
 
-import           Data.List (intersperse)
+import           Data.List (nub)
 import qualified Data.Map.Strict as Map
+import           System.FilePath ((<.>),pathSeparator)
 import           Text.Location (HasLoc(..))
 
 
-javaFSM :: FSM -> Doc
-javaFSM FSM { .. } = vcat
-  [ text "import javax.annotation.Generated;"
-  , text ""
-  , generated fsmName
-  , block (public (final (cls name))) $ vcat $
-    [ private (text "int" <+> text "mState" <> end)
-    , text ""
-    ] ++
+-- | Package layout for generated classes.
+type Package = Map.Map FilePath Doc
 
-    intersperse (text "") (map javaEnum fsmEnums) ++
+type PackageName = String
 
-    [ text ""
-    , mkException fsmInputs
-
-    , text ""
-    , block (public (name <> parens empty)) $ vcat
-      [ assign (text "mState") (int 0)
-      ]
-
-    , text ""
-    ] ++
-
-    moveFun fsmInputs fsmOutputs fsmNodes
-  ]
-
+-- | Generate a java package from an FSM. This includes, the controller itself,
+-- exception class for invalid transitions, and all enum definitions.
+javaFSM :: PackageName -> FSM -> Package
+javaFSM pkgName FSM { .. } =
+  Map.fromList [ (qnameToPath (render kname),doc)
+               | (kname,doc) <- controller : exception : enums ]
   where
-  name = javaName fsmName
+
+  controller = (text pkgName <> char '.' <> pp fsmName,klass)
+    where
+    klass = mkClass pkgName (map fst (exception : enums))
+          $ block (public (cls (javaName fsmName)))
+          $ vcat
+          $ [ private (text "int" <+> text "mState" <> end)
+            , text ""
+            , block (public (pp fsmName <> parens empty)) $ vcat
+              [ assign (text "mState") (int 0)
+              ]
+            , text ""
+            ] ++ moveFun fsmInputs fsmOutputs fsmNodes
+
+  exception = (text pkgName <> char '.' <> exnName, klass)
+    where
+    klass = mkClass pkgName (importEnums enumPkg fsmInputs)
+                    (mkException fsmInputs)
+
+  enumPkg = pkgName <.> "enum"
+  enums = map (javaEnum enumPkg) fsmEnums
 
 
-javaEnum :: EnumDef -> Doc
-javaEnum EnumDef { .. } =
-  generated eName $$
-  block (public (enum (javaName eName)))
-        (vcat (punctuate comma (map javaName eCons)))
+-- | Turn a qualified class name into a java source path.
+qnameToPath :: String -> FilePath
+qnameToPath qname = map translate qname <.> "java"
+  where
+  translate '.' = pathSeparator
+  translate c   = c
+
+-- | Generate the module names for imported enum types.
+importEnums :: PackageName -> StateVars -> Imports
+importEnums pkgName vars = [ text pkgName <> char '.' <> pp n | n <- enums ]
+  where
+  enums = nub [ eName d | (_,VarInfo { viType = VTEnum d }) <- Map.toList vars ]
+
+
+type Imports = [Doc]
+
+mkClass :: PackageName
+        -> Imports
+        -> Doc -- ^ Class/enum declaration
+        -> Doc
+mkClass pkgName imps decl = vcat $
+  [ text "package" <+> text pkgName <> end ] ++
+  [ text "import" <+> imp <> end | imp <- imps ] ++
+  [ text "", decl ]
+
+
+javaEnum :: PackageName -> EnumDef -> (Doc,Doc)
+javaEnum pkgName EnumDef { .. } = (name,klass)
+  where
+  name  = text pkgName <> char '.' <> pp eName
+  klass = mkClass pkgName []
+        $ block (public (enum (javaName eName)))
+                (vcat (punctuate comma (map javaName eCons)))
 
 
 -- | Generate the move function, as well as the return struct, if it's
@@ -96,15 +130,15 @@ moveFun inps outs nodes
 
   returnStruct state vals =
     vcat [ assign (this (text "mState")) (int state)
-         , sep [ text "return", retCls <> parens (fsep (punctuate comma (map javaValue vals))) <> end ]]
+         , sep [ text "return new", retCls <> parens (fsep (punctuate comma (map javaValue vals))) <> end ]]
 
   outVars  = map mkVar (Map.toList outs)
   outDecls = [ ty <+> var | (ty,var) <- outVars ]
 
 javaVType :: VType -> Doc
-javaVType VTBool                  = text "boolean"
-javaVType (VTEnum EnumDef { .. }) = javaName eName
-javaVType (VTInt _ _)             = text "int"
+javaVType VTBool      = text "boolean"
+javaVType (VTEnum e)  = enumName e
+javaVType (VTInt _ _) = text "int"
 
 mkVar :: (Name,VarInfo) -> (Doc,Doc)
 mkVar (n,VarInfo { .. }) = (javaVType viType, (javaName n))
@@ -151,28 +185,29 @@ javaValue (VBool False) = text "false"
 
 javaValue (VCon n)      =
   case nameOrigin n of
-    FromController o -> pp o <> char '.' <> pp n
-    FromDecl _ d     -> pp d <> char '.' <> pp n
-    FromParam _ d    -> pp d <> char '.' <> pp n
+    FromController o -> text "Enum" <> char '.' <> pp o <> char '.' <> pp n
+    FromDecl _ d     -> text "Enum" <> char '.' <> pp d <> char '.' <> pp n
+    FromParam _ d    -> text "Enum" <> char '.' <> pp d <> char '.' <> pp n
 
 javaValue (VNum n)      = pp n
 
+
+exnName :: Doc
+exnName  = text "InputException"
 
 -- | Generate a local exception class that can be used thrown when the
 -- inputs don't match the current state.
 mkException :: StateVars -> Doc
 mkException inps =
-  block (public (cls clsName) <+> text "extends RuntimeException")
+  block (public (cls exnName) <+> text "extends RuntimeException")
     $ vcat
     $ [ public (final (ty <+> var)) <> end | (ty,var) <- inVars ]
    ++ [ text ""
-      , block (public clsName <+> argList)
+      , block (public exnName <+> argList)
               (vcat [ assign (this var) var | (_,var) <- inVars ])
       ]
 
   where
-
-  clsName = text "InputException"
 
   inVars  = map mkVar (Map.toList inps)
   argList = parens (fsep (punctuate comma [ ty <+> var | (ty,var) <- inVars ]))
@@ -218,3 +253,6 @@ enum k = text "enum" <+> k
 
 javaName :: Name -> Doc
 javaName n = pp (nameText n)
+
+enumName :: EnumDef -> Doc
+enumName EnumDef { .. } = text "Enum" <> char '.' <> javaName eName

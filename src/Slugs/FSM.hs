@@ -13,6 +13,7 @@ import           Scope.Name (Name)
 import           Slugs.Env
 import           TypeCheck.AST (Controller(..),EnumDef(..),StateVar(..),Type(..))
 
+import           Control.Monad (guard)
 import           Data.Either (partitionEithers)
 import           Data.List (mapAccumL,find,break,group)
 import qualified Data.Map.Strict as Map
@@ -58,10 +59,16 @@ fromSlugs env cont Slugs.FSM { .. } =
       , fsmInputs  = Map.fromList inpVars
       , fsmOutputs = Map.fromList outVars
       , fsmEnums   = cEnums cont
-      , fsmNodes   = Map.map (mkNode env inpVars outVars) fsmNodes
+      , fsmNodes   = nodes
       }
 
   where
+
+  -- NOTE: nodes is defined recursively, as the transitions are pruned when they
+  -- are guarded by invalid bit patterns. Passing nodes in, and defining the
+  -- transition lazily means that we can filter the transitions based on the
+  -- nodes that ended up in the final FSM.
+  nodes = Map.mapMaybe (mkNode nodes env inpVars outVars) fsmNodes
 
   inpVars = [ (svName sv, mkVarInfo env sv bs) | (sv,bs) <- inps ]
   outVars = [ (svName sv, mkVarInfo env sv bs) | (sv,bs) <- outs ]
@@ -110,14 +117,18 @@ sanitizeVarStr str = fst (break (== '@') str)
 
 
 -- | Decompose the state into the input requirements, and output changes.
-mkNode :: Env -> [(Name,VarInfo)] -> [(Name,VarInfo)] -> Slugs.Node -> Node
-mkNode env inps outs = \ Slugs.Node { .. } ->
-  let (bits',inAssigns) = mapAccumL (decodeValue env) nState inps
-      (_,outAssigns)    = mapAccumL (decodeValue env) bits'  outs
+mkNode :: Map.Map Int a -> Env -> [(Name,VarInfo)] -> [(Name,VarInfo)]
+       -> Slugs.Node -> Maybe Node
+mkNode keys env inps outs = \ Slugs.Node { .. } ->
+  do let (bits',inAssigns) = mapAccumL (decodeValue env) nState inps
+         (_,outAssigns)    = mapAccumL (decodeValue env) bits'  outs
 
-   in Node { nodeInputs  = Map.fromList (zip inVars inAssigns)
-           , nodeOutputs = Map.fromList (zip outVars outAssigns)
-           , nodeTrans   = nTrans }
+     inps' <- sequence inAssigns
+     outs' <- sequence outAssigns
+
+     return Node { nodeInputs  = Map.fromList (zip inVars  inps')
+                 , nodeOutputs = Map.fromList (zip outVars outs')
+                 , nodeTrans   = filter (`Map.member` keys) nTrans }
 
   where
   inVars  = map fst inps
@@ -125,16 +136,24 @@ mkNode env inps outs = \ Slugs.Node { .. } ->
 
 
 -- | Decode a number that's been encoded as a list of bits.
-decodeValue :: Env -> [Int] -> (Name,VarInfo) -> ([Int],Value)
+decodeValue :: Env -> [Int] -> (Name,VarInfo) -> ([Int],Maybe Value)
 decodeValue env bits (n,VarInfo { .. }) = (rest,e)
   where
   (used,rest) = splitAt viBits bits
 
   e = case (viType,used) of
-        (VTBool, [b])               -> VBool (b == 1)
-        (VTEnum EnumDef { .. }, bs) -> VCon (eCons !! decodeNum bs)
-        (VTInt _ _, bs)             -> VNum (toInteger (decodeNum bs) + lowerBound n env)
-        _                           -> panic "Invalid state!"
+        (VTBool, [b]) ->
+             return (VBool (b == 1))
+
+        (VTEnum EnumDef { .. }, bs) ->
+          do let ix = decodeNum bs
+             guard (ix < length eCons)
+             return (VCon (eCons !! ix))
+
+        (VTInt _ _, bs) ->
+             return (VNum (toInteger (decodeNum bs) + lowerBound n env))
+
+        _ -> panic "Invalid state!"
 
 
 -- | Given a little-endian list of ints in '[0,1]', decode a number

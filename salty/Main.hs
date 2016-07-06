@@ -49,4 +49,4 @@ main  =
               Nothing  -> do putStrLn "Unrealizable"
                              exitFailure
 
-     print (javaFSM fsm)
+     print (javaFSM "test" fsm)

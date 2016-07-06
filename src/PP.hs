@@ -17,6 +17,8 @@ import qualified Data.Text.Lazy as L
 import           Text.PrettyPrint.HughesPJ
 import           Text.Location
 
+render :: PP a => a -> String
+render a = show (pp a)
 
 pp :: PP a => a -> Doc
 pp  = ppPrec 0
