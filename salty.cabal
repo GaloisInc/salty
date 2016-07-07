@@ -48,6 +48,9 @@ executable salty
   build-depends:       base >=4.8 && <5,
                        language-slugs,
                        text,
+                       directory,
+                       containers,
+                       filepath,
                        salty
   hs-source-dirs:      salty
   default-language:    Haskell2010

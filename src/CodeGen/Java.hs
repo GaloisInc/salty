@@ -29,7 +29,7 @@ javaFSM pkgName FSM { .. } =
 
   controller = (text pkgName <> char '.' <> pp fsmName,klass)
     where
-    klass = mkClass pkgName (map fst (exception : enums))
+    klass = mkClass pkgName [ fst exception ]
           $ block (public (cls (javaName fsmName)))
           $ vcat
           $ [ private (text "int" <+> text "mState" <> end)
@@ -38,14 +38,14 @@ javaFSM pkgName FSM { .. } =
               [ assign (text "mState") (int 0)
               ]
             , text ""
-            ] ++ moveFun fsmInputs fsmOutputs fsmNodes
+            ] ++ moveFun enumPkg fsmInputs fsmOutputs fsmNodes
 
   exception = (text pkgName <> char '.' <> exnName, klass)
     where
-    klass = mkClass pkgName (importEnums enumPkg fsmInputs)
-                    (mkException fsmInputs)
+    klass = mkClass pkgName []
+                    (mkException enumPkg fsmInputs)
 
-  enumPkg = pkgName <.> "enum"
+  enumPkg = pkgName <.> "enums"
   enums = map (javaEnum enumPkg) fsmEnums
 
 
@@ -86,8 +86,8 @@ javaEnum pkgName EnumDef { .. } = (name,klass)
 
 -- | Generate the move function, as well as the return struct, if it's
 -- necessary.
-moveFun :: StateVars -> StateVars -> Map.Map Int Node -> [Doc]
-moveFun inps outs nodes
+moveFun :: PackageName -> StateVars -> StateVars -> Map.Map Int Node -> [Doc]
+moveFun enumPkg inps outs nodes
   | Map.null nodes = []
   | otherwise      =
     [ block (public (final (cls retCls))) $ vcat $
@@ -103,7 +103,7 @@ moveFun inps outs nodes
 
     [ block (public (retCls <+> text "move" <+> argList)) $ vcat
       [ block (text "switch" <> parens (this (text "mState")))
-              (vcat (map (mkState mkRes nodes) (Map.toList nodes)))
+              (vcat (map (mkState enumPkg mkRes nodes) (Map.toList nodes)))
       , text "throw" <+> text "new" <+> inputExn <> end ]
     ]
 
@@ -111,13 +111,13 @@ moveFun inps outs nodes
 
   inputExn = text "InputException" <> parens (fsep (punctuate comma (map snd inVars)))
 
-  inVars  = map mkVar (Map.toList inps)
+  inVars  = map (mkVar enumPkg) (Map.toList inps)
   argList = parens (fsep (punctuate comma [ ty <+> var | (ty,var) <- inVars ]))
 
   (needsRetCls,retCls,mkRes) =
     case Map.size outs of
       0 -> (False,text "int", returnState)
-      1 -> (False,javaVType (viType (head (Map.elems outs))), returnValue)
+      1 -> (False,javaVType enumPkg (viType (head (Map.elems outs))), returnValue)
       _ -> (True, text "Return", returnStruct)
 
   returnState state _ =
@@ -126,70 +126,71 @@ moveFun inps outs nodes
 
   returnValue state vals =
     vcat [ assign (this (text "mState")) (int state)
-         , text "return" <+> hsep (map javaValue vals) <> end ]
+         , text "return" <+> hsep (map (javaValue enumPkg) vals) <> end ]
 
   returnStruct state vals =
     vcat [ assign (this (text "mState")) (int state)
-         , sep [ text "return new", retCls <> parens (fsep (punctuate comma (map javaValue vals))) <> end ]]
+         , sep [ text "return new"
+               , retCls <> parens (fsep (punctuate comma (map (javaValue enumPkg) vals))) <> end ]]
 
-  outVars  = map mkVar (Map.toList outs)
+  outVars  = map (mkVar enumPkg) (Map.toList outs)
   outDecls = [ ty <+> var | (ty,var) <- outVars ]
 
-javaVType :: VType -> Doc
-javaVType VTBool      = text "boolean"
-javaVType (VTEnum e)  = enumName e
-javaVType (VTInt _ _) = text "int"
+javaVType :: PackageName -> VType -> Doc
+javaVType _     VTBool      = text "boolean"
+javaVType enums (VTEnum e)  = text enums <> char '.' <> pp (eName e)
+javaVType _     (VTInt _ _) = text "int"
 
-mkVar :: (Name,VarInfo) -> (Doc,Doc)
-mkVar (n,VarInfo { .. }) = (javaVType viType, (javaName n))
+mkVar :: PackageName -> (Name,VarInfo) -> (Doc,Doc)
+mkVar enumPkg (n,VarInfo { .. }) = (javaVType enumPkg viType, (javaName n))
 
 
 type MkRes = Int -> [Value] -> Doc
 
-mkState :: MkRes -> Map.Map Int Node -> (Int,Node) -> Doc
-mkState mkRes nodes (n,Node { .. }) =
+mkState :: PackageName -> MkRes -> Map.Map Int Node -> (Int,Node) -> Doc
+mkState enumPkg mkRes nodes (n,Node { .. }) =
   text "case" <+> int n <> colon
   $$ nest 2 (vcat stmts)
 
   where
-  stmts = mkTransBlock mkRes nodes nodeTrans ++ [text "break" <> end]
+  stmts = mkTransBlock enumPkg mkRes nodes nodeTrans ++ [text "break" <> end]
 
 -- | Turn a transition block into a bunch of conditionals on the environment
 -- variables.
-mkTransBlock :: MkRes -> Map.Map Int Node -> [Int] -> [Doc]
-mkTransBlock mkRes nodes trans =
+mkTransBlock :: PackageName -> MkRes -> Map.Map Int Node -> [Int] -> [Doc]
+mkTransBlock enumPkg mkRes nodes trans =
   case branches of
     b : rest -> mkCond "if" b : map (mkCond "else if") rest
     _        -> []
   where
-  branches = [ mkTrans mkRes to (nodes Map.! to) | to <- trans ]
+  branches = [ mkTrans enumPkg mkRes to (nodes Map.! to) | to <- trans ]
 
   mkCond t (c,b) = block (text t <> parens c) b
 
 -- | Return the conditional and body of a single transition.
-mkTrans :: MkRes -> Int -> Node -> (Doc,Doc)
-mkTrans mkRes i Node { .. } = (cond,mkRes i (Map.elems nodeOutputs))
+mkTrans :: PackageName -> MkRes -> Int -> Node -> (Doc,Doc)
+mkTrans enumPkg mkRes i Node { .. } = (cond,mkRes i (Map.elems nodeOutputs))
   where
   cond = fsep
        $ punctuate (text " &&")
-         [ mkGuard var val | (var,val) <- Map.toList nodeInputs ]
+         [ mkGuard enumPkg var val | (var,val) <- Map.toList nodeInputs ]
 
 
-mkGuard :: Name -> Value -> Doc
-mkGuard var val = javaName var <+> text "==" <+> javaValue val
+mkGuard :: PackageName -> Name -> Value -> Doc
+mkGuard enumPkg var val = javaName var <+> text "==" <+> javaValue enumPkg val
 
 
-javaValue :: Value -> Doc
-javaValue (VBool True)  = text "true"
-javaValue (VBool False) = text "false"
+javaValue :: PackageName -> Value -> Doc
+javaValue _ (VBool True)  = text "true"
+javaValue _ (VBool False) = text "false"
 
-javaValue (VCon n)      =
+javaValue enumPkg (VCon n) =
   case nameOrigin n of
-    FromController o -> text "Enum" <> char '.' <> pp o <> char '.' <> pp n
-    FromDecl _ d     -> text "Enum" <> char '.' <> pp d <> char '.' <> pp n
-    FromParam _ d    -> text "Enum" <> char '.' <> pp d <> char '.' <> pp n
+    FromController o -> text enumPkg <> char '.' <> pp o <> char '.' <> pp n
+    FromDecl _ d     -> text enumPkg <> char '.' <> pp d <> char '.' <> pp n
+    FromParam _ d    -> text enumPkg <> char '.' <> pp d <> char '.' <> pp n
 
-javaValue (VNum n)      = pp n
+javaValue _ (VNum n) = pp n
 
 
 exnName :: Doc
@@ -197,8 +198,8 @@ exnName  = text "InputException"
 
 -- | Generate a local exception class that can be used thrown when the
 -- inputs don't match the current state.
-mkException :: StateVars -> Doc
-mkException inps =
+mkException :: PackageName -> StateVars -> Doc
+mkException enumPkg inps =
   block (public (cls exnName) <+> text "extends RuntimeException")
     $ vcat
     $ [ public (final (ty <+> var)) <> end | (ty,var) <- inVars ]
@@ -209,7 +210,7 @@ mkException inps =
 
   where
 
-  inVars  = map mkVar (Map.toList inps)
+  inVars  = map (mkVar enumPkg) (Map.toList inps)
   argList = parens (fsep (punctuate comma [ ty <+> var | (ty,var) <- inVars ]))
 
 
@@ -253,6 +254,3 @@ enum k = text "enum" <+> k
 
 javaName :: Name -> Doc
 javaName n = pp (nameText n)
-
-enumName :: EnumDef -> Doc
-enumName EnumDef { .. } = text "Enum" <> char '.' <> javaName eName

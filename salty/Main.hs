@@ -1,5 +1,8 @@
+{-# LANGUAGE RecordWildCards #-}
 
-import CodeGen.Java (javaFSM)
+import Options
+
+import CodeGen.Java (Package,javaFSM)
 import Scope.Check
 import Scope.Name (emptySupply)
 import Slugs (runSlugs)
@@ -7,19 +10,20 @@ import Syntax.Parser
 import TypeCheck
 
 import           Control.Exception (catch,IOException)
-import           Data.Maybe (fromMaybe)
+import qualified Data.Map.Strict as Map
 import qualified Data.Text.Lazy.IO as L
-import           System.Environment (getArgs,lookupEnv)
+import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
+import           System.FilePath (takeDirectory,takeFileName)
 
 main :: IO ()
 main  =
-  do [file] <- getArgs
+  do opts <- parseOptions
 
-     bytes <- L.readFile file
+     bytes <- L.readFile (optInput opts)
 
      pCont <-
-       case parseController file bytes of
+       case parseController (optInput opts) bytes of
          Right p  -> return p
          Left err -> do print err
                         exitFailure
@@ -36,10 +40,7 @@ main  =
          Left errs -> do mapM_ (print . ppTCError) errs
                          exitFailure
 
-     mbSlugs <- lookupEnv "SLUGS"
-     let slugs = fromMaybe "../slugs/src/slugs" mbSlugs
-
-     mbFSM <- runSlugs slugs tcCont `catch` \ e ->
+     mbFSM <- runSlugs (optSlugs opts) tcCont `catch` \ e ->
                  do let _ = e :: IOException
                     putStrLn "Failed to run slugs. Is SLUGS set?"
                     exitFailure
@@ -49,4 +50,14 @@ main  =
               Nothing  -> do putStrLn "Unrealizable"
                              exitFailure
 
-     print (javaFSM "test" fsm)
+     writePackage opts (javaFSM (optPackage opts) fsm)
+
+
+writePackage :: Options -> Package -> IO ()
+writePackage _opts pkg = mapM_ writeClass (Map.toList pkg)
+  where
+  writeClass (file,doc) =
+    do createDirectoryIfMissing True (takeDirectory file)
+
+       putStrLn ("Writing " ++ takeFileName file)
+       writeFile file (show doc)
