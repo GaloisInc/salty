@@ -14,7 +14,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Text.Lazy.IO as L
 import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
-import           System.FilePath (takeDirectory,takeFileName)
+import           System.FilePath (takeDirectory,(</>))
 
 main :: IO ()
 main  =
@@ -54,10 +54,15 @@ main  =
 
 
 writePackage :: Options -> Package -> IO ()
-writePackage _opts pkg = mapM_ writeClass (Map.toList pkg)
+writePackage opts pkg = mapM_ writeClass (Map.toList pkg)
   where
-  writeClass (file,doc) =
-    do createDirectoryIfMissing True (takeDirectory file)
+  prefix = case optOutDir opts of
+             Just dir -> dir
+             Nothing  -> ""
 
-       putStrLn ("Writing " ++ takeFileName file)
-       writeFile file (show doc)
+  writeClass (file,doc) =
+    do let outFile = prefix </> file
+       createDirectoryIfMissing True (takeDirectory outFile)
+
+       putStrLn ("Writing " ++ outFile)
+       writeFile outFile (show doc)

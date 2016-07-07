@@ -9,6 +9,7 @@ import System.Exit (exitSuccess,exitFailure)
 data Options = Options { optHelp    :: Bool
                        , optPackage :: String
                        , optInput   :: FilePath
+                       , optOutDir  :: Maybe FilePath
                        , optSlugs   :: FilePath
                        } deriving (Show)
 
@@ -17,6 +18,7 @@ defaultOptions  =
   Options { optHelp    = False
           , optPackage = "salty"
           , optInput   = "controller.salt"
+          , optOutDir  = Nothing
           , optSlugs   = "slugs"
           }
 
@@ -41,6 +43,9 @@ options  =
   , Option "p" ["package"] (ReqArg setPackage "PACKAGE_STRING")
     "The base package name to use for java code generation"
 
+  , Option "o" ["output"] (ReqArg setOutDir "PATH")
+    "Optional output directory for artifacts"
+
   , Option "s" ["slugs"] (ReqArg setSlugs "SLUGS_PATH")
     "The path to the slugs executable"
   ]
@@ -53,6 +58,9 @@ setPackage str = OK (\opts -> opts { optPackage = str })
 
 setInput :: String -> Parser
 setInput str = OK (\opts -> opts { optInput = str })
+
+setOutDir :: String -> Parser
+setOutDir str = OK (\opts -> opts { optOutDir = Just str })
 
 setSlugs :: String -> Parser
 setSlugs str = OK (\opts -> opts { optSlugs = str })
