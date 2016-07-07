@@ -2,7 +2,7 @@ flags: {}
 packages:
 - location: ./
 - location:
-    git: git@github.com:GaloisInc/language-slugs.git
+    git: https://github.com/GaloisInc/language-slugs
     commit: master
 extra-deps:
 - GraphSCC-1.0.4
