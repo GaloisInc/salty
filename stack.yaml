@@ -25,4 +25,7 @@ extra-deps:
 - text-1.2.2.1
 - unordered-containers-0.2.7.1
 - vector-0.11.0.0
+- QuickCheck-2.8.2
+- random-1.1
+- tf-random-0.5
 resolver: ghc-8.0.1
