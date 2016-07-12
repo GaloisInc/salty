@@ -5,29 +5,7 @@ packages:
     git: https://github.com/GaloisInc/language-slugs
     commit: master
 extra-deps:
-- GraphSCC-1.0.4
-- ListLike-4.2.1
-- aeson-0.11.2.0
-- attoparsec-0.13.0.2
-- dlist-0.7.1.2
-- fail-4.9.0.0
-- fmlist-0.9
-- generic-deriving-1.10.5
-- hashable-1.2.4.0
-- haskell-lexer-1.0
-- located-0.1.1.0
-- monadLib-3.7.3
-- mtl-2.2.1
-- pretty-show-1.6.11
-- primitive-0.6.1.0
-- process-extras-0.4.1.4
-- scientific-0.3.4.7
-- syb-0.6
-- tagged-0.8.4
-- text-1.2.2.1
-- unordered-containers-0.2.7.1
-- vector-0.11.0.0
-- QuickCheck-2.8.2
-- random-1.1
-- tf-random-0.5
-resolver: ghc-8.0.1
+    - located-0.1.0.0
+    - text-1.2.2.1
+resolver: nightly-2016-07-11
+
