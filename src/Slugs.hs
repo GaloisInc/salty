@@ -10,13 +10,15 @@ import Opt.Simpl (simp)
 import TypeCheck.AST (Controller)
 import TypeCheck.Expand (expand)
 
-import qualified Language.Slugs.Run as S
+import           Control.Monad (when)
+import qualified Language.Slugs as S
 
 
-runSlugs :: FilePath -> Controller -> IO (Maybe FSM)
-runSlugs slugsProg c =
+runSlugs :: Bool -> FilePath -> Controller -> IO (Maybe FSM)
+runSlugs dbg slugsProg c =
   do let cont = simp (expand c)
      let (spec,env) = mkSpec cont
+     when dbg (print (S.ppSpec spec))
      res <- S.runSlugs slugsProg spec
      case res of
        S.Unrealizable    -> return Nothing

@@ -54,6 +54,7 @@ executable salty
                        directory,
                        containers,
                        filepath,
+                       pretty-show,
                        salty
   hs-source-dirs:      salty
   default-language:    Haskell2010

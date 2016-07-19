@@ -12,6 +12,7 @@ data Options = Options { optHelp    :: Bool
                        , optOutDir  :: Maybe FilePath
                        , optSlugs   :: FilePath
                        , optDumpParsed :: Bool
+                       , optDumpSpec :: Bool
                        } deriving (Show)
 
 defaultOptions :: Options
@@ -22,6 +23,7 @@ defaultOptions  =
           , optOutDir  = Nothing
           , optSlugs   = "slugs"
           , optDumpParsed = False
+          , optDumpSpec = False
           }
 
 
@@ -53,6 +55,9 @@ options  =
 
   , Option "" ["ddump-parse"] (NoArg setDumpParsed)
     "Dump the parse tree for the controller"
+
+  , Option "" ["ddump-spec"] (NoArg setDumpSpec)
+    "Dump the slugs spec before running slugs"
   ]
 
 setHelp :: Parser
@@ -72,6 +77,9 @@ setSlugs str = OK (\opts -> opts { optSlugs = str })
 
 setDumpParsed :: Parser
 setDumpParsed  = OK (\opts -> opts { optDumpParsed = True })
+
+setDumpSpec :: Parser
+setDumpSpec  = OK (\opts -> opts { optDumpSpec = True })
 
 
 parseOptions :: IO Options

@@ -16,6 +16,7 @@ import qualified Data.Text.Lazy.IO as L
 import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
 import           System.FilePath (takeDirectory,(</>))
+import           Text.Show.Pretty (ppShow)
 
 main :: IO ()
 main  =
@@ -29,7 +30,7 @@ main  =
          Left err -> do print err
                         exitFailure
 
-     when (optDumpParsed opts) (print pCont)
+     when (optDumpParsed opts) (putStrLn (ppShow pCont))
 
      (scCont,scSup) <-
        case scopeCheck emptySupply pCont of
@@ -43,7 +44,7 @@ main  =
          Left errs -> do mapM_ (print . ppTCError) errs
                          exitFailure
 
-     mbFSM <- runSlugs (optSlugs opts) tcCont `catch` \ e ->
+     mbFSM <- runSlugs (optDumpSpec opts) (optSlugs opts) tcCont `catch` \ e ->
                  do let _ = e :: IOException
                     putStrLn "Failed to run slugs. Is SLUGS set?"
                     exitFailure
