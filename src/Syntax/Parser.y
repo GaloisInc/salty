@@ -106,16 +106,16 @@ top_decl :: { TopDecl PName }
   | 'output' state_var_decl
     { TDLoc (fmap TDOutput $2) }
 
-  | 'sys_trans' expr
+  | 'sys_trans' layout(expr)
     { TDLoc (TDSysTrans $2 `at` getLoc $2) }
 
-  | 'sys_liveness' expr
+  | 'sys_liveness' layout(expr)
     { TDLoc (TDSysLiveness $2 `at` getLoc $2) }
 
-  | 'env_trans' expr
+  | 'env_trans' layout(expr)
     { TDLoc (TDEnvTrans $2 `at` getLoc $2) }
 
-  | 'env_liveness' expr
+  | 'env_liveness' layout(expr)
     { TDLoc (TDEnvLiveness $2 `at` getLoc $2) }
 
 

@@ -57,20 +57,20 @@ simpleTopDecl (AST.TDOutput sv) =
   do sv' <- checkStateVar sv
      return $ \ c -> c { cOutputs = sv' : cOutputs c }
 
-simpleTopDecl (AST.TDSysTrans e) =
-  do e' <- checkExpr TBool e
+simpleTopDecl (AST.TDSysTrans es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
      return $ \ c -> c { cSysTrans = EAnd e' (cSysTrans c) }
 
-simpleTopDecl (AST.TDSysLiveness e) =
-  do e' <- checkExpr TBool e
+simpleTopDecl (AST.TDSysLiveness es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
      return $ \ c -> c { cSysLiveness = EAnd e' (cSysLiveness c) }
 
-simpleTopDecl (AST.TDEnvTrans e) =
-  do e' <- checkExpr TBool e
+simpleTopDecl (AST.TDEnvTrans es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
      return $ \ c -> c { cEnvTrans = EAnd e' (cEnvTrans c) }
 
-simpleTopDecl (AST.TDEnvLiveness e) =
-  do e' <- checkExpr TBool e
+simpleTopDecl (AST.TDEnvLiveness es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
      return $ \ c -> c { cEnvLiveness = EAnd e' (cEnvLiveness c) }
 
 simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl

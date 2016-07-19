@@ -173,11 +173,19 @@ lexWithLayout :: FilePath -> L.Text -> [Lexeme]
 lexWithLayout src bytes =
   layout Layout { .. } (ignoreComments (lexer src Nothing bytes))
   where
-  beginsLayout Token { tokType = TKeyword Kwhere } = True
-  beginsLayout Token { tokType = TKeyword Kof    } = True
-  beginsLayout _                                   = False
+  beginsLayout Token { tokType = TKeyword Kwhere        } = True
+  beginsLayout Token { tokType = TKeyword Kof           } = True
+  beginsLayout Token { tokType = TKeyword Ksys_trans    } = True
+  beginsLayout Token { tokType = TKeyword Ksys_liveness } = True
+  beginsLayout Token { tokType = TKeyword Kenv_trans    } = True
+  beginsLayout Token { tokType = TKeyword Kenv_liveness } = True
+  beginsLayout _                                          = False
 
-  endsLayout _ = False
+  endsLayout Token { tokType = TKeyword Ksys_trans    } = True
+  endsLayout Token { tokType = TKeyword Ksys_liveness } = True
+  endsLayout Token { tokType = TKeyword Kenv_trans    } = True
+  endsLayout Token { tokType = TKeyword Kenv_liveness } = True
+  endsLayout _                                          = False
 
   start = Token { tokText = L.empty, tokType = TVirt VBegin }
   sep   = Token { tokText = L.empty, tokType = TVirt VSep   }

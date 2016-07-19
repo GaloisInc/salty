@@ -33,7 +33,7 @@ library
                        alex  >= 3.1.7
   build-depends:       base >=4.8 && <5,
                        language-slugs,
-                       located,
+                       located >= 0.1.1.0,
                        array,
                        containers,
                        monadLib,

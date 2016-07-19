@@ -193,10 +193,10 @@ checkTopDecl (TDEnum enum)     = TDEnum        `fmap` checkEnum enum
 checkTopDecl (TDFun fun)       = TDFun         `fmap` checkFun  fun
 checkTopDecl (TDInput sv)      = TDInput       `fmap` checkStateVar sv
 checkTopDecl (TDOutput sv)     = TDOutput      `fmap` checkStateVar sv
-checkTopDecl (TDSysTrans e)    = TDSysTrans    `fmap` checkExpr e
-checkTopDecl (TDEnvTrans e)    = TDEnvTrans    `fmap` checkExpr e
-checkTopDecl (TDSysLiveness e) = TDSysLiveness `fmap` checkExpr e
-checkTopDecl (TDEnvLiveness e) = TDEnvLiveness `fmap` checkExpr e
+checkTopDecl (TDSysTrans e)    = TDSysTrans    `fmap` traverse checkExpr e
+checkTopDecl (TDEnvTrans e)    = TDEnvTrans    `fmap` traverse checkExpr e
+checkTopDecl (TDSysLiveness e) = TDSysLiveness `fmap` traverse checkExpr e
+checkTopDecl (TDEnvLiveness e) = TDEnvLiveness `fmap` traverse checkExpr e
 checkTopDecl (TDLoc loc)       = TDLoc         `fmap` checkLoc loc checkTopDecl
 
 

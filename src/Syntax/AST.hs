@@ -24,10 +24,10 @@ data TopDecl name = TDEnum (EnumDef name)
                   | TDFun (Fun name)
                   | TDInput (StateVar name)
                   | TDOutput (StateVar name)
-                  | TDSysTrans (Expr name)
-                  | TDSysLiveness (Expr name)
-                  | TDEnvTrans (Expr name)
-                  | TDEnvLiveness (Expr name)
+                  | TDSysTrans [Expr name]
+                  | TDSysLiveness [Expr name]
+                  | TDEnvTrans [Expr name]
+                  | TDEnvLiveness [Expr name]
                   | TDLoc (Loc (TopDecl name))
                     deriving (Functor,Show)
 
@@ -174,15 +174,15 @@ stateVarDs StateVar { svName } = Set.singleton (thing svName)
 
 -- | Free variables in this top-level declaration.
 topDeclFvs :: Ord name => TopDecl name -> Set.Set name
-topDeclFvs TDEnum {}         = Set.empty
-topDeclFvs (TDFun fun)       = funFvs fun
-topDeclFvs (TDInput sv)      = stateVarFvs sv
-topDeclFvs (TDOutput sv)     = stateVarFvs sv
-topDeclFvs (TDSysTrans    e) = exprFvs e
-topDeclFvs (TDSysLiveness e) = exprFvs e
-topDeclFvs (TDEnvTrans    e) = exprFvs e
-topDeclFvs (TDEnvLiveness e) = exprFvs e
-topDeclFvs (TDLoc loc)       = topDeclFvs (thing loc)
+topDeclFvs TDEnum {}          = Set.empty
+topDeclFvs (TDFun fun)        = funFvs fun
+topDeclFvs (TDInput sv)       = stateVarFvs sv
+topDeclFvs (TDOutput sv)      = stateVarFvs sv
+topDeclFvs (TDSysTrans    es) = foldMap exprFvs es
+topDeclFvs (TDSysLiveness es) = foldMap exprFvs es
+topDeclFvs (TDEnvTrans    es) = foldMap exprFvs es
+topDeclFvs (TDEnvLiveness es) = foldMap exprFvs es
+topDeclFvs (TDLoc loc)        = topDeclFvs (thing loc)
 
 -- | The free variables of the function body.
 funFvs :: Ord name => Fun name -> Set.Set name
