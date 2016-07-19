@@ -1,3 +1,4 @@
+-- -*- mode: Haskell; -*-
 -- vim: ft=haskell
 
 controller Democontroller1 where
