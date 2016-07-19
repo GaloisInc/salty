@@ -11,6 +11,7 @@ data Options = Options { optHelp    :: Bool
                        , optInput   :: FilePath
                        , optOutDir  :: Maybe FilePath
                        , optSlugs   :: FilePath
+                       , optDumpParsed :: Bool
                        } deriving (Show)
 
 defaultOptions :: Options
@@ -20,6 +21,7 @@ defaultOptions  =
           , optInput   = "controller.salt"
           , optOutDir  = Nothing
           , optSlugs   = "slugs"
+          , optDumpParsed = False
           }
 
 
@@ -48,6 +50,9 @@ options  =
 
   , Option "s" ["slugs"] (ReqArg setSlugs "SLUGS_PATH")
     "The path to the slugs executable"
+
+  , Option "" ["ddump-parse"] (NoArg setDumpParsed)
+    "Dump the parse tree for the controller"
   ]
 
 setHelp :: Parser
@@ -64,6 +69,9 @@ setOutDir str = OK (\opts -> opts { optOutDir = Just str })
 
 setSlugs :: String -> Parser
 setSlugs str = OK (\opts -> opts { optSlugs = str })
+
+setDumpParsed :: Parser
+setDumpParsed  = OK (\opts -> opts { optDumpParsed = True })
 
 
 parseOptions :: IO Options

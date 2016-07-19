@@ -10,6 +10,7 @@ import Syntax.Parser
 import TypeCheck
 
 import           Control.Exception (catch,IOException)
+import           Control.Monad (when)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text.Lazy.IO as L
 import           System.Directory (createDirectoryIfMissing)
@@ -27,6 +28,8 @@ main  =
          Right p  -> return p
          Left err -> do print err
                         exitFailure
+
+     when (optDumpParsed opts) (print pCont)
 
      (scCont,scSup) <-
        case scopeCheck emptySupply pCont of
