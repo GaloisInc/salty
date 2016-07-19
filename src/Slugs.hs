@@ -19,7 +19,7 @@ runSlugs dbg slugsProg c =
   do let cont = simp (expand c)
      let (spec,env) = mkSpec cont
      when dbg (print (S.ppSpec spec))
-     res <- S.runSlugs slugsProg spec
+     res <- S.runSlugs dbg slugsProg spec
      case res of
        S.Unrealizable    -> return Nothing
        S.StateMachine sm -> return (Just (fromSlugs env cont sm))
