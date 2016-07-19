@@ -1,7 +1,13 @@
 
 SLUGS ?= ../../slugs/src/slugs
 
+SALTY ?=
+
+ifeq ($(SALTY),)
 salty = stack exec -- salty -s $(SLUGS) -p $1 -o build $2
+else
+salty = $(SALTY) -s $(SLUGS) -p $1 -o build $2
+endif
 
 all: DemoTest.class
 
