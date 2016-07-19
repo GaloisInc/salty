@@ -3,6 +3,7 @@
 module PP (
     PP(..),
     pp,
+    render,
     optParens,
     ticks,
     semicolon,
@@ -14,7 +15,7 @@ import           Scope.Name (Name,nameText)
 
 import           Data.Int (Int64)
 import qualified Data.Text.Lazy as L
-import           Text.PrettyPrint.HughesPJ
+import           Text.PrettyPrint.HughesPJ hiding (render)
 import           Text.Location
 
 render :: PP a => a -> String
@@ -38,6 +39,10 @@ class PP a where
 
   ppList :: [a] -> Doc
   ppList as = brackets (fsep (punctuate comma (map pp as)))
+
+instance PP Doc where
+  ppPrec _ = id
+  {-# INLINE ppPrec #-}
 
 instance PP a => PP [a] where
   ppPrec _ = ppList
