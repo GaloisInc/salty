@@ -106,13 +106,17 @@ destEApp = go []
 
 
 eAnd :: [Expr] -> Expr
-eAnd  = foldl1 EAnd
+eAnd []  = ETrue
+eAnd [e] = e
+eAnd es  = foldl1 EAnd es
 
 eNot :: Expr -> Expr
 eNot  = ENot
 
 eOr :: [Expr] -> Expr
-eOr  = foldl1 EOr
+eOr []  = EFalse
+eOr [e] = e
+eOr es  = foldl1 EOr es
 
 eImp :: Expr -> Expr -> Expr
 eImp a b = eOr [ eNot a, b ]

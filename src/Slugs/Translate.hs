@@ -27,7 +27,7 @@ mkState :: Env -> [StateVar] -> Expr -> Expr -> Slugs.State
 mkState env vars trans liveness =
   Slugs.State { Slugs.stInit =
                 do guard (not (null vars))
-                   return (foldl1 Slugs.EAnd inits)
+                   return (conj inits)
 
               , Slugs.stTrans =
                 do guard (trans /= ETrue)
@@ -39,6 +39,11 @@ mkState env vars trans liveness =
               }
 
   where
+
+  conj []  = Slugs.ETrue
+  conj [e] = e
+  conj es  = foldl1 Slugs.EAnd es
+
   inits = [ mkInit env sv e | sv@StateVar { svInit = Just e, .. } <- vars ]
 
 mkInit :: Env -> StateVar -> Expr -> Slugs.Expr
