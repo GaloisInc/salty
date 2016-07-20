@@ -47,7 +47,8 @@ import           Text.Location.Layout
   'else'       { Keyword Kelse       $$ }
   'case'       { Keyword Kcase       $$ }
   'of'         { Keyword Kof         $$ }
-  '='          { Keyword Keq         $$ }
+  '='          { Keyword Kassign     $$ }
+  '=='         { Keyword Keq         $$ }
   '!='         { Keyword Kneq        $$ }
   '|'          { Keyword Kpipe       $$ }
   '('          { Keyword Klparen     $$ }
@@ -80,7 +81,7 @@ import           Text.Location.Layout
 %right '||'
 %right '&&'
 %right NOT
-%nonassoc '=' '!='
+%nonassoc '==' '!='
 
 
 %monad { Either Error }
@@ -209,7 +210,7 @@ bexpr :: { Expr PName }
   | bexpr '!=' bexpr
     { ELoc (EImp $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
-  | bexpr '=' bexpr
+  | bexpr '==' bexpr
     { ELoc (EEq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
   | bexpr '<->' bexpr
