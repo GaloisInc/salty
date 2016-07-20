@@ -67,6 +67,7 @@ import           Text.Location.Layout
   '&&'         { Keyword Kand        $$ }
   '||'         { Keyword Kor         $$ }
   '!'          { Keyword Knot        $$ }
+  '<->'        { Keyword Kiff        $$ }
 
   -- layout
   'v{'  { Virt VBegin $$ }
@@ -74,6 +75,7 @@ import           Text.Location.Layout
   'v}'  { Virt VEnd   $$ }
 
 
+%nonassoc '<->'
 %right '->'
 %right '||'
 %right '&&'
@@ -209,6 +211,9 @@ bexpr :: { Expr PName }
 
   | bexpr '=' bexpr
     { ELoc (EEq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+
+  | bexpr '<->' bexpr
+    { ELoc (EIff $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
   | app_expr
     { $1 }

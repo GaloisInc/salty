@@ -253,6 +253,12 @@ checkExpr ty (AST.EImp a b) =
      unify ty TBool
      return (eImp a' b')
 
+checkExpr ty (AST.EIff a b) =
+  do a' <- checkExpr TBool a
+     b' <- checkExpr TBool b
+     unify ty TBool
+     return (eAnd [ eImp a' b', eImp (eNot a') (eNot b') ])
+
 checkExpr ty (AST.ECase e cs) =
   do etv <- newTVar Nothing
      let ety = TFree etv

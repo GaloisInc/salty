@@ -263,6 +263,7 @@ checkExpr (ENext e)   = ENext `fmap` checkExpr e
 checkExpr (EEq a b)   = EEq  `fmap` checkExpr a <*> checkExpr b
 checkExpr (ENeq a b)  = ENeq `fmap` checkExpr a <*> checkExpr b
 checkExpr (EImp a b)  = EImp `fmap` checkExpr a <*> checkExpr b
+checkExpr (EIff a b)  = EIff `fmap` checkExpr a <*> checkExpr b
 checkExpr (ECase e cs)= ECase `fmap` checkExpr e <*> traverse checkCase cs
 
 checkCase :: Check Case

@@ -63,8 +63,10 @@ $white+ ;
 
 "..."   { keyword Krange }
 
+
 ":"     { keyword Kcolon  }
 "="     { keyword Keq     }
+"<->"   { keyword Kiff    }
 "!="    { keyword Kneq    }
 "("     { keyword Klparen }
 ")"     { keyword Krparen }
@@ -132,6 +134,7 @@ data Keyword = Kif
              | Kwhere
              | Kcomma
              | Kotherwise
+             | Kiff
              | Kor
              | Kand
              | Knot

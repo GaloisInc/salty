@@ -82,6 +82,7 @@ data Expr name = EVar name
                | EEq (Expr name) (Expr name)
                | ENeq (Expr name) (Expr name)
                | EImp (Expr name) (Expr name)
+               | EIff (Expr name) (Expr name)
                | ELoc (Loc (Expr name))
                  deriving (Functor,Show)
 
@@ -218,6 +219,7 @@ exprFvs (ENext e)   = exprFvs e
 exprFvs (EEq a b)   = Set.union (exprFvs a) (exprFvs b)
 exprFvs (ENeq a b)  = Set.union (exprFvs a) (exprFvs b)
 exprFvs (EImp a b)  = Set.union (exprFvs a) (exprFvs b)
+exprFvs (EIff a b)  = Set.union (exprFvs a) (exprFvs b)
 exprFvs (ECase e gs) = Set.union (exprFvs e) (foldMap caseFvs gs)
 exprFvs (ELoc loc)  = exprFvs (thing loc)
 
