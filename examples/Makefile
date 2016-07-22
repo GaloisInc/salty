@@ -20,7 +20,10 @@ else
   Q :=
 endif
 
-all: DemoTest.class
+sources := $(wildcard *.salt)
+jars    := $(addprefix build/,$(sources:.salt=.jar))
+
+all: $(jars)
 
 build:
 	mkdir build
