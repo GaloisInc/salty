@@ -4,37 +4,41 @@ SLUGS ?= ../../slugs/src/slugs
 SALTY ?=
 
 ifeq ($(SALTY),)
-salty = stack exec -- salty -s $(SLUGS) -p $1 -o build $2
-else
+  exists := $(shell test -f ../dist/build/salty/salty && echo "exists")
+  ifeq ($(exists),exists)
+    SALTY := ../dist/build/salty/salty
+  else
+    SALTY := stack exec -- salty
+  endif
+endif
+
 salty = $(SALTY) -s $(SLUGS) -p $1 -o build $2
+
+ifeq ($(V),)
+  Q := @
+else
+  Q :=
 endif
 
 all: DemoTest.class
 
-run-%: %.class
-	java -classpath .:build/ $*
-
-
 build:
 	mkdir build
-
-define build-jar
-
-build/$1.jar: build/$1/.token
-	cd build && \
-	  find demo -name \*.java -exec javac {} \; && \
-	  find demo -name \*.class -exec jar cf $1.jar {} +
-
-build/$1/.token: $1.salt | build
-	$$(call salty,$1,$1.salt) && touch $$@
-
-endef
 
 clean:
 	$(RM) -r build
 	$(RM) DemoTest.class
 
-$(eval $(call build-jar,demo))
-
 DemoTest.class: build/demo.jar DemoTest.java
-	javac -classpath build/ DemoTest.java
+	$(Q) javac -classpath build/ DemoTest.java
+
+run-%: %.class
+	$(Q) java -classpath .:build/ $*
+
+build/%.jar: build/%/.token
+	$(Q) cd build && \
+	  find $* -name \*.java -exec javac {} \; && \
+	  find $* -name \*.class -exec jar cf $*.jar {} +
+
+build/%/.token: %.salt | build
+	$(Q) $(call salty,$*,$*.salt) && touch $@
