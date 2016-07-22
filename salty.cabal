@@ -8,6 +8,13 @@ category:            Language
 build-type:          Simple
 cabal-version:       >=1.10
 
+synopsis:            A DSL for synthesizing controllers from GR(1) specifications
+
+bug-reports:         https://github.com/GaloisInc/salty/issues
+
+source-repository head
+  type:     git
+  location: https://github.com/GaloisInc/salty.git
 
 library
   exposed-modules:     CodeGen.Java
