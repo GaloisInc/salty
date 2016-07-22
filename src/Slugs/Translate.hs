@@ -61,26 +61,20 @@ mkExpr _   (ECon _)         = panic "Constructor used outside of assignment"
 mkExpr _   (EApp _ _)       = panic "Unexpected EApp"
 mkExpr _   (ENum _)         = panic "Unexpected ENum"
 
-mkExpr env (EVar v)         =
-  case lookupVar v env of
-
-    var@Slugs.VarBool{} ->
-
-      Slugs.EVar (Slugs.UVar var)
-
-    var@Slugs.VarNum{} ->
-      mkEAnd [ Slugs.EBit (Slugs.UVar var) i | i <- [0 .. Slugs.varBitSize var - 1]]
-
-mkExpr env (ENext (EVar v)) =
-  case lookupVar v env of
-
-    var@Slugs.VarBool{} ->
-      Slugs.EVar (Slugs.UVar var)
-
-    var@Slugs.VarNum{} ->
-      mkEAnd [ Slugs.EBit (Slugs.UNext var) i | i <- [0 .. Slugs.varBitSize var - 1]]
+mkExpr env (EVar v)         = mkVar Slugs.UVar  (lookupVar v env)
+mkExpr env (ENext (EVar v)) = mkVar Slugs.UNext (lookupVar v env)
 
 mkExpr _   (ENext _)        = panic "Unexpected ENext"
+
+
+mkVar :: (Slugs.Var -> Slugs.Use) -> Slugs.Var -> Slugs.Expr
+
+mkVar mk var@Slugs.VarBool{} =
+  Slugs.EVar (mk var)
+
+mkVar mk var@Slugs.VarNum{}  =
+  let use = mk var
+   in mkEAnd [ Slugs.EBit use i | i <- [0 .. Slugs.varBitSize var - 1] ]
 
 
 -- | Translate an expression that's expected to be a variable (or a use of Next
