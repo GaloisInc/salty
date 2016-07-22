@@ -149,6 +149,7 @@ mkState enumPkg mkRes nodes (n,Node { .. }) =
 mkTransBlock :: PackageName -> MkRes -> Map.Map Int Node -> [Int] -> [Doc]
 mkTransBlock enumPkg mkRes nodes trans =
   case branches of
+    [(_,b)]  -> [b]
     b : rest -> mkCond "if" b : map (mkCond "else if") rest
     _        -> []
   where
