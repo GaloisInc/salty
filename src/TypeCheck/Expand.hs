@@ -8,7 +8,7 @@ import TypeCheck.AST
 
 import qualified Data.Foldable as F
 import qualified Data.Map.Strict as Map
-import           Language.Slugs.Lens (rewriteOf)
+import           Language.Slugs.Lens (rewriteOf,transformOf)
 
 -- | Expand all macro uses, and remove function declarations from the
 -- controller.
@@ -75,7 +75,15 @@ instance Expand Expr where
       (EAnd l r, []) -> EAnd  (expand' env l) (expand' env r)
       (EOr  l r, []) -> EOr   (expand' env l) (expand' env r)
       (ENot l,   []) -> ENot  (expand' env l)
-      (ENext l,  []) -> ENext (expand' env l)
+      (ENext l,  []) -> eNext (expand' env l)
       (EEq  l r, []) -> EEq   (expand' env l) (expand' env r)
 
       _ -> panic ("Unexpected expression: " ++ show e)
+
+
+-- | Push the next operation down to the leaves of an expression.
+eNext :: Expr -> Expr
+eNext  = transformOf traverseExpr $ \ e ->
+  case e of
+    EVar{} -> ENext e
+    _      -> e
