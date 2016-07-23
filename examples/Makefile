@@ -12,7 +12,7 @@ ifeq ($(SALTY),)
   endif
 endif
 
-salty = $(SALTY) -s $(SLUGS) -p $1 -o build $2
+salty = $(SALTY) -s $(SLUGS) --python --java=$1 -o build $2
 
 ifeq ($(V),)
   Q := @

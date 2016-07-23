@@ -18,6 +18,7 @@ source-repository head
 
 library
   exposed-modules:     CodeGen.Java
+                       CodeGen.Python
                        Opt.Simpl
                        PP
                        Scope.Check

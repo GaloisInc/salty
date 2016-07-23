@@ -1,13 +1,15 @@
 module Options where
 
 import Control.Monad (when)
+import Data.Maybe (fromMaybe)
 import System.Console.GetOpt
 import System.Environment (getArgs,getProgName)
 import System.Exit (exitSuccess,exitFailure)
 
 
 data Options = Options { optHelp    :: Bool
-                       , optPackage :: String
+                       , optJava    :: Maybe String
+                       , optPython  :: Bool
                        , optInput   :: FilePath
                        , optOutDir  :: Maybe FilePath
                        , optSlugs   :: FilePath
@@ -18,7 +20,8 @@ data Options = Options { optHelp    :: Bool
 defaultOptions :: Options
 defaultOptions  =
   Options { optHelp    = False
-          , optPackage = "salty"
+          , optJava    = Nothing
+          , optPython  = False
           , optInput   = "controller.salt"
           , optOutDir  = Nothing
           , optSlugs   = "slugs"
@@ -44,8 +47,11 @@ options  =
   [ Option "h" ["help"] (NoArg setHelp)
     "Display this message"
 
-  , Option "p" ["package"] (ReqArg setPackage "PACKAGE_STRING")
-    "The base package name to use for java code generation"
+  , Option "j" ["java"] (OptArg setJava "PACKAGE_STRING")
+    "Output a java implementation of the controller, as this package"
+
+  , Option "p" ["python"] (NoArg setPython)
+    "Output a python implementation of the controller"
 
   , Option "o" ["output"] (ReqArg setOutDir "PATH")
     "Optional output directory for artifacts"
@@ -63,8 +69,8 @@ options  =
 setHelp :: Parser
 setHelp  = OK (\opts -> opts { optHelp = True })
 
-setPackage :: String -> Parser
-setPackage str = OK (\opts -> opts { optPackage = str })
+setJava :: Maybe String -> Parser
+setJava mb = OK (\opts -> opts { optJava = Just (fromMaybe "" mb) })
 
 setInput :: String -> Parser
 setInput str = OK (\opts -> opts { optInput = str })
@@ -80,6 +86,9 @@ setDumpParsed  = OK (\opts -> opts { optDumpParsed = True })
 
 setDumpSpec :: Parser
 setDumpSpec  = OK (\opts -> opts { optDumpSpec = True })
+
+setPython :: Parser
+setPython  = OK (\opts -> opts { optPython = True })
 
 
 parseOptions :: IO Options
