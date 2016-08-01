@@ -10,6 +10,7 @@ import System.Exit (exitSuccess,exitFailure)
 data Options = Options { optHelp    :: Bool
                        , optJava    :: Maybe String
                        , optPython  :: Bool
+                       , optDot     :: Bool
                        , optInput   :: FilePath
                        , optOutDir  :: Maybe FilePath
                        , optSlugs   :: FilePath
@@ -22,6 +23,7 @@ defaultOptions  =
   Options { optHelp    = False
           , optJava    = Nothing
           , optPython  = False
+          , optDot     = False
           , optInput   = "controller.salt"
           , optOutDir  = Nothing
           , optSlugs   = "slugs"
@@ -52,6 +54,9 @@ options  =
 
   , Option "p" ["python"] (NoArg setPython)
     "Output a python implementation of the controller"
+
+  , Option "d" ["dot"] (NoArg setDot)
+    "Output a graphviz representation of the controller"
 
   , Option "o" ["output"] (ReqArg setOutDir "PATH")
     "Optional output directory for artifacts"
@@ -89,6 +94,9 @@ setDumpSpec  = OK (\opts -> opts { optDumpSpec = True })
 
 setPython :: Parser
 setPython  = OK (\opts -> opts { optPython = True })
+
+setDot :: Parser
+setDot  = OK (\opts -> opts { optDot = True })
 
 
 parseOptions :: IO Options

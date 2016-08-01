@@ -12,7 +12,7 @@ ifeq ($(SALTY),)
   endif
 endif
 
-salty = $(SALTY) -s $(SLUGS) --python --java=$1 -o build $2
+salty = $(SALTY) -s $(SLUGS) --dot --python --java=$1 -o build $2
 
 ifeq ($(V),)
   Q := @
@@ -22,6 +22,9 @@ endif
 
 sources := $(wildcard *.salt)
 jars    := $(addprefix build/,$(sources:.salt=.jar))
+built   := $(addprefix build/,$(sources:.salt=/.token))
+
+.PHONY: all build clean
 
 all: $(jars)
 
@@ -31,6 +34,11 @@ build:
 clean:
 	$(RM) -r build
 	$(RM) DemoTest.class
+
+svg: $(built)
+	$(Q) cd build && \
+	  find . -name \*.dot -exec dot -Tsvg -o{}.svg {} \;
+
 
 DemoTest.class: build/demo.jar DemoTest.java
 	$(Q) javac -classpath build/ DemoTest.java

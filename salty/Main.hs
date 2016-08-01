@@ -2,6 +2,7 @@
 
 import Options
 
+import CodeGen.Dot (dotFSM)
 import CodeGen.Java (Package,javaFSM)
 import CodeGen.Python (pythonFSM)
 import Scope.Check
@@ -60,6 +61,8 @@ main  =
        Nothing  -> return ()
 
      when (optPython opts) (writePackage opts (pythonFSM fsm))
+
+     when (optDot opts) (writePackage opts (dotFSM fsm))
 
 
 writePackage :: Options -> Package -> IO ()

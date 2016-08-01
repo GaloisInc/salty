@@ -17,7 +17,8 @@ source-repository head
   location: https://github.com/GaloisInc/salty.git
 
 library
-  exposed-modules:     CodeGen.Java
+  exposed-modules:     CodeGen.Dot
+                       CodeGen.Java
                        CodeGen.Python
                        Opt.Simpl
                        PP
