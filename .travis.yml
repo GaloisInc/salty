@@ -74,3 +74,4 @@ script:
    (cd dist && cabal install --force-reinstalls "$SRC_TGZ")
 
 # EOF
+
