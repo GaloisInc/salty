@@ -28,8 +28,9 @@ install:
 
 # Here starts the actual work to be performed for the package under test;
 # any command which exits with a non-zero exit code causes the build to fail.
-stack build
-stack exec -- salty -h
+script:
+ - stack build
+ - stack exec -- salty -h
 
 
 # EOF
