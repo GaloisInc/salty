@@ -12,12 +12,11 @@ enum Behavior = SearchA | TrackTarget | Refuel
 
 output behavior : Behavior = SearchA
 
-
 -- track target play (safety)
 sys_trans
   if fuel_ok
      then if tt_command && saw_target
-             then behavior = TrackTarget
-             else behavior = SearchA
+             then behavior == TrackTarget
+             else behavior == SearchA
 
-     else behavior = Refuel
+     else behavior == Refuel

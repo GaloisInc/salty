@@ -2,12 +2,13 @@
 
 module TypeCheck.Expand (expand) where
 
+import Panic (panic,HasCallStack)
 import Scope.Name
 import TypeCheck.AST
 
 import qualified Data.Foldable as F
 import qualified Data.Map.Strict as Map
-import           Language.Slugs.Lens (rewriteOf)
+import           Language.Slugs.Lens (rewriteOf,transformOf)
 
 -- | Expand all macro uses, and remove function declarations from the
 -- controller.
@@ -35,10 +36,10 @@ subst env = rewriteOf traverseExpr f
 
 type Env = Map.Map Name Fun
 
-lookupFun :: Name -> Env -> Fun
+lookupFun :: HasCallStack => Name -> Env -> Fun
 lookupFun n env = Map.findWithDefault missing n env
   where
-  missing = panic ("lookupFun: Macro missing from environment: " ++ show n)
+  missing = panic ("Macro missing from environment: " ++ show n)
 
 expandDef :: Env -> Name -> [Expr] -> Expr
 expandDef env f args =
@@ -47,7 +48,7 @@ expandDef env f args =
    in subst inst fBody
 
 class Expand a where
-  expand' :: Env -> a -> a
+  expand' :: HasCallStack => Env -> a -> a
 
 instance Expand a => Expand (Maybe a) where
   expand' env = fmap (expand' env)
@@ -74,13 +75,15 @@ instance Expand Expr where
       (EAnd l r, []) -> EAnd  (expand' env l) (expand' env r)
       (EOr  l r, []) -> EOr   (expand' env l) (expand' env r)
       (ENot l,   []) -> ENot  (expand' env l)
-      (ENext l,  []) -> ENext (expand' env l)
+      (ENext l,  []) -> eNext (expand' env l)
       (EEq  l r, []) -> EEq   (expand' env l) (expand' env r)
 
-      _ -> panic ("expand': Unexpected expression: " ++ show e)
+      _ -> panic ("Unexpected expression: " ++ show e)
 
 
--- Utils -----------------------------------------------------------------------
-
-panic :: String -> a
-panic str = error ("PANIC: " ++ str)
+-- | Push the next operation down to the leaves of an expression.
+eNext :: Expr -> Expr
+eNext  = transformOf traverseExpr $ \ e ->
+  case e of
+    EVar{} -> ENext e
+    _      -> e

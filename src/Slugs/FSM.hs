@@ -9,6 +9,7 @@ module Slugs.FSM (
     Value(..)
   ) where
 
+import           Panic (panic,HasCallStack)
 import           Scope.Name (Name)
 import           Slugs.Env
 import           TypeCheck.AST (Controller(..),EnumDef(..),StateVar(..),Type(..))
@@ -19,9 +20,6 @@ import           Data.List (mapAccumL,find,break,group)
 import qualified Data.Map.Strict as Map
 import qualified Language.Slugs as Slugs
 
-
-panic :: String -> a
-panic msg = error ("PANIC: " ++ msg)
 
 type StateVars = Map.Map Name VarInfo
 
@@ -83,7 +81,7 @@ fromSlugs env cont Slugs.FSM { .. } =
     partitionEithers [ getStateVar env cont str a | (str,a) <- varGroups ]
 
 
-mkVarInfo :: Env -> StateVar -> Int -> VarInfo
+mkVarInfo :: HasCallStack => Env -> StateVar -> Int -> VarInfo
 mkVarInfo env StateVar { .. } viBits =
   VarInfo { viType = case (svType, svBounds) of
                        (TBool,_)         -> VTBool
@@ -95,7 +93,7 @@ mkVarInfo env StateVar { .. } viBits =
 
 -- | Lookup the state var from the input controller. The result is Left when the
 -- state var was an input, and Right when it was an output.
-getStateVar :: Env -> Controller -> String -> a -> Either (StateVar, a) (StateVar, a)
+getStateVar :: HasCallStack => Env -> Controller -> String -> a -> Either (StateVar, a) (StateVar, a)
 getStateVar env cont str a =
   case find svDef (cInputs cont) of
     Just sv -> Left (sv,a)
@@ -136,7 +134,7 @@ mkNode keys env inps outs = \ Slugs.Node { .. } ->
 
 
 -- | Decode a number that's been encoded as a list of bits.
-decodeValue :: Env -> [Int] -> (Name,VarInfo) -> ([Int],Maybe Value)
+decodeValue :: HasCallStack => Env -> [Int] -> (Name,VarInfo) -> ([Int],Maybe Value)
 decodeValue env bits (n,VarInfo { .. }) = (rest,e)
   where
   (used,rest) = splitAt viBits bits

@@ -21,5 +21,5 @@ runSlugs dbg slugsProg c =
      when dbg (print (S.ppSpec spec))
      res <- S.runSlugs dbg slugsProg spec
      case res of
-       S.Unrealizable    -> return Nothing
+       S.Unrealizable{}  -> return Nothing
        S.StateMachine sm -> return (Just (fromSlugs env cont sm))

@@ -4,37 +4,52 @@ SLUGS ?= ../../slugs/src/slugs
 SALTY ?=
 
 ifeq ($(SALTY),)
-salty = stack exec -- salty -s $(SLUGS) -p $1 -o build $2
-else
-salty = $(SALTY) -s $(SLUGS) -p $1 -o build $2
+  exists := $(shell test -f ../dist/build/salty/salty && echo "exists")
+  ifeq ($(exists),exists)
+    SALTY := ../dist/build/salty/salty
+  else
+    SALTY := stack exec -- salty
+  endif
 endif
 
-all: DemoTest.class
+salty = $(SALTY) -s $(SLUGS) --dot --python --java=$1 -o build $2
 
-run-%: %.class
-	java -classpath .:build/ $*
+ifeq ($(V),)
+  Q := @
+else
+  Q :=
+endif
 
+sources := $(wildcard *.salt)
+jars    := $(addprefix build/,$(sources:.salt=.jar))
+built   := $(addprefix build/,$(sources:.salt=/.token))
+
+.PHONY: all build clean
+
+all: $(jars)
 
 build:
 	mkdir build
-
-define build-jar
-
-build/$1.jar: build/$1/.token
-	cd build && \
-	  find demo -name \*.java -exec javac {} \; && \
-	  find demo -name \*.class -exec jar cf $1.jar {} +
-
-build/$1/.token: $1.salt | build
-	$$(call salty,$1,$1.salt) && touch $$@
-
-endef
 
 clean:
 	$(RM) -r build
 	$(RM) DemoTest.class
 
-$(eval $(call build-jar,demo))
+svg: $(built)
+	$(Q) cd build && \
+	  find . -name \*.dot -exec dot -Tsvg -o{}.svg {} \;
+
 
 DemoTest.class: build/demo.jar DemoTest.java
-	javac -classpath build/ DemoTest.java
+	$(Q) javac -classpath build/ DemoTest.java
+
+run-%: %.class
+	$(Q) java -classpath .:build/ $*
+
+build/%.jar: build/%/.token
+	$(Q) cd build && \
+	  find $* -name \*.java -exec javac {} \; && \
+	  find $* -name \*.class -exec jar cf $*.jar {} +
+
+build/%/.token: %.salt | build
+	$(Q) $(call salty,$*,$*.salt) && touch $@

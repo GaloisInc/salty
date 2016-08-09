@@ -2,7 +2,9 @@
 
 import Options
 
+import CodeGen.Dot (dotFSM)
 import CodeGen.Java (Package,javaFSM)
+import CodeGen.Python (pythonFSM)
 import Scope.Check
 import Scope.Name (emptySupply)
 import Slugs (runSlugs)
@@ -54,7 +56,13 @@ main  =
               Nothing  -> do putStrLn "Unrealizable"
                              exitFailure
 
-     writePackage opts (javaFSM (optPackage opts) fsm)
+     case optJava opts of
+       Just pkg -> writePackage opts (javaFSM pkg fsm)
+       Nothing  -> return ()
+
+     when (optPython opts) (writePackage opts (pythonFSM fsm))
+
+     when (optDot opts) (writePackage opts (dotFSM fsm))
 
 
 writePackage :: Options -> Package -> IO ()
@@ -66,7 +74,7 @@ writePackage opts pkg = mapM_ writeClass (Map.toList pkg)
 
   writeClass (file,doc) =
     do let outFile = prefix </> file
+       putStrLn ("Writing " ++ outFile)
        createDirectoryIfMissing True (takeDirectory outFile)
 
-       putStrLn ("Writing " ++ outFile)
        writeFile outFile (show doc)
