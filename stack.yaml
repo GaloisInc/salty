@@ -5,7 +5,7 @@ packages:
     git: https://github.com/GaloisInc/language-slugs
     commit: master
 extra-deps:
-    - located-0.1.0.0
+    - located-0.1.1.0
     - text-1.2.2.1
 resolver: nightly-2016-07-11
 

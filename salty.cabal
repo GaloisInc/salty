@@ -7,6 +7,7 @@ maintainer:          trevor@galois.com
 category:            Language
 build-type:          Simple
 cabal-version:       >=1.10
+Tested-With:         GHC == 8.0.1, GHC == 8.0.2
 
 synopsis:            A DSL for synthesizing controllers from GR(1) specifications
 
