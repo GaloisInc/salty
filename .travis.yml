@@ -22,6 +22,7 @@ before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:$PATH
  - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip
  - unzip master.zip
+ - cd slugs-master/src && make
  - find . -name "slugs"
 
 install:
