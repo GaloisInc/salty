@@ -1,6 +1,6 @@
 # This file has been generated -- see https://github.com/hvr/multi-ghc-travis
-language: c
 sudo: false
+language: c
 
 addons:
   apt:
@@ -10,20 +10,7 @@ addons:
 	  packages:
 		  - ghc-8.0.1
 			- libboost-all-dev
-			- g++-4.9
-
-cache:
-  directories:
-    - $HOME/.stack
-    - apt
-
-# matrix:
-#   include:
-#     - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
-#       addons: {apt: {packages: [ghc-8.0.1,g++-4.8,libboost-all-dev], sources: [hvr-ghc]}}
-
-#   allow_failures:
-#     - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
+			- g++-4.8
 
 before_install:
  # Download and unpack the stack executable
