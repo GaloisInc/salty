@@ -20,7 +20,10 @@ before_install:
  - export PATH=$HOME/.local/bin:$PATH
  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
  - export PATH=/opt/ghc/$GHCVER/bin:$PATH
- - git clone https://github.com/VerifiableRobotics/slugs.git
+ - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip /tmp/slugs.zip
+ - unzip /tmp/slugs.zip
+ - ls /tmp/slugs
+ - /tmp/slugs/src/slugs
 
 install:
  - stack --version
@@ -31,10 +34,8 @@ install:
 script:
  - stack build
  - stack exec -- salty -h
- - ls
  - find . -name "slugs"
- - ./slugs/src/slugs
- - cd examples && STACK_YAML=../stack.yaml SLUGS=../slugs/src/slugs make
+ - cd examples && STACK_YAML=../stack.yaml SLUGS=/tmp/slugs/src/slugs make
 
 # EOF
 
