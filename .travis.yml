@@ -22,6 +22,12 @@ before_install:
  - mkdir -p ~/.local/bin
  - export PATH=$HOME/.local/bin:$PATH
  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+ - g++ --version
+ - which g++-4.9
+ - g++-4.9 --version
+ - which g++
+ - rm /usr/bin/g++
+ - ln -s /usr/bin/g++-4.9 /usr/bin/g++
  - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip
  - unzip master.zip
  - cd slugs-master/src && make
