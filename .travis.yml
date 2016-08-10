@@ -10,12 +10,11 @@ cache:
 addons:
   apt:
     sources:
-     - ubuntu-toolchain-r-test
+     - hvr-ghc
     packages:
      - ghc-8.0.1
-
-# - libboost-all-dev
-# - g++-4.9
+     - libboost-all-dev
+     - g++-4.9
 
 before_install:
  # Download and unpack the stack executable
