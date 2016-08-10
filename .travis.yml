@@ -5,7 +5,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.stack
-  - apt
+    - apt
 
 addons:
   apt:
