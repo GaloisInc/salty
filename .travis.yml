@@ -6,6 +6,12 @@ cache:
   directories:
     - $HOME/.stack
 
+addons:
+  apt:
+	  packages:
+		- g++-4.8
+		- libboost-all-dev
+
 matrix:
   include:
     - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
