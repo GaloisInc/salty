@@ -2,18 +2,28 @@
 language: c
 sudo: false
 
+addons:
+  apt:
+	  sources:
+		  - hvr-ghc
+			- ubuntu-toolchain-r-test
+	  packages:
+		  - ghc-8.0.1
+			- libboost-all-dev
+			- g++-4.9
+
 cache:
   directories:
     - $HOME/.stack
     - apt
 
-matrix:
-  include:
-    - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
-      addons: {apt: {packages: [ghc-8.0.1,g++-4.8,libboost-all-dev], sources: [hvr-ghc]}}
+# matrix:
+#   include:
+#     - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
+#       addons: {apt: {packages: [ghc-8.0.1,g++-4.8,libboost-all-dev], sources: [hvr-ghc]}}
 
-  allow_failures:
-    - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
+#   allow_failures:
+#     - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
 
 before_install:
  # Download and unpack the stack executable
