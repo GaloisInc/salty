@@ -11,6 +11,7 @@ addons:
   apt:
     sources:
      - hvr-ghc
+     - ubuntu-toolchain-r-test
     packages:
      - ghc-8.0.1
      - libboost-all-dev
