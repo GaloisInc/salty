@@ -13,15 +13,15 @@ addons:
      - ubuntu-toolchain-r-test
     packages:
      - ghc-8.0.1
-     - libboost-all-dev
-     - g++-4.9
+
+# - libboost-all-dev
+# - g++-4.9
 
 before_install:
  # Download and unpack the stack executable
  - mkdir -p ~/.local/bin
  - export PATH=$HOME/.local/bin:$PATH
  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
- - export PATH=/opt/ghc/$GHCVER/bin:$PATH
  - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip
  - unzip master.zip
  - cd slugs-master/src && make
