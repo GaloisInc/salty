@@ -2,12 +2,19 @@
 sudo: false
 language: c
 
+cache:
+  directories:
+   - $HOME/.stack
+   - apt
+
 addons:
   apt:
-	  packages:
-	   - ghc-8.0.1
-		 - libboost-all-dev
-		 - g++-4.8
+    sources:
+     - ubuntu-toolchain-r-test
+    packages:
+     - ghc-8.0.1
+     - libboost-all-dev
+     - g++-4.9
 
 before_install:
  # Download and unpack the stack executable
