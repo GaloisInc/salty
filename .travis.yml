@@ -31,7 +31,7 @@ install:
 script:
  - stack build
  - stack exec -- salty -h
- - cd examples && STACK_YAML=../stack.yaml SLUGS=../../slugs/src/slugs make
+ - cd examples && STACK_YAML=../stack.yaml SLUGS=../slugs/src/slugs make
 
 # EOF
 
