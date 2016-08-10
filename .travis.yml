@@ -31,7 +31,8 @@ install:
 script:
  - stack build
  - stack exec -- salty -h
- - cd examples && make
+ - ../../slugs/src/slugs -h
+ - cd examples && SLUGS=../../slugs/src/slugs make
 
 # EOF
 
