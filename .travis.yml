@@ -2,10 +2,10 @@
 sudo: false
 language: c
 
-cache:
-  directories:
-   - $HOME/.stack
-   - apt
+cache: false
+#  directories:
+#   - $HOME/.stack
+#   - apt
 
 addons:
   apt:
