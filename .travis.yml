@@ -29,7 +29,8 @@ before_install:
  - g++ --version
  - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip
  - unzip master.zip
- - cd slugs-master/src && make && ls
+ - cd slugs-master/src && make
+ - cd ../../
 
 install:
  - stack --version
