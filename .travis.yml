@@ -3,9 +3,9 @@ sudo: false
 language: c
 
 cache: false
-#  directories:
-#   - $HOME/.stack
-#   - apt
+  directories:
+   - $HOME/.stack
+   - apt
 
 addons:
   apt:
@@ -22,7 +22,7 @@ before_install:
  - mkdir -p ~/.local/bin
  - export PATH=$HOME/.local/bin:$PATH
  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
- - ln -s /opt/ghc/8.0.1/bin/ghc-8.0.1 ~/.local/bin/ghc
+ - export PATH=/opt/ghc/8.0.1/bin/ghc-8.0.1:$PATH
  - ghc --version
  - ln -s /usr/bin/g++-4.9 ~/.local/bin/g++
  - g++ --version
