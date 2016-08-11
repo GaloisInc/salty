@@ -40,9 +40,7 @@ install:
 script:
  - stack build
  - stack exec -- salty -h
- - pwd
- - find . -name "slugs"
- - cd salty/examples && STACK_YAML=../stack.yaml SLUGS=../slugs-master/src/slugs make
+ - cd examples && STACK_YAML=../stack.yaml SLUGS=../slugs-master/src/slugs make
 
 # EOF
 
