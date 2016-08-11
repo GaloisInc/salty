@@ -22,7 +22,8 @@ before_install:
  - mkdir -p ~/.local/bin
  - export PATH=$HOME/.local/bin:$PATH
  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
- - export PATH=/opt/ghc/8.0.1/bin/ghc-8.0.1:$PATH
+ - export GHCVER=8.0.1
+ - export PATH=/opt/ghc/$GHCVER/bin:$PATH
  - ghc --version
  - ln -s /usr/bin/g++-4.9 ~/.local/bin/g++
  - g++ --version
