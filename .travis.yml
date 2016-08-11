@@ -22,19 +22,16 @@ before_install:
  - mkdir -p ~/.local/bin
  - export PATH=$HOME/.local/bin:$PATH
  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
- - g++ --version
- - which g++-4.9
- - g++-4.9 --version
- - which g++
+ - ln -s /opt/ghc/8.0.1/bin/ghc-8.0.1 ~/.local/bin/ghc
+ - ghc --version
  - ln -s /usr/bin/g++-4.9 ~/.local/bin/g++
+ - g++ --version
  - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip
  - unzip master.zip
- - cd slugs-master/src && make
- - find . -name "slugs"
+ - cd slugs-master/src && make && ls
 
 install:
  - stack --version
- - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
 
 # Here starts the actual work to be performed for the package under test;
 # any command which exits with a non-zero exit code causes the build to fail.
