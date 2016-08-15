@@ -11,7 +11,12 @@ ifeq ($(SALTY),)
   ifeq ($(exists),exists)
     SALTY := ../dist/build/salty/salty
   else
-    SALTY := stack exec -- salty
+    exists := $(shell test -f ../../cabal.project && echo "exists")
+    ifeq ($(exists),exists)
+      SALTY := $(wildcard ../../dist-newstyle/build/salty-*/build/salty/salty)
+    else
+      SALTY := stack exec -- salty
+    endif
   endif
 endif
 
