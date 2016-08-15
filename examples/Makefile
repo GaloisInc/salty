@@ -3,6 +3,9 @@ SLUGS ?= ../../slugs/src/slugs
 
 SALTY ?=
 
+# Convenience for adding additional parameters to the salty command line
+EXTRA ?=
+
 ifeq ($(SALTY),)
   exists := $(shell test -f ../dist/build/salty/salty && echo "exists")
   ifeq ($(exists),exists)
@@ -12,7 +15,7 @@ ifeq ($(SALTY),)
   endif
 endif
 
-salty = $(SALTY) -s $(SLUGS) --dot --python --java=$1 -o build $2
+salty = $(SALTY) -s $(SLUGS) $(EXTRA) --dot --python --java=$1 -o build $2
 
 ifeq ($(V),)
   Q := @
