@@ -1,10 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Slugs.Env (
-    Env(),
+    Env(), emptyEnv,
     mkEnv,
     lookupVar, lookupVarName, lookupConstr,
-    lowerBound,
+    lowerBound, lowerBound',
+    hasLowerBound,
     lookupEnum,
   ) where
 
@@ -23,6 +24,13 @@ data Env = Env { envEnums   :: Map.Map Name EnumDef
                , envVars    :: Map.Map Name Slugs.Var
                , envVars'   :: Map.Map String Name
                } deriving (Show)
+
+emptyEnv :: Env
+emptyEnv  = Env { envEnums   = Map.empty
+                , envConstrs = Map.empty
+                , envBounds  = Map.empty
+                , envVars    = Map.empty
+                , envVars'   = Map.empty }
 
 -- | Produce an environment, input variables, and output variables, from a
 -- controller.
@@ -77,7 +85,14 @@ lookupVar n Env { .. } = Map.findWithDefault missing n envVars
   missing = panic ("Var missing from environment: " ++ show n)
 
 lowerBound :: Name -> Env -> Integer
-lowerBound n Env { .. } = Map.findWithDefault 0 n envBounds
+lowerBound  = lowerBound' 0
+{-# INLINE lowerBound #-}
+
+lowerBound' :: Integer -> Name -> Env -> Integer
+lowerBound' d n Env { .. } = Map.findWithDefault d n envBounds
+
+hasLowerBound :: Name -> Env -> Maybe Integer
+hasLowerBound n Env { .. } = Map.lookup n envBounds
 
 -- | Take the mangled version of the variable name, and translate it back to the
 -- original name.

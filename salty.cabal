@@ -50,6 +50,7 @@ library
                        monadLib,
                        GraphSCC,
                        text,
+                       bytestring,
                        pretty,
                        filepath
   hs-source-dirs:      src
@@ -62,6 +63,7 @@ executable salty
   build-depends:       base >=4.8 && <5,
                        language-slugs,
                        text,
+                       bytestring,
                        directory,
                        containers,
                        filepath,

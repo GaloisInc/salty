@@ -1,34 +1,46 @@
 module Options where
 
 import Control.Monad (when)
+import Data.Char (toLower)
 import Data.Maybe (fromMaybe)
 import System.Console.GetOpt
 import System.Environment (getArgs,getProgName)
 import System.Exit (exitSuccess,exitFailure)
+import System.FilePath (takeExtension)
 
 
 data Options = Options { optHelp    :: Bool
                        , optJava    :: Maybe String
                        , optPython  :: Bool
                        , optDot     :: Bool
-                       , optInput   :: FilePath
+                       , optInput   :: Maybe Input
+                       , optInputLen:: Maybe Int
                        , optOutDir  :: Maybe FilePath
                        , optSlugs   :: FilePath
                        , optDumpParsed :: Bool
                        , optDumpSpec :: Bool
                        } deriving (Show)
 
+data Input = InpSpec FilePath
+             -- ^ A salty specification
+
+           | InpJSON FilePath
+             -- ^ Used when just generating code from the output of slugs.
+
+             deriving (Show)
+
 defaultOptions :: Options
 defaultOptions  =
-  Options { optHelp    = False
-          , optJava    = Nothing
-          , optPython  = False
-          , optDot     = False
-          , optInput   = "controller.salt"
-          , optOutDir  = Nothing
-          , optSlugs   = "slugs"
+  Options { optHelp       = False
+          , optJava       = Nothing
+          , optPython     = False
+          , optDot        = False
+          , optInput      = Nothing
+          , optInputLen   = Nothing
+          , optOutDir     = Nothing
+          , optSlugs      = "slugs"
           , optDumpParsed = False
-          , optDumpSpec = False
+          , optDumpSpec   = False
           }
 
 
@@ -64,6 +76,9 @@ options  =
   , Option "s" ["slugs"] (ReqArg setSlugs "SLUGS_PATH")
     "The path to the slugs executable"
 
+  , Option "l" ["length"] (ReqArg setInputLen "NUMBER")
+    "When just using the code generator, this is the number of input variables in the slugs output"
+
   , Option "" ["ddump-parse"] (NoArg setDumpParsed)
     "Dump the parse tree for the controller"
 
@@ -78,7 +93,17 @@ setJava :: Maybe String -> Parser
 setJava mb = OK (\opts -> opts { optJava = Just (fromMaybe "" mb) })
 
 setInput :: String -> Parser
-setInput str = OK (\opts -> opts { optInput = str })
+setInput str =
+  case map toLower (takeExtension str) of
+    ".json" -> OK (\opts -> opts { optInput = Just (InpJSON str)})
+    ".salt" -> OK (\opts -> opts { optInput = Just (InpSpec str) })
+    _       -> Error ["Unknown input filetype for `" ++ str ++ "`"]
+
+setInputLen :: String -> Parser
+setInputLen str =
+  case reads str of
+    [(x,"")] -> OK (\opts -> opts { optInputLen = Just x })
+    _        -> Error ["Unable to parse input length"]
 
 setOutDir :: String -> Parser
 setOutDir str = OK (\opts -> opts { optOutDir = Just str })
