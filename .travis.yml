@@ -5,7 +5,11 @@ language: c
 cache:
   directories:
    - $HOME/.stack
-   - apt
+   - $HOME/.cabal
+   - $HOME/.ghc
+   - $HOME/apt
+   - $HOME/.local/bin
+   - $HOME/slugs-master
 
 addons:
   apt:
@@ -18,29 +22,22 @@ addons:
      - g++-4.9
 
 before_install:
- # Download and unpack the stack executable
- - mkdir -p ~/.local/bin
- - export PATH=$HOME/.local/bin:$PATH
- - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+ # Setup tools
+ - bash scripts/setup.sh
  - export GHCVER=8.0.1
- - export PATH=/opt/ghc/$GHCVER/bin:$PATH
+ - export PATH=~/.local/bin:/opt/ghc/$GHCVER/bin:$PATH
  - ghc --version
- - ln -s /usr/bin/g++-4.9 ~/.local/bin/g++
  - g++ --version
- - wget https://github.com/VerifiableRobotics/slugs/archive/master.zip
- - unzip master.zip
- - cd slugs-master/src && make
- - cd ../../
 
 install:
- - stack --version
+ - stack --no-terminal install --only-dependencies
 
 # Here starts the actual work to be performed for the package under test;
 # any command which exits with a non-zero exit code causes the build to fail.
 script:
- - stack build
- - stack exec -- salty -h
- - cd examples && STACK_YAML=../stack.yaml SLUGS=../slugs-master/src/slugs make
+ - stack --no-terminal build
+ - stack --no-terminal exec -- salty -h
+ - cd examples && STACK_YAML=../stack.yaml SLUGS=~/slugs-master/src/slugs make
 
 # EOF
 
