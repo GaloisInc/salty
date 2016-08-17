@@ -7,7 +7,7 @@ import CodeGen.Java (Package,javaFSM)
 import CodeGen.Python (pythonFSM)
 import Scope.Check
 import Scope.Name (emptySupply)
-import Slugs (runSlugs,parseSlugsJSON,FSM)
+import Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
 import Syntax.Parser
 import TypeCheck
 
@@ -89,6 +89,20 @@ genFSM opts (InpJSON path) =
      case parseSlugsJSON path numInputs json of
        Just fsm -> return fsm
        Nothing  -> do putStrLn "Failed to parse slugs JSON output"
+                      exitFailure
+
+genFSM opts (InpSlugsOut path) =
+  do numInputs <-
+       case optInputLen opts of
+         Just len -> return len
+         Nothing  -> do putStrLn "`--length` flag is required when consuming raw slugs output"
+                        exitFailure
+
+     slugsout <- LB.readFile path
+
+     case parseSlugsOut path numInputs slugsout of
+       Just fsm -> return fsm
+       Nothing  -> do putStrLn "Failed to parse slugs output"
                       exitFailure
 
 

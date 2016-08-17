@@ -25,8 +25,10 @@ data Input = InpSpec FilePath
              -- ^ A salty specification
 
            | InpJSON FilePath
-             -- ^ Used when just generating code from the output of slugs.
+             -- ^ Used when just generating code from the json output of slugs.
 
+           | InpSlugsOut FilePath
+             -- ^ Used when just generating code from the output of slugs.
              deriving (Show)
 
 defaultOptions :: Options
@@ -95,9 +97,10 @@ setJava mb = OK (\opts -> opts { optJava = Just (fromMaybe "" mb) })
 setInput :: String -> Parser
 setInput str =
   case map toLower (takeExtension str) of
-    ".json" -> OK (\opts -> opts { optInput = Just (InpJSON str)})
-    ".salt" -> OK (\opts -> opts { optInput = Just (InpSpec str) })
-    _       -> Error ["Unknown input filetype for `" ++ str ++ "`"]
+    ".json"     -> OK (\opts -> opts { optInput = Just (InpJSON     str) })
+    ".salt"     -> OK (\opts -> opts { optInput = Just (InpSpec     str) })
+    ".slugsout" -> OK (\opts -> opts { optInput = Just (InpSlugsOut str) })
+    _           -> Error ["Unknown input filetype for `" ++ str ++ "`"]
 
 setInputLen :: String -> Parser
 setInputLen str =

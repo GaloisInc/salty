@@ -1,6 +1,7 @@
 module Slugs (
     runSlugs,
     parseSlugsJSON,
+    parseSlugsOut,
     FSM(..),
     Node(..),
   ) where
@@ -29,3 +30,6 @@ runSlugs dbg slugsProg c =
 
 parseSlugsJSON :: FilePath -> Int -> L.ByteString -> Maybe FSM
 parseSlugsJSON path numInputs input = fromSlugs' path numInputs `fmap` S.fsmFromJSON input
+
+parseSlugsOut :: FilePath -> Int -> L.ByteString -> Maybe FSM
+parseSlugsOut path numInputs input = fromSlugs' path numInputs `fmap` S.parseSlugsOut input
