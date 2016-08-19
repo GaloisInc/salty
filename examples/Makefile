@@ -32,7 +32,7 @@ sources := $(wildcard *.salt)
 jars    := $(addprefix build/,$(sources:.salt=.jar))
 built   := $(addprefix build/,$(sources:.salt=/.token))
 
-.PHONY: all clean
+.PHONY: all gen clean
 
 all: $(jars)
 
@@ -42,6 +42,8 @@ build:
 clean:
 	$(RM) -r build
 	$(RM) DemoTest.class
+
+gen: $(built)
 
 svg: $(built)
 	$(Q) cd build && \

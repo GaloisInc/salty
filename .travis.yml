@@ -37,7 +37,7 @@ install:
 script:
  - stack --no-terminal build
  - stack --no-terminal exec -- salty -h
- - cd examples && STACK_YAML=../stack.yaml SLUGS=~/slugs-master/src/slugs make
+ - cd examples && STACK_YAML=../stack.yaml SLUGS=~/slugs-master/src/slugs make gen
 
 # EOF
 
