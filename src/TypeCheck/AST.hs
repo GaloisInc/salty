@@ -26,6 +26,7 @@ instance Ord TVar where
   compare = compare `on` tvUnique
 
 data Type = TFree TVar
+          | TSet Type
           | TBool
           | TInt
           | TEnum Name
@@ -88,7 +89,8 @@ data Expr = ETrue
           | ENot Expr
           | ENext Expr
           | EEq Expr Expr
-            -- ^ Coerce from a state var to a value
+          | ESet [Expr]
+          | EIn Expr Expr
             deriving (Show,Eq,Ord)
 
 
@@ -139,6 +141,8 @@ traverseExpr f (EOr  a b) = EOr   <$> f a <*> f b
 traverseExpr f (ENot a)   = ENot  <$> f a
 traverseExpr f (ENext a)  = ENext <$> f a
 traverseExpr f (EEq a b)  = EEq   <$> f a <*> f b
+traverseExpr f (EIn a b)  = EIn   <$> f a <*> f b
+traverseExpr f (ESet es)  = ESet  <$> traverse f es
 
 
 -- Pretty-printing -------------------------------------------------------------

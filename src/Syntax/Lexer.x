@@ -71,6 +71,8 @@ $white+ ;
 "!="    { keyword Kneq    }
 "("     { keyword Klparen }
 ")"     { keyword Krparen }
+"{"     { keyword Klbrace }
+"}"     { keyword Krbrace }
 ","     { keyword Kcomma  }
 
 "\/"    { keyword Kor }
@@ -84,7 +86,8 @@ $white+ ;
 -- Built-in Types
 "Bool"  { keyword KBool  }
 "Int"   { keyword KInt   }
-"->"    { keyword Karrow }
+"->"    { keyword Krarrow }
+"<-"    { keyword Klarrow }
 
 -- Built-in constants
 "True"  { keyword KTrue  }
@@ -128,6 +131,8 @@ data Keyword = Kif
              | Kneq
              | Klparen
              | Krparen
+             | Klbrace
+             | Krbrace
              | Kprime
              | Kenum
              | Kpipe
@@ -141,11 +146,13 @@ data Keyword = Kif
              | Kand
              | Knot
              | Kinput
+             | Kin
              | Koutput
              | KBool
              | KInt
              | Kcolon
-             | Karrow
+             | Klarrow
+             | Krarrow
              | KTrue
              | KFalse
              | Ksys_trans

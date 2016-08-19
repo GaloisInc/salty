@@ -143,6 +143,8 @@ instance Types Type where
     do unify' x1 x2
        unify' y1 y2
 
+  unify' (TSet a) (TSet b) = unify' a b
+
   unify' TBool TBool = return ()
   unify' TInt  TInt  = return ()
 
@@ -155,6 +157,8 @@ instance Types Type where
   match' (TFun x1 y1) (TFun x2 y2) =
     do match' x1 x2
        match' y1 y2
+
+  match' (TSet a) (TSet b) = match' a b
 
   match' TBool TBool = return ()
   match' TInt  TInt  = return ()
@@ -182,6 +186,10 @@ instance Types Type where
       do a' <- go seen a
          b' <- go seen b
          return (TFun a' b')
+
+    go seen (TSet as) =
+      do as' <- go seen as
+         return (TSet as')
 
     go _ ty = return ty
 

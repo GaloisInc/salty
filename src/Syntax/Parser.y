@@ -29,7 +29,8 @@ import           Text.Location.Layout
   -- types
   'Bool'       { Keyword KBool       $$ }
   'Int'        { Keyword KInt        $$ }
-  '->'         { Keyword Karrow      $$ }
+  '->'         { Keyword Krarrow     $$ }
+  '<-'         { Keyword Klarrow     $$ }
 
   -- constants
   'True'       { Keyword KTrue       $$ }
@@ -53,6 +54,8 @@ import           Text.Location.Layout
   '|'          { Keyword Kpipe       $$ }
   '('          { Keyword Klparen     $$ }
   ')'          { Keyword Krparen     $$ }
+  '{'          { Keyword Klbrace     $$ }
+  '}'          { Keyword Krbrace     $$ }
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
@@ -81,7 +84,7 @@ import           Text.Location.Layout
 %right '||'
 %right '&&'
 %right NOT
-%nonassoc '==' '!='
+%nonassoc '==' '!=' '<-'
 
 
 %monad { Either Error }
@@ -216,6 +219,9 @@ bexpr :: { Expr PName }
   | bexpr '<->' bexpr
     { ELoc (EIff $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
+  | bexpr '<-' bexpr
+    { ELoc (EIn $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+
   | app_expr
     { $1 }
 
@@ -241,6 +247,9 @@ aexpr :: { Expr PName }
 
   | 'False'
     { ELoc (EFalse `at` $1) }
+
+  | '{' sep(',', expr) '}'
+    { ELoc (ESet $2 `at` mappend $1 $3) }
 
   | '(' expr ')'
     { $2 }

@@ -265,6 +265,25 @@ checkExpr ty (AST.ECase e cs) =
      e' <- checkExpr ety e
      checkCases ety e' ty cs
 
+checkExpr ty (AST.ESet es) =
+  do etv <- newTVar Nothing
+     let ety = TFree etv
+     unify ty (TSet ety)
+
+     es' <- traverse (checkExpr ety) es
+
+     return (ESet es')
+
+checkExpr ty (AST.EIn e set) =
+  do etv  <- newTVar Nothing
+     let ety = TFree etv
+     e'   <- checkExpr ety e
+     set' <- checkExpr (TSet ety) set
+
+     unify ty TBool
+
+     return (EIn e' set')
+
 -- using `ENext` is an explicit coercion into a value type, so the argument is
 -- required to be `TStateVar a`
 checkExpr ty (AST.ENext e) =
