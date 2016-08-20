@@ -282,7 +282,15 @@ checkExpr ty (AST.EIn e set) =
 
      unify ty TBool
 
-     return (EIn e' set')
+     return (EApp (EApp EIn e') set')
+
+checkExpr ty AST.EAny =
+  do unify ty (TFun (TSet TBool) TBool)
+     return EAny
+
+checkExpr ty AST.EAll =
+  do unify ty (TFun (TSet TBool) TBool)
+     return EAll
 
 -- using `ENext` is an explicit coercion into a value type, so the argument is
 -- required to be `TStateVar a`

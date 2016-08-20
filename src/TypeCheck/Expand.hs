@@ -64,6 +64,25 @@ instance Expand Expr where
   expand' env e =
     case destEApp e of
 
+      (EAny, [set]) ->
+        let set' = expand' env set
+         in case set' of
+              ESet es -> expand' env (foldl EOr EFalse es)
+              _       -> EApp EAny set'
+
+      (EAll, [set]) ->
+        let set' = expand' env set
+         in case set' of
+              ESet es -> expand' env (foldl EAnd ETrue es)
+              _       -> EApp EAll set'
+
+      (EIn, [a,set]) ->
+        let a'   = expand' env a
+            set' = expand' env set
+         in case set' of
+              ESet es -> expand' env (foldl EOr EFalse [ EEq a' x | x <- es ])
+              _       -> EApp (EApp EIn a') set'
+
       (EVar f, args) | not (null args) -> expand' env (expandDef env f args)
 
       (ETrue,    []) -> e
@@ -78,13 +97,6 @@ instance Expand Expr where
       (ENext l,  []) -> eNext (expand' env l)
       (EEq  l r, []) -> EEq   (expand' env l) (expand' env r)
       (ESet es,  []) -> ESet  (map (expand' env) es)
-
-      (EIn a set, []) ->
-        let a'   = expand' env a
-            set' = expand' env set
-         in case set' of
-              ESet es -> expand' env (foldl EOr EFalse [ EEq a' x | x <- es ])
-              _       -> EIn a' set'
 
       _ -> panic ("Unexpected expression: " ++ show e)
 

@@ -266,6 +266,9 @@ checkExpr (EImp a b)  = EImp `fmap` checkExpr a <*> checkExpr b
 checkExpr (EIff a b)  = EIff `fmap` checkExpr a <*> checkExpr b
 checkExpr (ECase e cs)= ECase `fmap` checkExpr e <*> traverse checkCase cs
 
+checkExpr EAny        = pure EAny
+checkExpr EAll        = pure EAny
+
 checkExpr (ESet es)   = ESet  `fmap` traverse checkExpr es
 checkExpr (EIn a b)   = EIn   `fmap` checkExpr a <*> checkExpr b
 

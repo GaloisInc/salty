@@ -88,6 +88,9 @@ data Expr name = EVar name
                | EIn (Expr name) (Expr name)
                  -- ^ @ x <- { a, b, c } @
 
+               | EAny
+               | EAll
+
                | ELoc (Loc (Expr name))
                  deriving (Functor,Show)
 
@@ -228,6 +231,8 @@ exprFvs (EIff a b)  = Set.union (exprFvs a) (exprFvs b)
 exprFvs (ECase e gs) = Set.union (exprFvs e) (foldMap caseFvs gs)
 exprFvs (ESet es)   = Set.unions (map exprFvs es)
 exprFvs (EIn a b)   = Set.union (exprFvs a) (exprFvs b)
+exprFvs EAny        = Set.empty
+exprFvs EAll        = Set.empty
 exprFvs (ELoc loc)  = exprFvs (thing loc)
 
 caseFvs :: Ord name => Case name -> Set.Set name

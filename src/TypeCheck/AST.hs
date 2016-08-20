@@ -90,7 +90,9 @@ data Expr = ETrue
           | ENext Expr
           | EEq Expr Expr
           | ESet [Expr]
-          | EIn Expr Expr
+          | EIn
+          | EAny
+          | EAll
             deriving (Show,Eq,Ord)
 
 
@@ -132,6 +134,9 @@ eIf p t f = eAnd [ eImp p t, eImp (eNot p) f ]
 traverseExpr :: Traversal' Expr Expr
 traverseExpr _ ETrue      = pure ETrue
 traverseExpr _ EFalse     = pure EFalse
+traverseExpr _ EIn        = pure EIn
+traverseExpr _ EAny       = pure EAny
+traverseExpr _ EAll       = pure EAll
 traverseExpr _ e@EVar{}   = pure e
 traverseExpr _ e@ECon{}   = pure e
 traverseExpr _ e@ENum{}   = pure e
@@ -141,7 +146,6 @@ traverseExpr f (EOr  a b) = EOr   <$> f a <*> f b
 traverseExpr f (ENot a)   = ENot  <$> f a
 traverseExpr f (ENext a)  = ENext <$> f a
 traverseExpr f (EEq a b)  = EEq   <$> f a <*> f b
-traverseExpr f (EIn a b)  = EIn   <$> f a <*> f b
 traverseExpr f (ESet es)  = ESet  <$> traverse f es
 
 
@@ -192,6 +196,10 @@ instance PP Expr where
   ppPrec _ (ENot a)   = text "!" <> ppPrec 10 a
   ppPrec p (EApp f x) = optParens (p >= 10) (hang (pp f) 2 (ppPrec 10 x))
   ppPrec _ (ENext e)  = char 'X' <> parens (pp e)
+  ppPrec _ (ESet es)  = braces (ppList es)
+  ppPrec p EIn        = text "in"
+  ppPrec _ EAll       = text "all"
+  ppPrec p EAny       = text "any"
 
 ppBinop :: (PP a, PP b) => Int -> a -> Doc -> b -> Doc
 ppBinop p a x b = optParens (p >= 10) (sep [ppPrec 10 a, x, ppPrec 10 b])
@@ -204,4 +212,5 @@ instance PP Type where
   ppPrec _ TBool      = text "Bool"
   ppPrec _ TInt       = text "Num"
   ppPrec _ (TEnum n)  = pp n
+  ppPrec _ (TSet a)   = braces (pp a)
   ppPrec p (TFun a b) = optParens (p >= 10) (sep [ ppPrec 10 a <+> text "->", pp b ])

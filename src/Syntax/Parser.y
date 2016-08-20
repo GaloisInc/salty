@@ -59,6 +59,9 @@ import           Text.Location.Layout
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
+  'any'        { Keyword Kany        $$ }
+  'all'        { Keyword Kall        $$ }
+
   '...'        { Keyword Krange      $$ }
 
   'prime'      { Keyword Kprime      $$ }
@@ -244,6 +247,12 @@ aexpr :: { Expr PName }
 
   | 'True'
     { ELoc (ETrue `at` $1) }
+
+  | 'any'
+    { ELoc (EAny `at` $1) }
+
+  | 'all'
+    { ELoc (EAll `at` $1) }
 
   | 'False'
     { ELoc (EFalse `at` $1) }
