@@ -10,6 +10,7 @@ import Scope.Name (emptySupply)
 import Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
 import Syntax.Parser
 import TypeCheck
+import PP (pp)
 
 import           Control.Exception (catch,IOException)
 import           Control.Monad (when)
@@ -66,6 +67,8 @@ genFSM opts (InpSpec path) =
          Right tc  -> return tc
          Left errs -> do mapM_ (print . ppTCError) errs
                          exitFailure
+
+     when (optDumpCore opts) (print (pp tcCont))
 
      mb <- runSlugs (optDumpSpec opts) (optSlugs opts) tcCont `catch` \ e ->
        do let _ = e :: IOException
