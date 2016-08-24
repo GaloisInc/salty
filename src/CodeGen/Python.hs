@@ -120,9 +120,10 @@ pythonValue _ (VBool b) = text (show b)
 
 pythonValue pfx (VCon n)  = 
   case nameOrigin n of
-    FromController o -> pfx <> char '.' <> pp o <> char '.' <> upper n
-    FromDecl _ d     -> pfx <> char '.' <> pp d <> char '.' <> upper n
-    FromParam _ d    -> pfx <> char '.' <> pp d <> char '.' <> upper n
+    FromController _ -> pfx <> char '.'                             <> upper n
+    FromDecl _ d     -> pfx <> char '.' <> pythonName d <> char '.' <> upper n
+    FromParam _ d    -> pfx <> char '.' <> pythonName d <> char '.' <> upper n
+    Generated _      -> pythonName n
 
 pythonValue _ (VNum i)  = integer i
 

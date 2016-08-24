@@ -28,14 +28,14 @@ javaFSM pkgName FSM { .. } =
                | (kname,doc) <- controller : exception : result ++ enums ]
   where
 
-  controller = (text pkgName <> char '.' <> pp fsmName,klass)
+  controller = (text pkgName <> char '.' <> javaName fsmName,klass)
     where
     klass = mkClass pkgName (map fst (exception:result))
           $ block (public (cls (javaName fsmName)))
           $ vcat
           $ [ private (text "int" <+> text "mState" <> end)
             , text ""
-            , block (public (pp fsmName <> parens empty)) $ vcat
+            , block (public (javaName fsmName <> parens empty)) $ vcat
               [ assign (text "mState") (int 0)
               ]
             , text ""
@@ -65,7 +65,7 @@ qnameToPath qname = map translate qname <.> "java"
 
 -- | Generate the module names for imported enum types.
 importEnums :: PackageName -> StateVars -> Imports
-importEnums pkgName vars = [ text pkgName <> char '.' <> pp n | n <- enums ]
+importEnums pkgName vars = [ text pkgName <> char '.' <> javaName n | n <- enums ]
   where
   enums = nub [ eName d | (_,VarInfo { viType = VTEnum d }) <- Map.toList vars ]
 
@@ -85,7 +85,7 @@ mkClass pkgName imps decl = vcat $
 javaEnum :: PackageName -> EnumDef -> (Doc,Doc)
 javaEnum pkgName EnumDef { .. } = (name,klass)
   where
-  name  = text pkgName <> char '.' <> pp eName
+  name  = text pkgName <> char '.' <> javaName eName
   klass = mkClass pkgName []
         $ block (public (enum (javaName eName)))
                 (vcat (punctuate comma (map javaName eCons)))
@@ -127,7 +127,7 @@ moveFun enumPkg inps outs nodes =
 
 javaVType :: PackageName -> VType -> Doc
 javaVType _     VTBool      = text "boolean"
-javaVType enums (VTEnum e)  = text enums <> char '.' <> pp (eName e)
+javaVType enums (VTEnum e)  = text enums <> char '.' <> javaName (eName e)
 javaVType _     (VTInt _ _) = text "int"
 
 mkVar :: PackageName -> (Name,VarInfo) -> (Doc,Doc)
@@ -176,9 +176,10 @@ javaValue _ (VBool False) = text "false"
 
 javaValue enumPkg (VCon n) =
   case nameOrigin n of
-    FromController o -> text enumPkg <> char '.' <> pp o <> char '.' <> pp n
-    FromDecl _ d     -> text enumPkg <> char '.' <> pp d <> char '.' <> pp n
-    FromParam _ d    -> text enumPkg <> char '.' <> pp d <> char '.' <> pp n
+    FromController _ -> text enumPkg <> char '.'                           <> javaName n
+    FromDecl _ d     -> text enumPkg <> char '.' <> javaName d <> char '.' <> javaName n
+    FromParam _ d    -> text enumPkg <> char '.' <> javaName d <> char '.' <> javaName n
+    Generated _      -> javaName n
 
 javaValue _ (VNum n) = pp n
 
