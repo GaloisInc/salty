@@ -9,17 +9,20 @@ import System.Exit (exitSuccess,exitFailure)
 import System.FilePath (takeExtension)
 
 
-data Options = Options { optHelp    :: Bool
-                       , optJava    :: Maybe String
-                       , optPython  :: Bool
-                       , optDot     :: Bool
-                       , optInput   :: Maybe Input
-                       , optInputLen:: Maybe Int
-                       , optOutDir  :: Maybe FilePath
-                       , optSlugs   :: FilePath
-                       , optDumpParsed :: Bool
-                       , optDumpCore :: Bool
-                       , optDumpSpec :: Bool
+data Options = Options { optHelp         :: !Bool
+                       , optOptLevel     :: !Int
+                       , optJava         :: !(Maybe String)
+                       , optPython       :: !Bool
+                       , optDot          :: !Bool
+                       , optInput        :: !(Maybe Input)
+                       , optInputLen     :: !(Maybe Int)
+                       , optOutDir       :: !(Maybe FilePath)
+                       , optSlugs        :: !FilePath
+                       , optDumpParsed   :: !Bool
+                       , optDumpCore     :: !Bool
+                       , optDumpExpanded :: !Bool
+                       , optDumpOpt      :: !Bool
+                       , optDumpSpec     :: !Bool
                        } deriving (Show)
 
 data Input = InpSpec FilePath
@@ -34,17 +37,20 @@ data Input = InpSpec FilePath
 
 defaultOptions :: Options
 defaultOptions  =
-  Options { optHelp       = False
-          , optJava       = Nothing
-          , optPython     = False
-          , optDot        = False
-          , optInput      = Nothing
-          , optInputLen   = Nothing
-          , optOutDir     = Nothing
-          , optSlugs      = "slugs"
-          , optDumpParsed = False
-          , optDumpCore   = False
-          , optDumpSpec   = False
+  Options { optHelp         = False
+          , optOptLevel     = 1
+          , optJava         = Nothing
+          , optPython       = False
+          , optDot          = False
+          , optInput        = Nothing
+          , optInputLen     = Nothing
+          , optOutDir       = Nothing
+          , optSlugs        = "slugs"
+          , optDumpParsed   = False
+          , optDumpCore     = False
+          , optDumpExpanded = False
+          , optDumpOpt      = False
+          , optDumpSpec     = False
           }
 
 
@@ -83,11 +89,20 @@ options  =
   , Option "l" ["length"] (ReqArg setInputLen "NUMBER")
     "When just using the code generator, this is the number of input variables in the slugs output"
 
+  , Option "O" [] (ReqArg setOptLevel "NUMBER")
+    "Enable/disable optimizations by passing 0/1"
+
   , Option "" ["ddump-parse"] (NoArg setDumpParsed)
     "Dump the parse tree for the controller"
 
   , Option "" ["ddump-core"] (NoArg setDumpCore)
     "Dump the core representation of the type-checked controller"
+
+  , Option "" ["ddump-expanded"] (NoArg setDumpExpanded)
+    "Dump the expanded form of the controller"
+
+  , Option "" ["ddump-opt"] (NoArg setDumpOpt)
+    "Dump the optimized core representation of the type-checked controller"
 
   , Option "" ["ddump-spec"] (NoArg setDumpSpec)
     "Dump the slugs spec before running slugs"
@@ -119,11 +134,23 @@ setOutDir str = OK (\opts -> opts { optOutDir = Just str })
 setSlugs :: String -> Parser
 setSlugs str = OK (\opts -> opts { optSlugs = str })
 
+setOptLevel :: String -> Parser
+setOptLevel str =
+  case reads str of
+    [(x,"")] -> OK (\opts -> opts { optOptLevel = x })
+    _        -> Error ["Failed to parse a number for optimization level"]
+
 setDumpParsed :: Parser
 setDumpParsed  = OK (\opts -> opts { optDumpParsed = True })
 
 setDumpCore :: Parser
 setDumpCore  = OK (\opts -> opts { optDumpCore = True })
+
+setDumpExpanded :: Parser
+setDumpExpanded  = OK (\opts -> opts { optDumpExpanded = True })
+
+setDumpOpt :: Parser
+setDumpOpt  = OK (\opts -> opts { optDumpOpt = True })
 
 setDumpSpec :: Parser
 setDumpSpec  = OK (\opts -> opts { optDumpSpec = True })

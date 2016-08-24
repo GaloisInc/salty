@@ -116,6 +116,10 @@ checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
 --  * Introduce type-variables for all functions in the group
 --  * Check each function individually 
 --  * Apply the substitution to each function, yielding its type
+--
+--  Question: Should we allow recursive functions at all? We can only support
+--  mutual recursion that will eventual terminate, but it might be easier to
+--  just disallow it altogether.
 inferFunGroup :: Bool -> [AST.Loc (AST.Fun Name)] -> TC (Controller -> Controller)
 inferFunGroup isRec funs =
   do let names = [ thing (AST.fName (thing locFun)) | locFun <- funs ]
@@ -142,10 +146,11 @@ checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
     do e <- checkGuard rty fBody
        ps'  <- zonk ps
        rty' <- zonk rty
+       e'   <- zonk e
        return Fun { fName   = thing fName
                   , fParams = zip (map thing fParams) ps'
                   , fResult = rty'
-                  , fBody   = e }
+                  , fBody   = e' }
 
 
 -- | Translate guards into if-then-else syntax.
@@ -182,12 +187,12 @@ checkExpr :: Type -> AST.Expr Name -> TC Expr
 checkExpr ty (AST.EVar n) =
   do ty' <- lookupVar n
      unify ty ty'
-     return (EVar n)
+     return (EVar ty' n)
 
 checkExpr ty (AST.ECon n) =
   do ty' <- lookupVar n
      unify ty ty'
-     return (ECon n)
+     return (ECon ty' n)
 
 checkExpr ty (AST.ENum i) =
   do unify ty TInt
@@ -237,7 +242,7 @@ checkExpr ty (AST.EEq a b) =
      a' <- checkExpr aty a
      b' <- checkExpr aty b
      unify ty TBool
-     return (EEq a' b')
+     return (EEq aty a' b')
 
 checkExpr ty (AST.ENeq a b) =
   do atv <- newTVar Nothing
@@ -245,7 +250,7 @@ checkExpr ty (AST.ENeq a b) =
      a' <- checkExpr aty a
      b' <- checkExpr aty b
      unify ty TBool
-     return (ENot (EEq a' b'))
+     return (ENot (EEq aty a' b'))
 
 checkExpr ty (AST.EImp a b) =
   do a' <- checkExpr TBool a
@@ -272,7 +277,7 @@ checkExpr ty (AST.ESet es) =
 
      es' <- traverse (checkExpr ety) es
 
-     return (ESet es')
+     return (ESet ety es')
 
 checkExpr ty (AST.EIn e set) =
   do etv  <- newTVar Nothing
@@ -282,21 +287,19 @@ checkExpr ty (AST.EIn e set) =
 
      unify ty TBool
 
-     return (EApp (EApp EIn e') set')
+     return (EIn ety e' set')
 
 checkExpr ty AST.EAny =
   do unify ty (TFun (TSet TBool) TBool)
-     return EAny
+     return (EPrim PAny)
 
 checkExpr ty AST.EAll =
   do unify ty (TFun (TSet TBool) TBool)
-     return EAll
+     return (EPrim PAll)
 
--- using `ENext` is an explicit coercion into a value type, so the argument is
--- required to be `TStateVar a`
 checkExpr ty (AST.ENext e) =
   do e' <- checkExpr ty e
-     return (ENext e')
+     return (ENext ty e')
 
 checkExpr ty (AST.ELoc loc) = withLoc loc (checkExpr ty)
 
@@ -347,11 +350,11 @@ checkPat :: Type -> Expr -> AST.Pat Name -> TC Expr
 checkPat ty e (AST.PCon n) =
   do nty <- lookupVar n
      unify ty nty
-     return (EEq e (ECon n))
+     return (EEq ty e (ECon nty n))
 
 -- XXX make sure to check that the number fits in the bounds expected
-checkPat _ e (AST.PNum n) =
-  do return (EEq e (ENum n))
+checkPat ty e (AST.PNum n) =
+  do return (EEq ty e (ENum n))
 
 checkPat ty e (AST.PLoc loc) = withLoc loc (checkPat ty e)
 

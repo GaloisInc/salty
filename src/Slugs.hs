@@ -8,9 +8,7 @@ module Slugs (
 
 import Slugs.FSM (fromSlugs,fromSlugs',FSM(..),Node(..))
 import Slugs.Translate (mkSpec)
-import Opt.Simpl (simp)
 import TypeCheck.AST (Controller)
-import TypeCheck.Expand (expand)
 
 import           Control.Monad (when)
 import qualified Data.ByteString.Lazy as L
@@ -18,9 +16,8 @@ import qualified Language.Slugs as S
 
 
 runSlugs :: Bool -> FilePath -> Controller -> IO (Maybe FSM)
-runSlugs dbg slugsProg c =
-  do let cont = simp (expand c)
-     let (spec,env) = mkSpec cont
+runSlugs dbg slugsProg cont =
+  do let (spec,env) = mkSpec cont
      when dbg (print (S.ppSpec spec))
      res <- S.runSlugs dbg slugsProg spec
      case res of

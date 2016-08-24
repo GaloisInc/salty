@@ -24,6 +24,9 @@ data Origin = FromController !(Range FilePath)
             | FromParam !(Range FilePath) !Name
               -- ^ Parameter definition region and parent function
 
+            | Generated String
+              -- ^ Generated from this pass
+
               deriving (Show)
 
 instance HasLoc Origin where
@@ -31,6 +34,7 @@ instance HasLoc Origin where
   getLoc (FromController r) = r
   getLoc (FromDecl r _)     = r
   getLoc (FromParam r _)    = r
+  getLoc Generated{}        = mempty
 
 
 data Name = Name { nText   :: !L.Text

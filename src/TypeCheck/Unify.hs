@@ -5,9 +5,8 @@ module TypeCheck.Unify (
     Env(), emptyEnv,
     UnifyError(..),
     Types(),
-    unify,
-    match,
-    zonk
+    Unify, unify, match,
+    Zonk, zonk,
   ) where
 
 import PP
@@ -31,7 +30,7 @@ match :: Types ty => ty -> ty -> Env -> Either UnifyError Env
 match a b = runUnify_ (match' a b)
 
 -- | Remove type variables from this type.
-zonk :: Types ty => ty -> Env -> Either UnifyError ty
+zonk :: Zonk ty => ty -> Env -> Either UnifyError ty
 zonk a env =
   case runUnify (zonk' a) env of
     Right (a',_) -> Right a'
@@ -122,17 +121,63 @@ bindVar var ty =
             set $! env { envVars  = IntMap.insert ix ty envVars
                        , envCanon = Map.insert var ix envCanon }
 
+class Zonk ty where
+  -- | Remove type variables by looking them up in the environment.
+  zonk' :: ty -> Unify ty
 
-class Types ty where
+instance Zonk a => Zonk [a] where
+  zonk' as = traverse zonk' as
+
+instance Zonk Expr where
+  zonk' ETrue           = pure ETrue
+  zonk' EFalse          = pure EFalse
+  zonk' (EVar ty v)     = EVar <$> zonk' ty <*> pure v
+  zonk' (ECon ty v)     = ECon <$> zonk' ty <*> pure v
+  zonk' e@ENum{}        = pure e
+  zonk' (EApp f x)      = EApp   <$> zonk' f  <*> zonk' x
+  zonk' (ESet ty es)    = ESet   <$> zonk' ty <*> traverse zonk' es
+  zonk' (ELet n ty b e) = ELet n <$> zonk' ty <*> zonk' b <*> zonk' e
+  zonk' (EPrim p)       = EPrim  <$> zonk' p
+
+instance Zonk Prim where
+  zonk' (PIn   ty) = PIn   <$> zonk' ty
+  zonk' (PEq   ty) = PEq   <$> zonk' ty
+  zonk' (PNext ty) = PNext <$> zonk' ty
+  zonk' ef         = pure ef
+
+instance Zonk Type where
+  zonk' t0 = go Set.empty t0
+    where
+
+    go seen ty@(TFree x) =
+      do Env { .. } <- get
+         case Map.lookup x envCanon of
+           Just ix ->
+             case IntMap.lookup ix envVars of
+               Just ty' | ix `Set.member` seen -> raise (OccursCheckFailure t0)
+                        | otherwise            -> go (Set.insert ix seen) ty'
+
+               Nothing -> return ty
+           Nothing -> return ty
+
+    go seen (TFun a b) =
+      do a' <- go seen a
+         b' <- go seen b
+         return (TFun a' b')
+
+    go seen (TSet as) =
+      do as' <- go seen as
+         return (TSet as')
+
+    go _ ty = return ty
+
+
+class Zonk ty => Types ty where
   -- | Unify two types, effecting the environment.
   unify' :: ty -> ty -> Unify ()
 
   -- | Matching unification. Only allow variables on the LHS to bind.
   match' :: ty -> ty -> Unify ()
-
-  -- | Remove type variables by looking them up in the environment.
-  zonk' :: ty -> Unify ty
-
 
 instance Types Type where
 
@@ -167,38 +212,9 @@ instance Types Type where
 
   match' x y = raise (MatchError x y)
 
-
-  zonk' t0 = go Set.empty t0
-    where
-
-    go seen ty@(TFree x) =
-      do Env { .. } <- get
-         case Map.lookup x envCanon of
-           Just ix ->
-             case IntMap.lookup ix envVars of
-               Just ty' | ix `Set.member` seen -> raise (OccursCheckFailure t0)
-                        | otherwise            -> go (Set.insert ix seen) ty'
-
-               Nothing -> return ty
-           Nothing -> return ty
-
-    go seen (TFun a b) =
-      do a' <- go seen a
-         b' <- go seen b
-         return (TFun a' b')
-
-    go seen (TSet as) =
-      do as' <- go seen as
-         return (TSet as')
-
-    go _ ty = return ty
-
-
 instance Types a => Types [a] where
   unify' as bs | length as == length bs = zipWithM_ unify' as bs
                | otherwise              = fail "Can't unify different length lists"
 
   match' as bs | length as == length bs = zipWithM_ match' as bs
                | otherwise              = fail "Can't match different length lists"
-
-  zonk' as = traverse zonk' as

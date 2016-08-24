@@ -11,7 +11,7 @@ module PP (
     module Text.PrettyPrint.HughesPJ
   ) where
 
-import           Scope.Name (Name,nameText)
+import           Scope.Name (Name,nameText,nameUnique)
 
 import           Data.Int (Int64)
 import qualified Data.Text.Lazy as L
@@ -62,7 +62,7 @@ instance PP L.Text where
   ppPrec _ = text . L.unpack
 
 instance PP Name where
-  ppPrec _ = pp . nameText
+  ppPrec _ n = pp (nameText n) <> char '_' <> pp (nameUnique n)
 
 instance PP Integer where
   ppPrec _ = integer

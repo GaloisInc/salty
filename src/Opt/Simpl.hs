@@ -68,16 +68,16 @@ simpExpr1 (EOr _ ETrue) = Just ETrue
 simpExpr1 (EOr (ENot a) b) | a == b = Just ETrue
 simpExpr1 (EOr a (ENot b)) | a == b = Just ETrue
 
-simpExpr1 (EEq (ENum a) (ENum b)) | a == b    = Just ETrue
-                                  | otherwise = Just EFalse
+simpExpr1 (EEq _ (ENum a) (ENum b)) | a == b    = Just ETrue
+                                    | otherwise = Just EFalse
 
-simpExpr1 (EEq (EVar a) (EVar b)) | a == b = Just ETrue
+simpExpr1 (EEq _ (EVar _ a) (EVar _ b)) | a == b = Just ETrue
 
-simpExpr1 (EEq ETrue  ETrue)  = Just ETrue
-simpExpr1 (EEq EFalse EFalse) = Just ETrue
-simpExpr1 (EEq ETrue  EFalse) = Just EFalse
-simpExpr1 (EEq EFalse ETrue)  = Just EFalse
+simpExpr1 (EEq _ ETrue  ETrue)  = Just ETrue
+simpExpr1 (EEq _ EFalse EFalse) = Just ETrue
+simpExpr1 (EEq _ ETrue  EFalse) = Just EFalse
+simpExpr1 (EEq _ EFalse ETrue)  = Just EFalse
 
-simpExpr1 (EEq a b) | a == b = Just ETrue
+simpExpr1 (EEq _ a b) | a == b = Just ETrue
 
 simpExpr1 _            = Nothing

@@ -47,32 +47,49 @@ mkState env vars trans liveness =
   inits = [ mkInit env sv e | sv@StateVar { svInit = Just e, .. } <- vars ]
 
 mkInit :: Env -> StateVar -> Expr -> Slugs.Expr
-mkInit env StateVar { .. } e = mkExpr env (EEq (EVar svName) e)
+mkInit env StateVar { .. } e = mkExpr env (EEq svType (EVar svType svName) e)
 
 -- | Translate a boolean-valued expression.
 mkExpr :: HasCallStack => Env -> Expr -> Slugs.Expr
 mkExpr _   ETrue            = Slugs.ETrue
 mkExpr _   EFalse           = Slugs.EFalse
-mkExpr env (EEq l r)        = mkAssign env l r
+mkExpr env (EEq _ l r)      = mkAssign env l r
 mkExpr env (ENot a)         = Slugs.ENeg (mkExpr env a)
 mkExpr env (EAnd a b)       = Slugs.EAnd (mkExpr env a) (mkExpr env b)
 mkExpr env (EOr  a b)       = Slugs.EOr  (mkExpr env a) (mkExpr env b)
-mkExpr _   (ECon _)         = panic "Constructor used outside of assignment"
-mkExpr _   (EApp _ _)       = panic "Unexpected EApp"
+
+mkExpr env (EVar _ v)           = mkVar Slugs.UVar  (lookupVarExpr v env)
+mkExpr env (ENext _ (EVar _ v)) = mkVar Slugs.UNext (lookupVarExpr v env)
+
+mkExpr env e@ELet{} =
+  let (binds,r)  = destELet e
+      (ns,ts,bs) = unzip3 binds
+      env'       = foldr (uncurry addRef) env (zip ns [0..])
+   in Slugs.EBuf (map (mkExpr env') (bs ++ [r]))
+
+mkExpr _   (ECon _ _)       = panic "Constructor used outside of assignment"
+mkExpr _   e@EApp{}         = panic ("Unexpected EApp: " ++ show e)
 mkExpr _   (ENum _)         = panic "Unexpected ENum"
-
-mkExpr env (EVar v)         = mkVar Slugs.UVar  (lookupVar v env)
-mkExpr env (ENext (EVar v)) = mkVar Slugs.UNext (lookupVar v env)
-
-mkExpr _   (ENext _)        = panic "Unexpected ENext"
+mkExpr _   (ENext _ _)      = panic "Unexpected ENext"
+mkExpr _   (EPrim _)        = panic "Unexpected EPrim"
+mkExpr _   (ESet _ _)         = panic "Unexpected ESet"
 
 
-mkVar :: (Slugs.Var -> Slugs.Use) -> Slugs.Var -> Slugs.Expr
+slugsVar :: Env -> Expr -> Maybe Slugs.Expr
+slugsVar env (EVar _ v)           = Just (mkVar Slugs.UVar  (lookupVarExpr v env))
+slugsVar env (ENext _ (EVar _ v)) = Just (mkVar Slugs.UNext (lookupVarExpr v env))
+slugsVar _   _                    = Nothing
 
-mkVar mk var@Slugs.VarBool{} =
+
+mkVar :: (Slugs.Var -> Slugs.Use) -> Either Int Slugs.Var -> Slugs.Expr
+
+mkVar mk (Left ref) =
+  Slugs.ERef ref
+
+mkVar mk (Right var@Slugs.VarBool{}) =
   Slugs.EVar (mk var)
 
-mkVar mk var@Slugs.VarNum{}  =
+mkVar mk (Right var@Slugs.VarNum{})  =
   let use = mk var
    in mkEAnd [ Slugs.EBit use i | i <- [0 .. Slugs.varBitSize var - 1] ]
 
@@ -80,30 +97,31 @@ mkVar mk var@Slugs.VarNum{}  =
 -- | Translate an expression that's expected to be a variable (or a use of Next
 -- with a variable)
 slugsUse :: Env -> Expr -> Maybe Slugs.Use
-slugsUse env (EVar v)         = Just (Slugs.UVar  (lookupVar v env))
-slugsUse env (ENext (EVar v)) = Just (Slugs.UNext (lookupVar v env))
-slugsUse _   _                = Nothing
+slugsUse env (EVar _ v)           = Just (Slugs.UVar  (lookupVar v env))
+slugsUse env (ENext _ (EVar _ v)) = Just (Slugs.UNext (lookupVar v env))
+slugsUse _   _                    = Nothing
+
 
 
 -- | Translate a use of equality.
 mkAssign :: HasCallStack => Env -> Expr -> Expr -> Slugs.Expr
 
 -- constant enum values
-mkAssign env (slugsUse env -> Just use) (ECon c) =
+mkAssign env (slugsUse env -> Just use) (ECon _ c) =
   Slugs.assignConst use (lookupConstr c env)
 
-mkAssign env (ECon c) (slugsUse env -> Just use) =
+mkAssign env (ECon _ c) (slugsUse env -> Just use) =
   Slugs.assignConst use (lookupConstr c env)
 
 -- constant booleans
-mkAssign env (slugsUse env -> Just use) ETrue  =             Slugs.EVar use
-mkAssign env (slugsUse env -> Just use) EFalse = Slugs.ENeg (Slugs.EVar use)
-mkAssign env ETrue  (slugsUse env -> Just use) =             Slugs.EVar use
-mkAssign env EFalse (slugsUse env -> Just use) = Slugs.ENeg (Slugs.EVar use)
+mkAssign env (slugsVar env -> Just var) ETrue  =            var
+mkAssign env (slugsVar env -> Just var) EFalse = Slugs.ENeg var
+mkAssign env ETrue  (slugsVar env -> Just var) =            var
+mkAssign env EFalse (slugsVar env -> Just var) = Slugs.ENeg var
 
 -- constant numbers
-mkAssign env (EVar n) (ENum a) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
-mkAssign env (ENum a) (EVar n) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
+mkAssign env (EVar _ n) (ENum a) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
+mkAssign env (ENum a) (EVar _ n) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
 
 -- variable assignment
 mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
@@ -119,7 +137,7 @@ mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
     _ -> panic "Incompatible variables in assignment"
 
 
-mkAssign _ a b = panic ("Invalid arguments: " ++ show (EEq a b))
+mkAssign _ a b = panic ("Invalid arguments to assign: " ++ show (a,b))
 
 
 mkEq :: Slugs.Expr -> Slugs.Expr -> Slugs.Expr

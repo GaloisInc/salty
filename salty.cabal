@@ -21,6 +21,8 @@ library
   exposed-modules:     CodeGen.Dot
                        CodeGen.Java
                        CodeGen.Python
+                       Opt
+                       Opt.HashCons
                        Opt.Simpl
                        PP
                        Scope.Check

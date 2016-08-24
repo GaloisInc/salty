@@ -5,12 +5,13 @@ import Options
 import CodeGen.Dot (dotFSM)
 import CodeGen.Java (Package,javaFSM)
 import CodeGen.Python (pythonFSM)
+import Opt (opt)
+import PP (pp)
 import Scope.Check
 import Scope.Name (emptySupply)
 import Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
 import Syntax.Parser
 import TypeCheck
-import PP (pp)
 
 import           Control.Exception (catch,IOException)
 import           Control.Monad (when)
@@ -62,7 +63,7 @@ genFSM opts (InpSpec path) =
          Left errs -> do mapM_ print errs
                          exitFailure
 
-     (tcCont,_) <-
+     (tcCont,tcSup) <-
        case typeCheck scSup scCont of
          Right tc  -> return tc
          Left errs -> do mapM_ (print . ppTCError) errs
@@ -70,7 +71,18 @@ genFSM opts (InpSpec path) =
 
      when (optDumpCore opts) (print (pp tcCont))
 
-     mb <- runSlugs (optDumpSpec opts) (optSlugs opts) tcCont `catch` \ e ->
+     let exCont = expand tcCont
+     when (optDumpExpanded opts) (print (pp exCont))
+
+     (oCont,_) <-
+       if optOptLevel opts >= 1 
+          then do let (oCont,oSup) = opt tcSup exCont
+                  when (optDumpOpt opts) (print (pp oCont))
+                  return (oCont,oSup)
+
+          else return (exCont,tcSup)
+
+     mb <- runSlugs (optDumpSpec opts) (optSlugs opts) oCont `catch` \ e ->
        do let _ = e :: IOException
           putStrLn "Failed to run slugs. Is SLUGS set?"
           exitFailure

@@ -8,7 +8,7 @@ import TypeCheck.AST
 
 import qualified Data.Foldable as F
 import qualified Data.Map.Strict as Map
-import           Language.Slugs.Lens (rewriteOf,transformOf)
+import           Language.Slugs.Lens (transformOf)
 
 -- | Expand all macro uses, and remove function declarations from the
 -- controller.
@@ -25,13 +25,6 @@ expand Controller { .. } =
 
   where
   env = Map.fromList [ (fName f, f) | g <- cFuns, f <- F.toList g ]
-
-
-subst :: Map.Map Name Expr -> Expr -> Expr
-subst env = rewriteOf traverseExpr f
-  where
-  f (EVar v) = Map.lookup v env
-  f _        = Nothing
 
 
 type Env = Map.Map Name Fun
@@ -60,50 +53,47 @@ instance Expand StateVar where
   expand' env StateVar { .. } = StateVar { svInit = expand' env svInit, .. }
 
 instance Expand Expr where
-
   expand' env e =
     case destEApp e of
-
-      (EAny, [set]) ->
+      (EPrim PAny, [set]) ->
         let set' = expand' env set
          in case set' of
-              ESet es -> expand' env (foldl EOr EFalse es)
-              _       -> EApp EAny set'
+              ESet _ es -> expand' env (foldl EOr EFalse es)
+              _         -> EAny set'
 
-      (EAll, [set]) ->
+      (EPrim PAll, [set]) ->
         let set' = expand' env set
          in case set' of
-              ESet es -> expand' env (foldl EAnd ETrue es)
-              _       -> EApp EAll set'
+              ESet _ es -> expand' env (foldl EAnd ETrue es)
+              _         -> EAll set'
 
-      (EIn, [a,set]) ->
+      (EPrim (PIn ty), [a,set]) ->
         let a'   = expand' env a
             set' = expand' env set
          in case set' of
-              ESet es -> expand' env (foldl EOr EFalse [ EEq a' x | x <- es ])
-              _       -> EApp (EApp EIn a') set'
+              ESet _ es -> expand' env (foldl EOr EFalse [ EEq ty a' x | x <- es ])
+              _         -> EIn ty a' set'
 
-      (EVar f, args) | not (null args) -> expand' env (expandDef env f args)
+      (EPrim (PNext _), [x]) -> eNext (expand' env x)
 
-      (ETrue,    []) -> e
-      (EFalse,   []) -> e
-      (EVar{},   []) -> e
-      (ECon{},   []) -> e
+      -- macro expansion
+      (EVar _ f, args)
+        | not (null args) || Map.member f env -> expand' env (expandDef env f args)
 
-      (ENum{},   []) -> e
-      (EAnd l r, []) -> EAnd  (expand' env l) (expand' env r)
-      (EOr  l r, []) -> EOr   (expand' env l) (expand' env r)
-      (ENot l,   []) -> ENot  (expand' env l)
-      (ENext l,  []) -> eNext (expand' env l)
-      (EEq  l r, []) -> EEq   (expand' env l) (expand' env r)
-      (ESet es,  []) -> ESet  (map (expand' env) es)
+      -- generic application case
+      (f, args) | not (null args) -> eApp (expand' env f) (map (expand' env) args)
 
-      _ -> panic ("Unexpected expression: " ++ show e)
+      (ESet ty es, []) -> ESet ty (map (expand' env) es)
+
+      (ELet n ty b x, []) -> ELet n ty (expand' env b) (expand' env x)
+
+      _ -> e
+
 
 
 -- | Push the next operation down to the leaves of an expression.
 eNext :: Expr -> Expr
 eNext  = transformOf traverseExpr $ \ e ->
   case e of
-    EVar{} -> ENext e
-    _      -> e
+    EVar ty _ -> ENext ty e
+    _         -> e

@@ -142,7 +142,7 @@ unify a b =
        Left err       -> record (UnifyError err)
 
 -- | Remove type variables from a type.
-zonk :: Unify.Types ty => ty -> TC ty
+zonk :: Unify.Zonk ty => ty -> TC ty
 zonk ty =
   do RW { .. } <- TC get
      case Unify.zonk ty rwSubst of
