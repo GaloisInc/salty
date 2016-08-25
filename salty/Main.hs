@@ -6,6 +6,7 @@ import CodeGen.Dot (dotFSM)
 import CodeGen.Java (Package,javaFSM)
 import CodeGen.Python (pythonFSM)
 import Opt (opt)
+import Opt.Simpl (simp)
 import PP (pp)
 import Scope.Check
 import Scope.Name (emptySupply)
@@ -43,7 +44,6 @@ main  =
 
      when (optDot opts) (writePackage opts (dotFSM fsm))
 
-
 genFSM :: Options -> Input -> IO FSM
 
 genFSM opts (InpSpec path) =
@@ -73,6 +73,8 @@ genFSM opts (InpSpec path) =
 
      let exCont = expand tcCont
      when (optDumpExpanded opts) (print (pp exCont))
+
+     when (optDumpSimp opts) (print (pp (simp exCont)))
 
      (oCont,_) <-
        if optOptLevel opts >= 1 

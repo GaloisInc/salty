@@ -123,7 +123,7 @@ typeOf (EApp f _)     =
     TFun _ r -> r
     _        -> panic "typeOf: Non-function in application position"
 
-typeOf (ESet ty es)   = TSet ty
+typeOf (ESet ty _)    = TSet ty
 typeOf (ELet _ _ _ e) = typeOf e
 typeOf (EPrim p)      = primTypeOf p
 
@@ -170,6 +170,14 @@ destELet  = go []
   go acc (ELet n t b e) = go ((n,t,b) : acc) e
   go acc e              = (reverse acc, e)
 
+destEAnd :: Expr -> [Expr]
+destEAnd (EAnd a b) = destEAnd a ++ destEAnd b
+destEAnd e          = [e]
+
+destEOr :: Expr -> [Expr]
+destEOr (EOr a b) = destEOr a ++ destEOr b
+destEOr e         = [e]
+
 
 tFun :: [Type] -> Type
 tFun  = foldr1 TFun
@@ -177,7 +185,7 @@ tFun  = foldr1 TFun
 eAnd :: [Expr] -> Expr
 eAnd []  = ETrue
 eAnd [e] = e
-eAnd es  = foldl1 EAnd es
+eAnd es  = foldr1 EAnd es
 
 eNot :: Expr -> Expr
 eNot  = ENot
@@ -185,7 +193,7 @@ eNot  = ENot
 eOr :: [Expr] -> Expr
 eOr []  = EFalse
 eOr [e] = e
-eOr es  = foldl1 EOr es
+eOr es  = foldr1 EOr es
 
 eImp :: Expr -> Expr -> Expr
 eImp a b = eOr [ eNot a, b ]

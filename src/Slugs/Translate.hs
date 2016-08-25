@@ -7,7 +7,6 @@ import Panic (panic,HasCallStack)
 import Slugs.Env
 import TypeCheck.AST
 
-import           Control.Monad (guard)
 import           Data.List (foldl1')
 import qualified Language.Slugs as Slugs
 
@@ -15,7 +14,7 @@ import qualified Language.Slugs as Slugs
 -- Translation -----------------------------------------------------------------
 
 mkSpec :: Controller -> (Slugs.Spec,Env)
-mkSpec cont = (spec,env)
+mkSpec cont = (Slugs.addLimits spec,env)
   where
   spec =
     Slugs.Spec { Slugs.specEnv    = mkState env (cInputs cont)  (cEnvTrans cont) (cEnvLiveness cont)
@@ -25,18 +24,9 @@ mkSpec cont = (spec,env)
 
 mkState :: Env -> [StateVar] -> Expr -> Expr -> Slugs.State
 mkState env vars trans liveness =
-  Slugs.State { Slugs.stInit =
-                do guard (not (null vars))
-                   return (conj inits)
-
-              , Slugs.stTrans =
-                do guard (trans /= ETrue)
-                   return (mkExpr env trans)
-
-              , Slugs.stLiveness =
-                do guard (liveness /= ETrue)
-                   return (mkExpr env liveness)
-              }
+  Slugs.State { Slugs.stInit     = conj inits
+              , Slugs.stTrans    = mkExpr env trans
+              , Slugs.stLiveness = mkExpr env liveness }
 
   where
 
@@ -63,7 +53,7 @@ mkExpr env (ENext _ (EVar _ v)) = mkVar Slugs.UNext (lookupVarExpr v env)
 
 mkExpr env e@ELet{} =
   let (binds,r)  = destELet e
-      (ns,ts,bs) = unzip3 binds
+      (ns,_,bs)  = unzip3 binds
       env'       = foldr (uncurry addRef) env (zip ns [0..])
    in Slugs.EBuf (map (mkExpr env') (bs ++ [r]))
 
@@ -83,7 +73,7 @@ slugsVar _   _                    = Nothing
 
 mkVar :: (Slugs.Var -> Slugs.Use) -> Either Int Slugs.Var -> Slugs.Expr
 
-mkVar mk (Left ref) =
+mkVar _ (Left ref) =
   Slugs.ERef ref
 
 mkVar mk (Right var@Slugs.VarBool{}) =

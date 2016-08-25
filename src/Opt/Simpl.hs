@@ -47,6 +47,12 @@ simpExpr1 (ENot EFalse) = Just ETrue
 
 simpExpr1 (ENot (ENot e)) = Just e
 
+simpExpr1 (ENot (EAnd a b)) = Just (EOr  (ENot a) (ENot b))
+simpExpr1 (ENot (EOr  a b)) = Just (EAnd (ENot a) (ENot b))
+
+simpExpr1 (EOr  (EOr  a b) c) = Just (EOr  a (EOr  b c))
+simpExpr1 (EAnd (EAnd a b) c) = Just (EAnd a (EAnd b c))
+
 simpExpr1 (EOr  a b) | a == b = Just a
 simpExpr1 (EAnd a b) | a == b = Just a
 

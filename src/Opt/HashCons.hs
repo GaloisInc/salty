@@ -31,7 +31,13 @@ emptyRW rwSupply = RW { rwEnv = Map.empty, rwEnv' = Map.empty, ..}
 
 -- | Bind all intermediate values.
 buildEnv :: Bindings -> Expr -> Expr
-buildEnv env e = Map.foldrWithKey (\n (t,b) -> ELet n t b) e env
+buildEnv env e =
+  let (z,env') =
+        case e of
+          EVar _ r | Just (_,r' )<- Map.lookup r env -> (r',Map.delete r env)
+          _                                          -> (e,env)
+
+   in Map.foldrWithKey (\n (t,b) -> ELet n t b) z env'
 
 
 newtype HC a = HC { unHC :: StateT RW Id a
@@ -140,6 +146,14 @@ instance HashCons Expr where
 
   hashCons' (ENext ty p) = do p' <- hashCons' p 
                               return (ENext ty p')
+
+  hashCons' e@EAnd{}     = do let xs = destEAnd e
+                              xs' <- traverse hashCons' xs
+                              cache TBool (eAnd xs')
+
+  hashCons' e@EOr{}      = do let xs = destEOr e
+                              xs' <- traverse hashCons' xs
+                              cache TBool (eOr xs')
 
   hashCons' e@EApp{}     = do let (f, xs) = destEApp e
                               f'  <- hashCons' f

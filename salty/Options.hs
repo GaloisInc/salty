@@ -21,6 +21,7 @@ data Options = Options { optHelp         :: !Bool
                        , optDumpParsed   :: !Bool
                        , optDumpCore     :: !Bool
                        , optDumpExpanded :: !Bool
+                       , optDumpSimp     :: !Bool
                        , optDumpOpt      :: !Bool
                        , optDumpSpec     :: !Bool
                        } deriving (Show)
@@ -49,6 +50,7 @@ defaultOptions  =
           , optDumpParsed   = False
           , optDumpCore     = False
           , optDumpExpanded = False
+          , optDumpSimp     = False
           , optDumpOpt      = False
           , optDumpSpec     = False
           }
@@ -101,6 +103,9 @@ options  =
   , Option "" ["ddump-expanded"] (NoArg setDumpExpanded)
     "Dump the expanded form of the controller"
 
+  , Option "" ["ddump-simpl"] (NoArg setDumpSimp)
+    "Dump the simplified expanded form of the controller"
+
   , Option "" ["ddump-opt"] (NoArg setDumpOpt)
     "Dump the optimized core representation of the type-checked controller"
 
@@ -148,6 +153,9 @@ setDumpCore  = OK (\opts -> opts { optDumpCore = True })
 
 setDumpExpanded :: Parser
 setDumpExpanded  = OK (\opts -> opts { optDumpExpanded = True })
+
+setDumpSimp :: Parser
+setDumpSimp  = OK (\opts -> opts { optDumpSimp = True })
 
 setDumpOpt :: Parser
 setDumpOpt  = OK (\opts -> opts { optDumpOpt = True })
