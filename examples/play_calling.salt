@@ -1,0 +1,118 @@
+-- vim: ft=haskell
+
+controller PlayCalling where
+
+-- Sensors ---------------------------------------------------------------------
+
+input s_Target  : Bool = False
+input s_DataOut : Bool = False
+input s_Data    : Bool = False
+input s_Fuel    : Bool = True
+
+
+-- UAV Behavior ----------------------------------------------------------------
+
+enum Behavior = Loiter
+              | SearchArea
+              | SearchPerimeter
+              | TrackTarget
+              | DeliverData
+              | Refuel
+
+output behavior : Behavior = Loiter
+
+
+-- Input Commands --------------------------------------------------------------
+
+enum Command = C_None
+             | C_TrackTarget
+             | C_SearchForest
+             | C_SearchForestPerimeter
+
+input command : Command = C_None
+
+-- Differences to "LTL Play Calling":
+--
+-- We don't use IFF for the play safety properties, as the commands share
+-- behaviors. If we implement as in the paper, the specification will not be
+-- realizable when multiple commands are implemented.
+play_safety c b1 r1 m b2 r2 health =
+     ((command == c /\ region == r1 /\ all health /\ !m) -> (behavior == b1))
+  /\ ((command == c /\ region == r2 /\ all health /\  m) -> (behavior == b2))
+  /\ ((command == c) -> (behavior == Refuel \/ behavior <- { b1, b2 }))
+
+play_goal c health behaviors =
+  (command == c /\ all health) -> (behavior <- behaviors)
+
+
+-- Target Tracking -------------------------------------------------------------
+
+sys_trans
+  play_safety C_TrackTarget SearchArea Region_BC s_Target TrackTarget Region_BC { s_Fuel }
+
+sys_liveness
+  play_goal C_TrackTarget { s_Fuel } { SearchArea, TrackTarget }
+
+
+-- Forest Searching ------------------------------------------------------------
+
+sys_trans
+  play_safety C_SearchForest SearchArea Region_F s_DataOut DeliverData Region_CS { s_Fuel }
+
+sys_liveness
+  play_goal C_SearchForest { s_Fuel } { SearchArea, DeliverData }
+
+
+-- Perimeter Search ------------------------------------------------------------
+
+sys_trans
+  play_safety C_SearchForestPerimeter SearchPerimeter Region_F (!s_Data) DeliverData Region_CS { s_Fuel }
+
+sys_liveness
+  play_goal C_SearchForestPerimeter { s_Fuel } { SearchPerimeter, DeliverData }
+
+
+-- Contingency -----------------------------------------------------------------
+
+contingency_trans hf ht b r =
+  (behavior == b) <-> (region == r /\ all ht)
+
+contingency_goal hf ht b r =
+  ( !(any hf) /\  all ht ) -> behavior == b
+
+sys_trans
+  contingency_trans { s_Fuel } {} Refuel Region_CS
+
+sys_liveness
+  contingency_goal  { s_Fuel } {} Refuel Region_CS
+
+
+-- Loiter ----------------------------------------------------------------------
+
+sys_trans
+  (behavior == Loiter) <-> (command == C_None /\ region == Region_0 /\ s_Fuel)
+
+sys_liveness
+  (command == C_None /\ s_Fuel) -> (behavior == Loiter)
+
+
+-- Region Transition -----------------------------------------------------------
+
+-- | Regions in the simulation.
+enum Region = Region_0
+            | Region_BC
+            | Region_CS
+            | Region_F
+
+-- | The current region of the UAV.
+output region : Region = Region_0
+
+region_trans from to =
+  region == from -> (region' == from \/ (region' <- to))
+
+-- define the region connections
+sys_trans
+  region_trans Region_0  { Region_CS, Region_BC, Region_F }
+  region_trans Region_F  { Region_0 }
+  region_trans Region_CS { Region_0 }
+  region_trans Region_BC { Region_0 }
