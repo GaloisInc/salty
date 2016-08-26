@@ -86,14 +86,10 @@ sys_trans
 sys_liveness
   contingency_goal  { s_Fuel } {} Refuel Region_CS
 
-
 -- Loiter ----------------------------------------------------------------------
 
 sys_trans
-  (behavior == Loiter) <-> (command == C_None /\ region == Region_0 /\ s_Fuel)
-
-sys_liveness
-  (command == C_None /\ s_Fuel) -> (behavior == Loiter)
+  (command == C_None) -> (behavior <- { Refuel, Loiter })
 
 
 -- Region Transition -----------------------------------------------------------
