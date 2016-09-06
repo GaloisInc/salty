@@ -90,6 +90,7 @@ data Expr name = EVar name
 
                | EAny
                | EAll
+               | EMutex
 
                | ELoc (Loc (Expr name))
                  deriving (Functor,Show)
@@ -233,6 +234,7 @@ exprFvs (ESet es)   = Set.unions (map exprFvs es)
 exprFvs (EIn a b)   = Set.union (exprFvs a) (exprFvs b)
 exprFvs EAny        = Set.empty
 exprFvs EAll        = Set.empty
+exprFvs EMutex      = Set.empty
 exprFvs (ELoc loc)  = exprFvs (thing loc)
 
 caseFvs :: Ord name => Case name -> Set.Set name

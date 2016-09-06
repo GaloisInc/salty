@@ -268,6 +268,7 @@ checkExpr (ECase e cs)= ECase `fmap` checkExpr e <*> traverse checkCase cs
 
 checkExpr EAny        = pure EAny
 checkExpr EAll        = pure EAll
+checkExpr EMutex      = pure EMutex
 
 checkExpr (ESet es)   = ESet  `fmap` traverse checkExpr es
 checkExpr (EIn a b)   = EIn   `fmap` checkExpr a <*> checkExpr b

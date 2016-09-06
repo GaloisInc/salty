@@ -82,9 +82,6 @@ fromSlugs env cont Slugs.FSM { .. } =
   varGroups =
     [ (head g, length g) | g <- group (map sanitizeVarStr fsmStateDescr) ]
 
-  head' (x:_) = x
-  head' []    = error "fromSlugs: head failed"
-
   -- translate the state variables from slugs back to names from the original
   -- specification, and partition into inputs/outputs
   (inps,outs) =

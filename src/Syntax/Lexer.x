@@ -63,8 +63,9 @@ $white+ ;
 
 "..."   { keyword Krange }
 
-"any"   { keyword Kany }
-"all"   { keyword Kall }
+"any"   { keyword Kany   }
+"all"   { keyword Kall   }
+"mutex" { keyword Kmutex }
 
 ":"     { keyword Kcolon  }
 "="     { keyword Kassign }
@@ -149,6 +150,7 @@ data Keyword = Kif
              | Knot
              | Kany
              | Kall
+             | Kmutex
              | Kinput
              | Kin
              | Koutput

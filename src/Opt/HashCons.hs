@@ -51,14 +51,6 @@ fresh  = HC $
      return name
 
 
-freshFrom :: Name -> HC Name
-freshFrom n = HC $
-  do RW {..} <- get
-     let (name,s') = mkName (nameOrigin n) (nameText n) rwSupply
-     set $! RW { rwSupply = s', ..}
-     return name
-
-
 resolve :: Type -> Name -> HC Expr
 resolve ty n = HC $
   do RW {..} <- get

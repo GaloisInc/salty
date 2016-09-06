@@ -297,6 +297,10 @@ checkExpr ty AST.EAll =
   do unify ty (TFun (TSet TBool) TBool)
      return (EPrim PAll)
 
+checkExpr ty AST.EMutex =
+  do unify ty (TFun (TSet TBool) TBool)
+     return (EPrim PMutex)
+
 checkExpr ty (AST.ENext e) =
   do e' <- checkExpr ty e
      return (ENext ty e')

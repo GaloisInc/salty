@@ -89,6 +89,7 @@ data Prim = PAnd
           | PIn   Type
           | PAny
           | PAll
+          | PMutex
             deriving (Show,Eq,Ord)
 
 data Expr = ETrue
@@ -111,6 +112,7 @@ primTypeOf (PEq ty)   = tFun [ty,ty,TBool]
 primTypeOf (PIn ty)   = tFun [ty, TSet ty, TBool]
 primTypeOf PAny       = tFun [TSet TBool, TBool]
 primTypeOf PAll       = tFun [TSet TBool, TBool]
+primTypeOf PMutex     = tFun [TSet TBool, TBool]
 
 typeOf :: Expr -> Type
 typeOf ETrue          = TBool
@@ -151,6 +153,9 @@ pattern EAny a = EApp (EPrim PAny) a
 
 pattern EAll :: Expr -> Expr
 pattern EAll a = EApp (EPrim PAll) a
+
+pattern EMutex :: Expr -> Expr
+pattern EMutex a = EApp (EPrim PMutex) a
 
 destTFun :: Type -> ([Type],Type)
 destTFun (TFun l r) =
@@ -269,6 +274,7 @@ instance PP Prim where
   ppPrec _ (PIn _)   = text "in"
   ppPrec _ PAny      = text "any"
   ppPrec _ PAll      = text "all"
+  ppPrec _ PMutex    = text "mutex"
 
 instance PP Expr where
   ppPrec _ ETrue        = text "True"

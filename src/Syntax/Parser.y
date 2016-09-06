@@ -61,6 +61,7 @@ import           Text.Location.Layout
 
   'any'        { Keyword Kany        $$ }
   'all'        { Keyword Kall        $$ }
+  'mutex'      { Keyword Kmutex      $$ }
 
   '...'        { Keyword Krange      $$ }
 
@@ -253,6 +254,9 @@ aexpr :: { Expr PName }
 
   | 'all'
     { ELoc (EAll `at` $1) }
+
+  | 'mutex'
+    { ELoc (EMutex `at` $1) }
 
   | 'False'
     { ELoc (EFalse `at` $1) }

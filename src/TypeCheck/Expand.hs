@@ -7,6 +7,7 @@ import Scope.Name
 import TypeCheck.AST
 
 import qualified Data.Foldable as F
+import           Data.List (permutations)
 import qualified Data.Map.Strict as Map
 import           Language.Slugs.Lens (transformOf)
 
@@ -56,16 +57,19 @@ instance Expand Expr where
   expand' env e =
     case destEApp e of
       (EPrim PAny, [set]) ->
-        let set' = expand' env set
-         in case set' of
-              ESet _ es -> expand' env (foldl EOr EFalse es)
-              _         -> EAny set'
+         case expand' env set of
+           ESet _ es -> expand' env (eOr es)
+           set'      -> EAny set'
 
       (EPrim PAll, [set]) ->
-        let set' = expand' env set
-         in case set' of
-              ESet _ es -> expand' env (foldl EAnd ETrue es)
-              _         -> EAll set'
+        case expand' env set of
+          ESet _ es -> expand' env (eAnd es)
+          set'      -> EAll set'
+
+      (EPrim PMutex, [set]) ->
+        case expand' env set of
+          ESet _ es -> expand' env (eMutex es)
+          set'      -> EMutex set'
 
       (EPrim (PIn ty), [a,set]) ->
         let a'   = expand' env a
@@ -89,6 +93,11 @@ instance Expand Expr where
 
       _ -> e
 
+
+eMutex :: [Expr] -> Expr
+eMutex []  = ETrue
+eMutex [e] = e
+eMutex es  = eAnd [ x `eImp` eNot (eOr xs) | (x:xs) <- permutations es ]
 
 
 -- | Push the next operation down to the leaves of an expression.
