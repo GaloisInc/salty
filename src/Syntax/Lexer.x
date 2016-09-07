@@ -47,9 +47,9 @@ $white+ ;
 "output"     { keyword Koutput     }
 
 "sys_trans"    { keyword Ksys_trans    }
-"env_trans"    { keyword Ksys_trans    }
+"env_trans"    { keyword Kenv_trans    }
 "sys_liveness" { keyword Ksys_liveness }
-"env_liveness" { keyword Ksys_liveness }
+"env_liveness" { keyword Kenv_liveness }
 
 "if"    { keyword Kif   }
 "then"  { keyword Kthen }
