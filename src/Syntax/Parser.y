@@ -68,9 +68,9 @@ import           Text.Location.Layout
   'prime'      { Keyword Kprime      $$ }
 
   'sys_liveness' { Keyword Ksys_liveness $$ }
-  'env_liveness' { Keyword Ksys_liveness $$ }
+  'env_liveness' { Keyword Kenv_liveness $$ }
   'sys_trans'    { Keyword Ksys_trans    $$ }
-  'env_trans'    { Keyword Ksys_trans    $$ }
+  'env_trans'    { Keyword Kenv_trans    $$ }
 
   '&&'         { Keyword Kand        $$ }
   '||'         { Keyword Kor         $$ }
