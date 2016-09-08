@@ -116,38 +116,35 @@ top_decl :: { TopDecl PName }
   | 'output' state_var_decl
     { TDLoc (fmap TDOutput $2) }
 
-  | 'sys_trans' layout(expr)
-    { TDLoc (TDSysTrans $2 `at` getLoc $2) }
+  | spec
+    { TDLoc (TDSpec $1 `at` $1) }
+
+
+-- Specification ---------------------------------------------------------------
+
+spec :: { Spec PName }
+  : 'sys_trans' layout(expr)
+    { SLoc (SSysTrans $2 `at` getLoc $2) }
 
   | 'sys_liveness' layout(expr)
-    { TDLoc (TDSysLiveness $2 `at` getLoc $2) }
+    { SLoc (SSysLiveness $2 `at` getLoc $2) }
 
   | 'env_trans' layout(expr)
-    { TDLoc (TDEnvTrans $2 `at` getLoc $2) }
+    { SLoc (SEnvTrans $2 `at` getLoc $2) }
 
   | 'env_liveness' layout(expr)
-    { TDLoc (TDEnvLiveness $2 `at` getLoc $2) }
+    { SLoc (SEnvLiveness $2 `at` getLoc $2) }
 
 
 -- Functions -------------------------------------------------------------------
 
 fun_decl :: { Loc (Fun PName) }
-  : IDENT list(IDENT) fun_body
-    { Fun $1 $2 $3 `at` mconcat [getLoc $1, getLoc $2, getLoc $3] }
+  : IDENT list(IDENT) '=' fun_body
+    { Fun $1 $2 $4 `at` mconcat [getLoc $1, getLoc $2, getLoc $4] }
 
-fun_body :: { [Guard PName] }
-  : '=' expr
-    { [GExpr $2] }
-
-  | '|' sep1('|', guard_body)
-    { $2 }
-
-guard_body :: { Guard PName }
-  : bexpr '=' expr
-    { GLoc (GGuard $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
-
-  | 'otherwise' '=' expr
-    { GLoc (GExpr $3 `at` mappend $1 (getLoc $3)) }
+fun_body :: { FunBody PName }
+  : list1(spec) { FBSpec $1 }
+  | expr        { FBExpr $1 }
 
 
 -- State Var Declarations ------------------------------------------------------

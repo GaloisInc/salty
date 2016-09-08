@@ -15,13 +15,11 @@ import           Language.Slugs.Lens (transformOf)
 -- controller.
 expand :: Controller -> Controller
 expand Controller { .. } =
-  Controller { cFuns        = []
-             , cInputs      = expand' env cInputs
-             , cOutputs     = expand' env cOutputs
-             , cEnvTrans    = expand' env cEnvTrans
-             , cEnvLiveness = expand' env cEnvLiveness
-             , cSysTrans    = expand' env cSysTrans
-             , cSysLiveness = expand' env cSysLiveness
+  Controller { cFuns     = []
+             , cInputs   = expand' env cInputs
+             , cOutputs  = expand' env cOutputs
+             , cSpec     = mconcat (expand' env cSpec : map (expandTopExpr env) cTopExprs)
+             , cTopExprs = []
              , .. }
 
   where
@@ -35,11 +33,17 @@ lookupFun n env = Map.findWithDefault missing n env
   where
   missing = panic ("Macro missing from environment: " ++ show n)
 
-expandDef :: Env -> Name -> [Expr] -> Expr
+expandDef :: Env -> Name -> [Expr] -> FunBody
 expandDef env f args =
   let Fun { .. } = lookupFun f env
       inst       = Map.fromList (zip (map fst fParams) args)
    in subst inst fBody
+
+-- | Translate top-level expressions into specifications, or panic if that's not
+-- possible.
+expandTopExpr :: Env -> Expr -> Spec
+expandTopExpr env e = undefined
+
 
 class Expand a where
   expand' :: HasCallStack => Env -> a -> a
@@ -52,6 +56,13 @@ instance Expand a => Expand [a] where
 
 instance Expand StateVar where
   expand' env StateVar { .. } = StateVar { svInit = expand' env svInit, .. }
+
+instance Expand Spec where
+  expand' env Spec { .. } =
+    Spec { sEnvTrans    = expand' env sEnvTrans
+         , sEnvLiveness = expand' env sEnvLiveness
+         , sSysTrans    = expand' env sSysTrans
+         , sSysLiveness = expand' env sSysLiveness }
 
 instance Expand Expr where
   expand' env e =
@@ -82,7 +93,10 @@ instance Expand Expr where
 
       -- macro expansion
       (EVar _ f, args)
-        | not (null args) || Map.member f env -> expand' env (expandDef env f args)
+        | not (null args) || Map.member f env ->
+          case expandDef env f args of
+            FunExpr b -> expand' env b
+            FunSpec _ -> panic "Unexpected specification in expression"
 
       -- generic application case
       (f, args) | not (null args) -> eApp (expand' env f) (map (expand' env) args)

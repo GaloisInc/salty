@@ -9,7 +9,7 @@ import           TypeCheck.AST
 import           TypeCheck.Groups
 import           TypeCheck.Monad
 
-import           Control.Monad (unless,when)
+import           Control.Monad (when)
 import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import           Text.Location (thing,getLoc,at)
@@ -57,23 +57,36 @@ simpleTopDecl (AST.TDOutput sv) =
   do sv' <- checkStateVar sv
      return $ \ c -> c { cOutputs = sv' : cOutputs c }
 
-simpleTopDecl (AST.TDSysTrans es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ \ c -> c { cSysTrans = EAnd e' (cSysTrans c) }
+simpleTopDecl (AST.TDSpec s) =
+  do s' <- checkSpec s
+     return $ \ c -> c { cSpec = cSpec c `mappend` s' }
 
-simpleTopDecl (AST.TDSysLiveness es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ \ c -> c { cSysLiveness = EAnd e' (cSysLiveness c) }
-
-simpleTopDecl (AST.TDEnvTrans es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ \ c -> c { cEnvTrans = EAnd e' (cEnvTrans c) }
-
-simpleTopDecl (AST.TDEnvLiveness es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ \ c -> c { cEnvLiveness = EAnd e' (cEnvLiveness c) }
+simpleTopDecl (AST.TDExpr e) =
+  do e' <- checkExpr TSpec e
+     return $ \ c -> c { cTopExprs = e' : cTopExprs c }
 
 simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
+
+-- | Check a specification value.
+checkSpec :: AST.Spec Name -> TC Spec
+
+checkSpec (AST.SSysTrans es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
+     return $ mempty { sSysTrans = e' }
+
+checkSpec (AST.SSysLiveness es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
+     return $ mempty { sSysLiveness = e' }
+
+checkSpec (AST.SEnvTrans es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
+     return $ mempty { sEnvTrans = e' }
+
+checkSpec (AST.SEnvLiveness es) =
+  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
+     return $ mempty { sEnvLiveness = e' }
+
+checkSpec (AST.SLoc loc) = withLoc loc checkSpec
 
 
 -- | Add all of the constructors to the typing environment.
@@ -143,7 +156,7 @@ inferFunGroup isRec funs =
 checkFun :: Type -> AST.Loc (AST.Fun Name) -> TC Fun
 checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
   withParams ty fParams $ \ (ps,rty) ->
-    do e <- checkGuard rty fBody
+    do e    <- checkFunBody rty fBody
        ps'  <- zonk ps
        rty' <- zonk rty
        e'   <- zonk e
@@ -153,31 +166,16 @@ checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
                   , fBody   = e' }
 
 
--- | Translate guards into if-then-else syntax.
-checkGuard :: Type -> [AST.Guard Name] -> TC Expr
-checkGuard ty = go
-  where
+checkFunBody :: Type -> AST.FunBody Name -> TC FunBody
 
-  -- In the simple case, the guarded RHS is just a single expression. This
-  -- translates to no conditionals on the RHS.
-  go (AST.GExpr e:gs) =
-    do e' <- checkExpr ty e
-       unless (null gs) (record (unreachableCases gs))
-       return e'
+checkFunBody ty (AST.FBSpec ps) =
+  do unify ty TSpec
+     ps' <- traverse checkSpec ps
+     return (FunSpec (mconcat ps'))
 
-  go (AST.GGuard p e:gs) =
-    do p' <- checkExpr TBool p
-       e' <- checkExpr ty e
-       k  <- if null gs
-                then return EFalse
-                else go gs
-  
-       return (eIf p' e' k)
-  
-  go (AST.GLoc loc:gs) =
-    withLoc loc (\g -> go (g:gs))
-
-  go [] = error "Invalid guard"
+checkFunBody ty (AST.FBExpr e) =
+  do e' <- checkExpr ty e
+     return (FunExpr e')
 
 
 -- | Type-check an expression, producing a type-checked expression as the

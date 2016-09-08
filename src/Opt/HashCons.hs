@@ -109,17 +109,24 @@ instance HashCons Controller where
   hashCons' Controller { .. } =
     do is  <- hashCons' cInputs
        os  <- hashCons' cOutputs
-       ets <- scope (hashCons' cEnvTrans)
-       els <- scope (hashCons' cEnvLiveness)
-       sts <- scope (hashCons' cSysTrans)
-       sls <- scope (hashCons' cSysLiveness)
+       s   <- hashCons' cSpec
+       es  <- hashCons' cTopExprs
        return Controller { cInputs      = is
                          , cOutputs     = os
-                         , cEnvTrans    = ets
-                         , cEnvLiveness = els
-                         , cSysTrans    = sts
-                         , cSysLiveness = sls
+                         , cSpec        = s
+                         , cTopExprs    = es
                          , .. }
+
+instance HashCons Spec where
+  hashCons' Spec { .. } =
+    do ets <- scope (hashCons' sEnvTrans)
+       els <- scope (hashCons' sEnvLiveness)
+       sts <- scope (hashCons' sSysTrans)
+       sls <- scope (hashCons' sSysLiveness)
+       return Spec { sEnvTrans    = ets
+                   , sEnvLiveness = els
+                   , sSysTrans    = sts
+                   , sSysLiveness = sls }
 
 instance HashCons StateVar where
   hashCons' StateVar {..} =

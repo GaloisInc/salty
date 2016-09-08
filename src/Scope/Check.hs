@@ -128,13 +128,10 @@ topDeclNames (TDEnum enum) = enumNames enum
 topDeclNames (TDFun fun)   = funNames Nothing fun
 topDeclNames (TDInput sv)  = stateVarNames sv
 topDeclNames (TDOutput sv) = stateVarNames sv
+-- specifications and top-level expressions don't introduce names
+topDeclNames TDSpec{}      = return Map.empty
+topDeclNames TDExpr{}      = return Map.empty
 topDeclNames (TDLoc loc)   = topDeclNames (thing loc)
-
--- transition/liveness don't introduce names
-topDeclNames TDSysTrans    {} = return Map.empty
-topDeclNames TDSysLiveness {} = return Map.empty
-topDeclNames TDEnvTrans    {} = return Map.empty
-topDeclNames TDEnvLiveness {} = return Map.empty
 
 enumNames :: NamesFrom EnumDef
 enumNames EnumDef { .. } =
@@ -193,12 +190,16 @@ checkTopDecl (TDEnum enum)     = TDEnum        `fmap` checkEnum enum
 checkTopDecl (TDFun fun)       = TDFun         `fmap` checkFun  fun
 checkTopDecl (TDInput sv)      = TDInput       `fmap` checkStateVar sv
 checkTopDecl (TDOutput sv)     = TDOutput      `fmap` checkStateVar sv
-checkTopDecl (TDSysTrans e)    = TDSysTrans    `fmap` traverse checkExpr e
-checkTopDecl (TDEnvTrans e)    = TDEnvTrans    `fmap` traverse checkExpr e
-checkTopDecl (TDSysLiveness e) = TDSysLiveness `fmap` traverse checkExpr e
-checkTopDecl (TDEnvLiveness e) = TDEnvLiveness `fmap` traverse checkExpr e
+checkTopDecl (TDSpec s)        = TDSpec        `fmap` checkSpec s
+checkTopDecl (TDExpr e)        = TDExpr        `fmap` checkExpr e
 checkTopDecl (TDLoc loc)       = TDLoc         `fmap` checkLoc loc checkTopDecl
 
+checkSpec :: Check Spec
+checkSpec (SSysTrans e)    = SSysTrans    `fmap` traverse checkExpr e
+checkSpec (SEnvTrans e)    = SEnvTrans    `fmap` traverse checkExpr e
+checkSpec (SSysLiveness e) = SSysLiveness `fmap` traverse checkExpr e
+checkSpec (SEnvLiveness e) = SEnvLiveness `fmap` traverse checkExpr e
+checkSpec (SLoc loc)       = SLoc         `fmap` checkLoc loc checkSpec
 
 checkEnum :: Check EnumDef
 checkEnum EnumDef { .. } =
@@ -211,7 +212,7 @@ checkFun :: Check Fun
 checkFun Fun { .. } =
   do n' <- checkLoc fName resolve
      withParams (thing n') fParams $ \ps' ->
-       do b' <- traverse checkGuard fBody
+       do b' <- checkFunBody fBody
           return Fun { fName   = n'
                      , fParams = ps'
                      , fBody   = b' }
@@ -239,11 +240,9 @@ withParams fun ps k = go [] ps
        go ((thing n,n'):acc) ns
 
 
-checkGuard :: Check Guard
-checkGuard (GGuard p e)  = GGuard  `fmap` checkExpr p  <*> checkExpr e
-checkGuard (GExpr e)     = GExpr   `fmap` checkExpr e
-checkGuard (GLoc loc)    = GLoc    `fmap` checkLoc loc checkGuard
-
+checkFunBody :: Check FunBody
+checkFunBody (FBSpec ps) = FBSpec `fmap` traverse checkSpec ps
+checkFunBody (FBExpr e)  = FBExpr `fmap` checkExpr e
 
 checkExpr :: Check Expr
 checkExpr (EVar n) = EVar `fmap` resolve n

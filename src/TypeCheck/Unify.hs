@@ -145,6 +145,21 @@ instance Zonk Prim where
   zonk' (PNext ty) = PNext <$> zonk' ty
   zonk' ef         = pure ef
 
+instance Zonk FunBody where
+  zonk' (FunSpec s) = FunSpec <$> zonk' s
+  zonk' (FunExpr e) = FunExpr <$> zonk' e
+
+instance Zonk Spec where
+  zonk' Spec { .. } =
+    do st <- zonk' sSysTrans
+       sl <- zonk' sSysLiveness
+       et <- zonk' sEnvTrans
+       el <- zonk' sEnvLiveness
+       return Spec { sSysTrans    = st
+                   , sSysLiveness = sl
+                   , sEnvTrans    = et
+                   , sEnvLiveness = el }
+
 instance Zonk Type where
   zonk' t0 = go Set.empty t0
     where

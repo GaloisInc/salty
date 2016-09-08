@@ -34,30 +34,50 @@ data Type = TFree TVar
           | TInt
           | TEnum Name
           | TFun Type Type
+          | TSpec
+            -- ^ The typ of top-level specifications (things that use sys_trans,
+            -- etc.)
             deriving (Eq,Ord,Show)
 
 data Controller = Controller { cName        :: !Name
                              , cInputs      :: [StateVar]
                              , cOutputs     :: [StateVar]
-                             , cEnvTrans    :: Expr
-                             , cEnvLiveness :: Expr
-                             , cSysTrans    :: Expr
-                             , cSysLiveness :: Expr
+                             , cSpec        :: Spec
+                             , cTopExprs    :: [Expr]
                              , cFuns        :: [Group Fun]
                              , cEnums       :: [EnumDef]
                              } deriving (Show)
+
+data Spec = Spec { sEnvTrans    :: Expr
+                 , sEnvLiveness :: Expr
+                 , sSysTrans    :: Expr
+                 , sSysLiveness :: Expr
+                 } deriving (Show)
+
+instance Monoid Spec where
+  mempty = Spec { sEnvTrans    = ETrue
+                , sEnvLiveness = ETrue
+                , sSysTrans    = ETrue
+                , sSysLiveness = ETrue
+                }
+
+  mappend a b = Spec { sEnvTrans    = merge sEnvTrans
+                     , sEnvLiveness = merge sEnvLiveness
+                     , sSysTrans    = merge sSysTrans
+                     , sSysLiveness = merge sSysLiveness
+                     }
+    where
+    merge p = EAnd (p a) (p b)
 
 emptyController :: Name -> Controller
 emptyController cName =
   Controller { cName
              , cInputs      = []
              , cOutputs     = []
-             , cEnvTrans    = ETrue
-             , cEnvLiveness = ETrue
-             , cSysTrans    = ETrue
-             , cSysLiveness = ETrue
+             , cSpec        = mempty
              , cFuns        = []
-             , cEnums       = [] }
+             , cEnums       = []
+             , cTopExprs    = [] }
 
 data Group a = NonRecursive a
              | Recursive [a]
@@ -78,8 +98,12 @@ data StateVar = StateVar { svName   :: !Name
 data Fun = Fun { fName   :: !Name
                , fParams :: [(Name,Type)]
                , fResult :: Type
-               , fBody   :: Expr
+               , fBody   :: FunBody
                } deriving (Show)
+
+data FunBody = FunSpec Spec
+             | FunExpr Expr
+               deriving (Show)
 
 data Prim = PAnd
           | POr
@@ -223,11 +247,25 @@ traverseExpr f (ESet t es)    = ESet t   <$> traverse f es
 traverseExpr f (ELet n t b e) = ELet n t <$> f b <*> f e
 traverseExpr _ e@EPrim{}      = pure e
 
-subst :: Map.Map Name Expr -> Expr -> Expr
-subst env = rewriteOf traverseExpr f
-  where
-  f (EVar _ v) = Map.lookup v env
-  f _          = Nothing
+class Subst a where
+  subst :: Map.Map Name Expr -> a -> a
+
+instance Subst FunBody where
+  subst env (FunSpec s) = FunSpec (subst env s)
+  subst env (FunExpr e) = FunExpr (subst env e)
+
+instance Subst Spec where
+  subst env Spec { .. } =
+    Spec { sEnvTrans    = subst env sEnvTrans
+         , sEnvLiveness = subst env sEnvLiveness
+         , sSysTrans    = subst env sSysTrans
+         , sSysLiveness = subst env sSysLiveness }
+
+instance Subst Expr where
+  subst env = rewriteOf traverseExpr f
+    where
+    f (EVar _ v) = Map.lookup v env
+    f _          = Nothing
 
 
 -- Pretty-printing -------------------------------------------------------------
@@ -239,10 +277,14 @@ instance PP Controller where
         ++ concatMap (map pp . F.toList) cFuns
         ++ map (ppStateVar "input")  cInputs
         ++ map (ppStateVar "output") cOutputs
-        ++ [ hang (text "env_trans")    2 (pp cEnvTrans)
-           , hang (text "env_liveness") 2 (pp cEnvLiveness)
-           , hang (text "sys_trans")    2 (pp cSysTrans)
-           , hang (text "sys_liveness") 2 (pp cSysLiveness) ]
+        ++ [pp cSpec]
+
+instance PP Spec where
+  ppPrec p Spec { .. } = optParens (p >= 10) $ vcat
+    [ hang (text "env_trans")    2 (pp sEnvTrans)
+    , hang (text "env_liveness") 2 (pp sEnvLiveness)
+    , hang (text "sys_trans")    2 (pp sSysTrans)
+    , hang (text "sys_liveness") 2 (pp sSysLiveness) ]
 
 instance PP EnumDef where
   ppPrec _ EnumDef { .. } =
@@ -264,6 +306,10 @@ instance PP Fun where
        2 (pp fBody)
     where
     ppParam (p,ty) = pp p <> colon <+> pp ty
+
+instance PP FunBody where
+  ppPrec _ (FunSpec s) = pp s
+  ppPrec _ (FunExpr e) = pp e
 
 instance PP Prim where
   ppPrec _ PAnd      = text "&&"
@@ -312,3 +358,4 @@ instance PP Type where
   ppPrec _ (TEnum n)  = pp n
   ppPrec _ (TSet a)   = braces (pp a)
   ppPrec p (TFun a b) = optParens (p >= 10) (sep [ ppPrec 10 a <+> text "->", pp b ])
+  ppPrec _ TSpec      = text "Spec"

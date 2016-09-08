@@ -14,11 +14,13 @@ import qualified Language.Slugs as Slugs
 -- Translation -----------------------------------------------------------------
 
 mkSpec :: Controller -> (Slugs.Spec,Env)
-mkSpec cont = (Slugs.addLimits spec,env)
+mkSpec cont = (Slugs.addLimits slugs,env)
   where
-  spec =
-    Slugs.Spec { Slugs.specEnv    = mkState env (cInputs cont)  (cEnvTrans cont) (cEnvLiveness cont)
-               , Slugs.specSys    = mkState env (cOutputs cont) (cSysTrans cont) (cSysLiveness cont)
+  spec = cSpec cont
+
+  slugs =
+    Slugs.Spec { Slugs.specEnv = mkState env (cInputs cont)  (sEnvTrans spec) (sEnvLiveness spec)
+               , Slugs.specSys = mkState env (cOutputs cont) (sSysTrans spec) (sSysLiveness spec)
                , .. }
   (env,specInput,specOutput) = mkEnv cont
 

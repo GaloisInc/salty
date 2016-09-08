@@ -32,7 +32,6 @@ module TypeCheck.Monad (
     -- ** Errors
     ppTCError,
     invalidRecursiveGroup,
-    unreachableCases,
     tooManyDefaultCases,
   ) where
 
@@ -72,7 +71,6 @@ data TCType = Checking Type
 
 data TCError = UnifyError Unify.UnifyError
              | InvalidRecursiveGroup [AST.TopDecl Name]
-             | UnreachableCases [AST.Guard Name]
              | TooManyDefaultCases [AST.Case Name]
              | MissingBounds (AST.Loc Name)
                deriving (Show)
@@ -93,10 +91,6 @@ ppTCError err =
       -- XXX print more information
       InvalidRecursiveGroup _ ->
         text "Recursive group contains non-functions"
-
-      -- XXX print more information
-      UnreachableCases _ ->
-        text "Unreachable cases in macro definition"
 
       -- XXX print more information
       TooManyDefaultCases _ ->
@@ -240,10 +234,6 @@ collectErrors m =
 -- | A recursive group that does not consist of just functions.
 invalidRecursiveGroup :: [AST.TopDecl Name] -> TCError
 invalidRecursiveGroup g = InvalidRecursiveGroup g
-
--- | These guarded cases are unreachable.
-unreachableCases :: [AST.Guard Name] -> TCError
-unreachableCases gs = UnreachableCases gs
 
 -- | Too many default cases in a case expression.
 tooManyDefaultCases :: [AST.Case Name] -> TCError

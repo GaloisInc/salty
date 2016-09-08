@@ -77,6 +77,7 @@ mkVar env name ty mbBounds =
     TFree{} -> panic "free variable"
     TFun{}  -> panic "function-typed state variable"
     TSet{}  -> panic "set-typed state variable"
+    TSpec{} -> panic "spec-typed state variable"
 
 
 addRef :: Name -> Int -> Env -> Env

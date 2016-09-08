@@ -24,12 +24,17 @@ data TopDecl name = TDEnum (EnumDef name)
                   | TDFun (Fun name)
                   | TDInput (StateVar name)
                   | TDOutput (StateVar name)
-                  | TDSysTrans [Expr name]
-                  | TDSysLiveness [Expr name]
-                  | TDEnvTrans [Expr name]
-                  | TDEnvLiveness [Expr name]
+                  | TDSpec (Spec name)
+                  | TDExpr (Expr name)
                   | TDLoc (Loc (TopDecl name))
                     deriving (Functor,Show)
+
+data Spec name = SEnvTrans    [Expr name]
+               | SEnvLiveness [Expr name]
+               | SSysTrans    [Expr name]
+               | SSysLiveness [Expr name]
+               | SLoc (Loc (Spec name))
+                 deriving (Functor,Show)
 
 
 isFun :: TopDecl name -> Bool
@@ -43,9 +48,9 @@ data EnumDef name = EnumDef { eName :: Loc name
                             } deriving (Functor,Show)
 
 
-data Fun name = Fun { fName :: Loc name
+data Fun name = Fun { fName   :: Loc name
                     , fParams :: [Loc name]
-                    , fBody :: [Guard name]
+                    , fBody   :: FunBody name
                     } deriving (Functor,Show)
 
 data StateVar name = StateVar { svName   :: Loc name
@@ -54,10 +59,9 @@ data StateVar name = StateVar { svName   :: Loc name
                               , svInit   :: Maybe (Expr name)
                               } deriving (Functor,Show)
 
-data Guard name = GGuard (Expr name) (Expr name)
-                | GExpr (Expr name)
-                | GLoc (Loc (Guard name))
-                  deriving (Functor,Show)
+data FunBody name = FBSpec [Spec name]
+                  | FBExpr (Expr name)
+                    deriving (Functor,Show)
 
 data Type name = TBool
                | TInt
@@ -117,14 +121,19 @@ instance HasLoc (TopDecl name) where
   getLoc (TDLoc loc) = getLoc loc
   getLoc _           = mempty
 
+instance HasLoc (Spec name) where
+  type LocSource (Spec name) = FilePath
+  getLoc (SLoc loc) = getLoc loc
+  getLoc _          = mempty
+
 instance HasLoc (EnumDef name) where
   type LocSource (EnumDef name) = FilePath
   getLoc EnumDef { eName, eCons } = foldMap getLoc (eName : eCons)
 
-instance HasLoc (Guard name) where
-  type LocSource (Guard name) = FilePath
-  getLoc (GLoc loc) = getLoc loc
-  getLoc _          = mempty
+instance HasLoc (FunBody name) where
+  type LocSource (FunBody name) = FilePath
+  getLoc (FBSpec xs) = getLoc xs
+  getLoc (FBExpr e)  = getLoc e
 
 instance HasLoc (Expr name) where
   type LocSource (Expr name) = FilePath
@@ -160,10 +169,8 @@ topDeclDs (TDEnum enum)   = enumDs enum
 topDeclDs (TDFun fun)     = funDs fun
 topDeclDs (TDInput sv)    = stateVarDs sv
 topDeclDs (TDOutput sv)   = stateVarDs sv
-topDeclDs TDSysTrans   {} = Set.empty
-topDeclDs TDSysLiveness{} = Set.empty
-topDeclDs TDEnvTrans   {} = Set.empty
-topDeclDs TDEnvLiveness{} = Set.empty
+topDeclDs TDSpec{}        = Set.empty
+topDeclDs TDExpr{}        = Set.empty
 topDeclDs (TDLoc loc)     = topDeclDs (thing loc)
 
 
@@ -188,23 +195,28 @@ topDeclFvs TDEnum {}          = Set.empty
 topDeclFvs (TDFun fun)        = funFvs fun
 topDeclFvs (TDInput sv)       = stateVarFvs sv
 topDeclFvs (TDOutput sv)      = stateVarFvs sv
-topDeclFvs (TDSysTrans    es) = foldMap exprFvs es
-topDeclFvs (TDSysLiveness es) = foldMap exprFvs es
-topDeclFvs (TDEnvTrans    es) = foldMap exprFvs es
-topDeclFvs (TDEnvLiveness es) = foldMap exprFvs es
+topDeclFvs (TDSpec s)         = specFvs s
+topDeclFvs (TDExpr s)         = exprFvs s
 topDeclFvs (TDLoc loc)        = topDeclFvs (thing loc)
+
+-- | Free variables used in this specification.
+specFvs :: Ord name => Spec name -> Set.Set name
+specFvs (SSysTrans    es) = foldMap exprFvs es
+specFvs (SSysLiveness es) = foldMap exprFvs es
+specFvs (SEnvTrans    es) = foldMap exprFvs es
+specFvs (SEnvLiveness es) = foldMap exprFvs es
+specFvs (SLoc loc)        = foldMap specFvs loc 
 
 -- | The free variables of the function body.
 funFvs :: Ord name => Fun name -> Set.Set name
 funFvs Fun { fParams, fBody } = 
-  let fvs = Set.unions (map guardFvs fBody)
+  let fvs = funBodyFvs fBody
       bvs = Set.fromList (map thing fParams)
    in fvs Set.\\ bvs
 
-guardFvs :: Ord name => Guard name -> Set.Set name
-guardFvs (GGuard p e)  = Set.union (exprFvs p)  (exprFvs e)
-guardFvs (GExpr e)     = exprFvs e
-guardFvs (GLoc loc)    = guardFvs (thing loc)
+funBodyFvs :: Ord name => FunBody name -> Set.Set name
+funBodyFvs (FBSpec ps) = foldMap specFvs ps
+funBodyFvs (FBExpr e)  = exprFvs e
 
 -- | The free variables of the state-variable initializer.
 stateVarFvs :: Ord name => StateVar name -> Set.Set name

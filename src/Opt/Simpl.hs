@@ -23,10 +23,8 @@ instance Simp Controller where
   simp Controller { .. } =
     Controller { cInputs      = simp cInputs
                , cOutputs     = simp cOutputs
-               , cEnvTrans    = simp cEnvTrans
-               , cEnvLiveness = simp cEnvLiveness
-               , cSysTrans    = simp cSysTrans
-               , cSysLiveness = simp cSysLiveness
+               , cSpec        = simp cSpec
+               , cTopExprs    = map simp cTopExprs
                , cFuns        = simp cFuns
                , .. }
 
@@ -35,6 +33,17 @@ instance Simp StateVar where
 
 instance Simp Fun where
   simp Fun { .. } = Fun { fBody = simp fBody, .. }
+
+instance Simp FunBody where
+  simp (FunSpec s) = FunSpec (simp s)
+  simp (FunExpr e) = FunExpr (simp e)
+
+instance Simp Spec where
+  simp Spec { .. } = Spec { sSysTrans    = simp sSysTrans
+                          , sSysLiveness = simp sSysLiveness
+                          , sEnvTrans    = simp sEnvTrans
+                          , sEnvLiveness = simp sEnvLiveness }
+
 
 instance Simp Expr where
   simp = rewriteOf traverseExpr simpExpr1
