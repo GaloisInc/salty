@@ -119,6 +119,9 @@ top_decl :: { TopDecl PName }
   | spec
     { TDLoc (TDSpec $1 `at` $1) }
 
+  | expr
+    { TDLoc (TDExpr $1 `at` $1) }
+
 
 -- Specification ---------------------------------------------------------------
 

@@ -42,7 +42,15 @@ expandDef env f args =
 -- | Translate top-level expressions into specifications, or panic if that's not
 -- possible.
 expandTopExpr :: Env -> Expr -> Spec
-expandTopExpr env e = undefined
+expandTopExpr env e =
+  case destEApp (expand' env e) of
+    (EVar _ f, args) -> go (expandDef env f args)
+    _                -> panic "Non-spec top-level expression"
+
+  where
+
+  go (FunExpr e') = expandTopExpr env e'
+  go (FunSpec s)  = expand' env s
 
 
 class Expand a where
@@ -92,11 +100,13 @@ instance Expand Expr where
       (EPrim (PNext _), [x]) -> eNext (expand' env x)
 
       -- macro expansion
-      (EVar _ f, args)
+      (fun@(EVar _ f), args)
         | not (null args) || Map.member f env ->
           case expandDef env f args of
             FunExpr b -> expand' env b
-            FunSpec _ -> panic "Unexpected specification in expression"
+
+            -- don't attempt to expand a specification here
+            FunSpec _ -> eApp fun (map (expand' env) args)
 
       -- generic application case
       (f, args) | not (null args) -> eApp (expand' env f) (map (expand' env) args)

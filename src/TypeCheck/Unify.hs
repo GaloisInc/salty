@@ -205,6 +205,7 @@ instance Types Type where
 
   unify' (TSet a) (TSet b) = unify' a b
 
+  unify' TSpec TSpec = return ()
   unify' TBool TBool = return ()
   unify' TInt  TInt  = return ()
 
@@ -220,6 +221,7 @@ instance Types Type where
 
   match' (TSet a) (TSet b) = match' a b
 
+  match' TSpec TSpec = return ()
   match' TBool TBool = return ()
   match' TInt  TInt  = return ()
 
