@@ -63,3 +63,6 @@ build/%.jar: build/%/.token
 
 build/%/.token: %.salt | build
 	$(Q) $(call salty,$*,$*.salt) && touch $@
+
+echo-%:
+	$(Q) echo "$* = $($*)"
