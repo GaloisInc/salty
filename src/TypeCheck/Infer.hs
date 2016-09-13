@@ -58,11 +58,11 @@ simpleTopDecl (AST.TDOutput sv) =
      return $ \ c -> c { cOutputs = sv' : cOutputs c }
 
 simpleTopDecl (AST.TDSpec s) =
-  do s' <- checkSpec s
+  do s' <- zonk =<< checkSpec s
      return $ \ c -> c { cSpec = cSpec c `mappend` s' }
 
 simpleTopDecl (AST.TDExpr e) =
-  do e' <- checkExpr TSpec e
+  do e' <- zonk =<< checkExpr TSpec e
      return $ \ c -> c { cTopExprs = e' : cTopExprs c }
 
 simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
@@ -105,7 +105,7 @@ checkEnum AST.EnumDef { eName, eCons } =
 checkStateVar :: AST.StateVar Name -> TC StateVar
 checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
   do ty' <- translateType svType
-     e'  <- traverse (checkExpr ty') svInit
+     e'  <- zonk =<< traverse (checkExpr ty') svInit
 
      bounds <- case svBounds of
                  Just loc -> withLoc loc (return . Just)
@@ -175,7 +175,7 @@ checkFunBody :: Type -> AST.FunBody Name -> TC FunBody
 
 checkFunBody ty (AST.FBSpec ps) =
   do unify ty TSpec
-     ps' <- traverse checkSpec ps
+     ps' <- zonk =<< traverse checkSpec ps
      return (FunSpec (mconcat ps'))
 
 checkFunBody ty (AST.FBExpr e) =

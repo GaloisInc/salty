@@ -128,8 +128,12 @@ class Zonk ty where
   -- | Free type variables.
   ftvs :: ty -> Set.Set TVar
 
+instance Zonk a => Zonk (Maybe a) where
+  zonk' = traverse zonk'
+  ftvs  = maybe Set.empty ftvs
+
 instance Zonk a => Zonk [a] where
-  zonk' as = traverse zonk' as
+  zonk' = traverse zonk'
 
   ftvs as = Set.unions (map ftvs as)
 
