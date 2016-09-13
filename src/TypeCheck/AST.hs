@@ -19,6 +19,10 @@ import           Language.Slugs.Lens
 
 data TVar = TVar { tvOrigin :: !(Maybe Name)
                  , tvUnique :: !Int
+                   -- ^ When the TVar is used for a free type variable, this
+                   -- index is globally unique. When it's used for a generalized
+                   -- variable, this variable is the index into the parameter
+                   -- list.
                  } deriving (Show)
 
 instance Eq TVar where
@@ -29,6 +33,7 @@ instance Ord TVar where
   compare = compare `on` tvUnique
 
 data Type = TFree TVar
+          | TGen TVar -- ^ Bound type variables
           | TSet Type
           | TBool
           | TInt
@@ -95,9 +100,12 @@ data StateVar = StateVar { svName   :: !Name
                          , svInit   :: !(Maybe Expr)
                          } deriving (Show)
 
+data Schema = Forall [TVar] Type
+              deriving (Show)
+
 data Fun = Fun { fName   :: !Name
-               , fParams :: [(Name,Type)]
-               , fResult :: Type
+               , fSchema :: Schema
+               , fParams :: [Name]
                , fBody   :: FunBody
                } deriving (Show)
 
@@ -122,36 +130,88 @@ data Expr = ETrue
           | ECon Type Name
           | ENum Integer
           | EApp Expr Expr
+          | ETApp Expr Type
           | ESet Type [Expr]
           | ELet Name Type Expr Expr
           | EPrim Prim
             deriving (Show,Eq,Ord)
 
-primTypeOf :: Prim -> Type
-primTypeOf PAnd       = tFun [TBool,TBool,TBool]
-primTypeOf POr        = tFun [TBool,TBool,TBool]
-primTypeOf PNot       = tFun [TBool,TBool]
-primTypeOf (PNext ty) = tFun [ty,ty]
-primTypeOf (PEq ty)   = tFun [ty,ty,TBool]
-primTypeOf (PIn ty)   = tFun [ty, TSet ty, TBool]
-primTypeOf PAny       = tFun [TSet TBool, TBool]
-primTypeOf PAll       = tFun [TSet TBool, TBool]
-primTypeOf PMutex     = tFun [TSet TBool, TBool]
+
+class TypeInst a where
+  typeInst :: [Type] -> a -> a
+
+instance TypeInst a => TypeInst [a] where
+  typeInst ts = map (typeInst ts)
+
+instance TypeInst Type where
+  typeInst gs = go
+    where
+    go (TGen v)   = gs !! tvUnique v
+    go (TSet t)   = TSet (go t)
+    go (TFun a b) = TFun (go a) (go b)
+    go t@TFree{}  = t
+    go t@TBool    = t
+    go t@TInt     = t
+    go t@TEnum{}  = t
+    go t@TSpec    = t
+
+instance TypeInst Expr where
+  typeInst gs (EVar ty n)     = EVar (typeInst gs ty) n
+  typeInst gs (ECon ty n)     = ECon (typeInst gs ty) n
+  typeInst gs (EApp f x)      = EApp (typeInst gs f) (typeInst gs x)
+  typeInst gs (ETApp e ty)    = ETApp (typeInst gs e) (typeInst gs ty)
+  typeInst gs (ESet ty es)    = ESet (typeInst gs ty) (typeInst gs es)
+  typeInst gs (ELet n ty a b) = ELet n (typeInst gs ty)
+                                       (typeInst gs a)
+                                       (typeInst gs b)
+  typeInst gs (EPrim p)       = EPrim (typeInst gs p)
+  typeInst _  t@ETrue         = t
+  typeInst _  t@EFalse        = t
+  typeInst _  t@ENum{}        = t
+
+instance TypeInst Prim where
+  typeInst gs (PNext ty) = PNext (typeInst gs ty)
+  typeInst gs (PEq   ty) = PEq   (typeInst gs ty)
+  typeInst gs (PIn   ty) = PIn   (typeInst gs ty)
+  typeInst _  t@PAnd     = t
+  typeInst _  t@POr      = t
+  typeInst _  t@PNot     = t
+  typeInst _  t@PAny     = t
+  typeInst _  t@PAll     = t
+  typeInst _  t@PMutex   = t
 
 typeOf :: Expr -> Type
-typeOf ETrue          = TBool
-typeOf EFalse         = TBool
-typeOf (EVar ty _)    = ty
-typeOf (ECon ty _)    = ty
-typeOf (ENum _)       = TInt
-typeOf (EApp f _)     =
-  case typeOf f of
-    TFun _ r -> r
-    _        -> panic "typeOf: Non-function in application position"
+typeOf  = typeOf' []
 
-typeOf (ESet ty _)    = TSet ty
-typeOf (ELet _ _ _ e) = typeOf e
-typeOf (EPrim p)      = primTypeOf p
+typeOf' :: [Type] -> Expr -> Type
+typeOf'  = go
+  where
+  go _  ETrue          = TBool
+  go _  EFalse         = TBool
+  go gs (EVar ty _)    = typeInst gs ty
+  go gs (ECon ty _)    = typeInst gs ty
+  go _  (ENum _)       = TInt
+  go gs (EApp f _)     =
+    case go gs f of
+      TFun _ r -> r
+      _        -> panic "typeOf: Non-function in application position"
+
+  go gs (ETApp f t)    = go (gs ++ [t]) f
+
+  go gs (ESet ty _)    = TSet (typeInst gs ty)
+  go gs (ELet _ _ _ e) = go gs e
+  go gs (EPrim p)      = primTypeOf gs p
+
+  primTypeOf _  PAnd       = tFun [TBool,TBool,TBool]
+  primTypeOf _  POr        = tFun [TBool,TBool,TBool]
+  primTypeOf _  PNot       = tFun [TBool,TBool]
+  primTypeOf gs (PNext ty) = tFun [typeInst gs ty,typeInst gs ty]
+  primTypeOf gs (PEq ty)   = tFun [typeInst gs ty,typeInst gs ty,TBool]
+  primTypeOf gs (PIn ty)   = tFun [typeInst gs ty, TSet (typeInst gs ty), TBool]
+  primTypeOf _  PAny       = tFun [TSet TBool, TBool]
+  primTypeOf _  PAll       = tFun [TSet TBool, TBool]
+  primTypeOf _  PMutex     = tFun [TSet TBool, TBool]
+
 
 
 pattern EAnd :: Expr -> Expr -> Expr
@@ -187,6 +247,12 @@ destTFun (TFun l r) =
    in (l:args,res)
 destTFun ty = ([],ty)
 
+destApp :: Expr -> (Expr,[Type],[Expr])
+destApp e =
+  let (a,es) = destEApp e
+      (b,ts) = destETApp a
+   in (b,ts,es)
+
 destEApp :: Expr -> (Expr,[Expr])
 destEApp  = go []
   where
@@ -206,6 +272,12 @@ destEAnd e          = [e]
 destEOr :: Expr -> [Expr]
 destEOr (EOr a b) = destEOr a ++ destEOr b
 destEOr e         = [e]
+
+destETApp :: Expr -> (Expr,[Type])
+destETApp  = go []
+  where
+  go acc (ETApp e ty) = go (ty:acc) e
+  go acc e            = (e, reverse acc)
 
 
 tFun :: [Type] -> Type
@@ -246,6 +318,7 @@ traverseExpr f (EApp p x)     = EApp     <$> f p <*> f x
 traverseExpr f (ESet t es)    = ESet t   <$> traverse f es
 traverseExpr f (ELet n t b e) = ELet n t <$> f b <*> f e
 traverseExpr _ e@EPrim{}      = pure e
+traverseExpr f (ETApp e ty)   = ETApp    <$> f e <*> pure ty
 
 class Subst a where
   subst :: Map.Map Name Expr -> a -> a
@@ -299,13 +372,11 @@ ppStateVar lab StateVar { .. } =
 instance PP Fun where
   ppPrec _ Fun { .. } =
     hang (pp fName
-          <+> parens (fsep (punctuate comma (map ppParam fParams)))
+          <+> parens (fsep (punctuate comma (map pp fParams)))
           <> colon
-          <+> pp fResult
+          <+> pp fSchema
           <+> char '=')
        2 (pp fBody)
-    where
-    ppParam (p,ty) = pp p <> colon <+> pp ty
 
 instance PP FunBody where
   ppPrec _ (FunSpec s) = pp s
@@ -339,6 +410,10 @@ instance PP Expr where
   ppPrec _ (ENext _ e)  = char 'X' <> parens (pp e)
   ppPrec _ (ESet _ es)  = braces (ppList es)
   ppPrec p (EPrim e)    = ppPrec p e
+  ppPrec p e@ETApp{}    = optParens (p >= 10) $
+    let (e', ts) = destETApp e
+        params   = braces (fsep (punctuate comma (map pp ts)))
+      in optParens (p >= 10) (hang (ppPrec 10 e' <> char '@') 2 params)
 
   ppPrec p (ELet n t b e) =
     optParens (p >= 10)
@@ -351,8 +426,17 @@ ppBinop p a x b = optParens (p >= 10) (sep [ppPrec 10 a, x, ppPrec 10 b])
 instance PP TVar where
   ppPrec _ TVar { .. } = char '?' <> pp tvUnique
 
+instance PP Schema where
+  ppPrec p (Forall ps ty) = optParens (p >= 10) $ (vars <+> pp ty)
+    where
+    vars | null ps   = empty
+         | otherwise = text "forall"
+                   <+> fsep (punctuate (char ',') (map pp ps))
+                    <> char '.'
+
 instance PP Type where
   ppPrec _ (TFree v)  = pp v
+  ppPrec _ (TGen v)   = pp v
   ppPrec _ TBool      = text "Bool"
   ppPrec _ TInt       = text "Num"
   ppPrec _ (TEnum n)  = pp n

@@ -36,7 +36,7 @@ lookupFun n env = Map.findWithDefault missing n env
 expandDef :: Env -> Name -> [Expr] -> FunBody
 expandDef env f args =
   let Fun { .. } = lookupFun f env
-      inst       = Map.fromList (zip (map fst fParams) args)
+      inst       = Map.fromList (zip fParams args)
    in subst inst fBody
 
 -- | Translate top-level expressions into specifications, or panic if that's not
@@ -73,35 +73,41 @@ instance Expand Spec where
          , sSysLiveness = expand' env sSysLiveness }
 
 instance Expand Expr where
+  expand' env e
+    | (e',ts) <- destETApp e, not (null ts) =
+      typeInst ts (expand' env e')
+
   expand' env e =
-    case destEApp e of
-      (EPrim PAny, [set]) ->
+    case destApp e of
+
+      (EPrim PAny, _, [set]) ->
          case expand' env set of
            ESet _ es -> expand' env (eOr es)
            set'      -> EAny set'
 
-      (EPrim PAll, [set]) ->
+      (EPrim PAll, _, [set]) ->
         case expand' env set of
           ESet _ es -> expand' env (eAnd es)
           set'      -> EAll set'
 
-      (EPrim PMutex, [set]) ->
+      (EPrim PMutex, _, [set]) ->
         case expand' env set of
           ESet _ es -> expand' env (eMutex es)
           set'      -> EMutex set'
 
-      (EPrim (PIn ty), [a,set]) ->
+      (EPrim (PIn ty), _, [a,set]) ->
         let a'   = expand' env a
             set' = expand' env set
          in case set' of
               ESet _ es -> expand' env (foldl EOr EFalse [ EEq ty a' x | x <- es ])
               _         -> EIn ty a' set'
 
-      (EPrim (PNext _), [x]) -> eNext (expand' env x)
+      (EPrim (PNext _), _, [x]) -> eNext (expand' env x)
 
       -- macro expansion
-      (fun@(EVar _ f), args)
+      (fun@(EVar _ f), ts, args)
         | not (null args) || Map.member f env ->
+          typeInst ts $
           case expandDef env f args of
             FunExpr b -> expand' env b
 
@@ -109,11 +115,11 @@ instance Expand Expr where
             FunSpec _ -> eApp fun (map (expand' env) args)
 
       -- generic application case
-      (f, args) | not (null args) -> eApp (expand' env f) (map (expand' env) args)
+      (f, _, args) | not (null args) -> eApp (expand' env f) (map (expand' env) args)
 
-      (ESet ty es, []) -> ESet ty (map (expand' env) es)
+      (ESet ty es, _, []) -> ESet ty (map (expand' env) es)
 
-      (ELet n ty b x, []) -> ELet n ty (expand' env b) (expand' env x)
+      (ELet n ty b x, _, []) -> ELet n ty (expand' env b) (expand' env x)
 
       _ -> e
 

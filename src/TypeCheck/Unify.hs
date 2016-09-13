@@ -6,7 +6,7 @@ module TypeCheck.Unify (
     UnifyError(..),
     Types(),
     Unify, unify, match,
-    Zonk, zonk,
+    Zonk, zonk, ftvs,
   ) where
 
 import PP
@@ -125,8 +125,13 @@ class Zonk ty where
   -- | Remove type variables by looking them up in the environment.
   zonk' :: ty -> Unify ty
 
+  -- | Free type variables.
+  ftvs :: ty -> Set.Set TVar
+
 instance Zonk a => Zonk [a] where
   zonk' as = traverse zonk' as
+
+  ftvs as = Set.unions (map ftvs as)
 
 instance Zonk Expr where
   zonk' ETrue           = pure ETrue
@@ -138,6 +143,18 @@ instance Zonk Expr where
   zonk' (ESet ty es)    = ESet   <$> zonk' ty <*> traverse zonk' es
   zonk' (ELet n ty b e) = ELet n <$> zonk' ty <*> zonk' b <*> zonk' e
   zonk' (EPrim p)       = EPrim  <$> zonk' p
+  zonk' (ETApp e ty)    = ETApp  <$> zonk' e  <*> zonk' ty
+
+  ftvs ETrue           = Set.empty
+  ftvs EFalse          = Set.empty
+  ftvs EVar{}          = Set.empty
+  ftvs ECon{}          = Set.empty
+  ftvs ENum{}          = Set.empty
+  ftvs (EApp f x)      = Set.union (ftvs f)  (ftvs x)
+  ftvs (ESet ty es)    = Set.union (ftvs ty) (ftvs es)
+  ftvs (ELet _ ty b e) = Set.unions [ftvs ty, ftvs b, ftvs e]
+  ftvs (EPrim p)       = ftvs p
+  ftvs (ETApp e ty)    = Set.union (ftvs e) (ftvs ty)
 
 instance Zonk Prim where
   zonk' (PIn   ty) = PIn   <$> zonk' ty
@@ -145,9 +162,17 @@ instance Zonk Prim where
   zonk' (PNext ty) = PNext <$> zonk' ty
   zonk' ef         = pure ef
 
+  ftvs (PIn   ty) = ftvs ty
+  ftvs (PEq   ty) = ftvs ty
+  ftvs (PNext ty) = ftvs ty
+  ftvs _          = Set.empty
+
 instance Zonk FunBody where
   zonk' (FunSpec s) = FunSpec <$> zonk' s
   zonk' (FunExpr e) = FunExpr <$> zonk' e
+
+  ftvs (FunSpec s) = ftvs s
+  ftvs (FunExpr e) = ftvs e
 
 instance Zonk Spec where
   zonk' Spec { .. } =
@@ -159,6 +184,12 @@ instance Zonk Spec where
                    , sSysLiveness = sl
                    , sEnvTrans    = et
                    , sEnvLiveness = el }
+
+  ftvs Spec { .. } = Set.unions
+    [ ftvs sSysTrans
+    , ftvs sSysLiveness
+    , ftvs sEnvTrans
+    , ftvs sEnvLiveness ]
 
 instance Zonk Type where
   zonk' t0 = go Set.empty t0
@@ -185,6 +216,15 @@ instance Zonk Type where
          return (TSet as')
 
     go _ ty = return ty
+
+  ftvs (TFree v)  = Set.singleton v
+  ftvs (TSet ty)  = ftvs ty
+  ftvs (TFun a b) = Set.union (ftvs a) (ftvs b)
+  ftvs TGen{}     = Set.empty
+  ftvs TBool      = Set.empty
+  ftvs TInt       = Set.empty
+  ftvs TEnum{}    = Set.empty
+  ftvs TSpec      = Set.empty
 
 
 class Zonk ty => Types ty where

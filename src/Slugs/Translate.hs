@@ -61,10 +61,11 @@ mkExpr env e@ELet{} =
 
 mkExpr _   (ECon _ _)       = panic "Constructor used outside of assignment"
 mkExpr _   e@EApp{}         = panic ("Unexpected EApp: " ++ show e)
+mkExpr _   e@ETApp{}        = panic ("Unexpected ETApp: " ++ show e)
 mkExpr _   (ENum _)         = panic "Unexpected ENum"
 mkExpr _   (ENext _ _)      = panic "Unexpected ENext"
 mkExpr _   (EPrim _)        = panic "Unexpected EPrim"
-mkExpr _   (ESet _ _)         = panic "Unexpected ESet"
+mkExpr _   (ESet _ _)       = panic "Unexpected ESet"
 
 
 slugsVar :: Env -> Expr -> Maybe Slugs.Expr

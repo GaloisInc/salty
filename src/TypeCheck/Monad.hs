@@ -14,6 +14,7 @@ module TypeCheck.Monad (
     -- ** Unification
     unify,
     zonk,
+    Unify.ftvs,
 
     -- ** Type Environment 
     lookupVar,
@@ -39,7 +40,7 @@ import           PP
 import           Scope.Name (Name,Supply,nextUnique)
 import           Syntax.AST (Loc)
 import qualified Syntax.AST as AST
-import           TypeCheck.AST (Type(..),TVar(..))
+import           TypeCheck.AST (Type(..),TVar(..),Schema(..))
 import qualified TypeCheck.Unify as Unify
 
 import           Data.Either (partitionEithers)
@@ -65,8 +66,7 @@ emptyRW rwSupply = RW { rwSubst = Unify.emptyEnv
                       , rwErrs  = []
                       , .. }
 
-data TCType = Checking Type
-            | HasType !Type
+data TCType = HasType !Schema -- ^ A variable with known type.
               deriving (Show)
 
 data TCError = UnifyError Unify.UnifyError
@@ -90,7 +90,7 @@ ppTCError err =
 
       -- XXX print more information
       InvalidRecursiveGroup _ ->
-        text "Recursive group contains non-functions"
+        text "Recursive functions are not supported"
 
       -- XXX print more information
       TooManyDefaultCases _ ->
@@ -147,13 +147,12 @@ zonk ty =
 -- Type Environment ------------------------------------------------------------
 
 -- | Lookup the type of a variable.
-lookupVar :: Name -> TC Type
+lookupVar :: Name -> TC Schema
 lookupVar n = TC $
   do RW { .. } <- get
      case Map.lookup n rwEnv of
-       Just (Checking ty) -> return ty
-       Just (HasType ty)  -> return ty
-       Nothing            -> error ("Unknown variable: " ++ show n)
+       Just (HasType s) -> return s
+       Nothing          -> error ("Unknown variable: " ++ show n)
 
 -- | Introduce a new type variable. The optional name is the origin of the
 -- variable (for a type variable derived from a parameter, it's the name of the
@@ -167,16 +166,16 @@ newTVar tvOrigin = TC $ sets $ \ RW { .. } ->
 -- bindings are only in the environment for the duration of the body.
 withTypes :: [(Name,Type)] -> TC a -> TC a
 withTypes tys body = TC $
-  do let binds = Map.fromList [ (n, Checking ty) | (n,ty) <- tys ]
+  do let binds = Map.fromList [ (n, HasType (Forall [] ty)) | (n,ty) <- tys ]
      env <- sets (\ RW { .. } -> (rwEnv, RW { rwEnv = Map.union binds rwEnv, .. }))
      a   <- unTC body
      sets_ (\ RW { .. } -> RW { rwEnv = env, .. })
      return a
 
 -- | Permanently add bindings to the typing environment.
-addTypes :: [(Name,Type)] -> TC ()
+addTypes :: [(Name,Schema)] -> TC ()
 addTypes tys =
-  let binds = Map.fromList [ (n, HasType ty) | (n,ty) <- tys ]
+  let binds = Map.fromList [ (n, HasType s) | (n,s) <- tys ]
    in TC (sets_ (\ RW { .. } -> RW { rwEnv = Map.union binds rwEnv, .. }))
 
 

@@ -75,6 +75,7 @@ mkVar env name ty mbBounds =
       Slugs.VarBool (mangleName name)
 
     TFree{} -> panic "free variable"
+    TGen{}  -> panic "generalized variable"
     TFun{}  -> panic "function-typed state variable"
     TSet{}  -> panic "set-typed state variable"
     TSpec{} -> panic "spec-typed state variable"

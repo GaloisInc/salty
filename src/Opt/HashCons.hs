@@ -160,6 +160,10 @@ instance HashCons Expr where
                               let e' = eApp f' xs'
                               cache (typeOf e') e'
 
+  hashCons' e@ETApp{}    = do let (f,ts) = destETApp e
+                              f' <- hashCons' f
+                              cache (typeOf' ts f') (foldl ETApp f' ts)
+
   -- NOTE: sets aren't cached, as they are values that slugs can't represent
   hashCons' (ESet ty es) = do es' <- traverse hashCons' es
                               return (ESet ty es')

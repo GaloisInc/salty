@@ -9,9 +9,10 @@ import           TypeCheck.AST
 import           TypeCheck.Groups
 import           TypeCheck.Monad
 
-import           Control.Monad (when)
+import           Control.Monad (when,unless,zipWithM_)
 import           Data.Either (partitionEithers)
 import           Data.List (foldl')
+import qualified Data.Set as Set
 import           Text.Location (thing,getLoc,at)
 
 
@@ -23,13 +24,12 @@ inferController AST.Controller { AST.cName, AST.cDecls } =
 
 inferTopGroup :: Group (AST.TopDecl Name) -> TC (Controller -> Controller)
 
-inferTopGroup (NonRecursive td) =
-  simpleTopDecl td
+inferTopGroup (NonRecursive td) = simpleTopDecl td
 
-inferTopGroup (Recursive tds)   =
-  case traverse mkLocFun tds of
-    Just funs -> inferFunGroup True funs
-    _         -> failWith (invalidRecursiveGroup tds)
+-- XXX: for the future, it might be useful to allow recursive functions.
+-- Currently, we have no measure to use for the recursion to terminate, so the
+-- only recursive functions we could write would be non-terminating.
+inferTopGroup (Recursive tds) = failWith (invalidRecursiveGroup tds)
 
 
 mkLocFun :: AST.TopDecl Name -> Maybe (AST.Loc (AST.Fun Name))
@@ -47,7 +47,7 @@ simpleTopDecl (AST.TDEnum enum) = checkEnum enum
 
 simpleTopDecl (AST.TDFun fun) =
   do loc <- askLoc
-     inferFunGroup False [fun `at` loc]
+     inferFun (fun `at` loc)
 
 simpleTopDecl (AST.TDInput sv) =
   do sv' <- checkStateVar sv
@@ -92,7 +92,7 @@ checkSpec (AST.SLoc loc) = withLoc loc checkSpec
 -- | Add all of the constructors to the typing environment.
 checkEnum :: AST.EnumDef Name -> TC (Controller -> Controller)
 checkEnum AST.EnumDef { eName, eCons } =
-  do let ty   = TEnum (thing eName)
+  do let ty   = Forall [] (TEnum (thing eName))
          cons = map thing eCons
 
      addTypes (zip cons (repeat ty))
@@ -111,7 +111,8 @@ checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
                  Just loc -> withLoc loc (return . Just)
                  Nothing  -> return Nothing
 
-     addTypes [(thing svName, ty')]
+     -- TODO: add an assertion that the type doesn't contain variables [tc]
+     addTypes [(thing svName, Forall [] ty')]
 
      -- when the type of the state var is Int, make sure that it has bounds
      -- defined.
@@ -124,29 +125,18 @@ checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
                      , svInit   = e' }
 
 
--- | Check a recursive group of functions:
+-- | Check a single function.
 --
---  * Introduce type-variables for all functions in the group
---  * Check each function individually 
---  * Apply the substitution to each function, yielding its type
---
---  Question: Should we allow recursive functions at all? We can only support
---  mutual recursion that will eventual terminate, but it might be easier to
---  just disallow it altogether.
-inferFunGroup :: Bool -> [AST.Loc (AST.Fun Name)] -> TC (Controller -> Controller)
-inferFunGroup isRec funs =
-  do let names = [ thing (AST.fName (thing locFun)) | locFun <- funs ]
-     tys   <- traverse guessType funs
-     funs' <- withTypes (zip names tys) (tryAll (zipWith checkFun tys funs))
-     tys'  <- traverse zonk tys
+-- NOTE: we don't currently allow recursive functions, as there's no way to
+-- terminate recursion in the language.
+inferFun :: AST.Loc (AST.Fun Name) -> TC (Controller -> Controller)
+inferFun locFun = withLoc locFun $ \ AST.Fun { fName } ->
+  do ty  <- guessType locFun
+     fb' <- checkFun ty locFun
 
-     addTypes (zip names tys')
+     addTypes [(thing fName, fSchema fb')]
 
-     let group = case funs' of
-                   [f] | not isRec -> NonRecursive f
-                   _               -> Recursive funs'
-
-     return $ \ c -> c { cFuns = group : cFuns c }
+     return $ \ c -> c { cFuns = NonRecursive fb' : cFuns c }
 
 
 -- | NOTE: type variables can still be present after zonking at this stage,
@@ -156,14 +146,29 @@ inferFunGroup isRec funs =
 checkFun :: Type -> AST.Loc (AST.Fun Name) -> TC Fun
 checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
   withParams ty fParams $ \ (ps,rty) ->
-    do e    <- checkFunBody rty fBody
-       ps'  <- zonk ps
-       rty' <- zonk rty
-       e'   <- zonk e
+    do e       <- checkFunBody rty fBody
+       fSchema <- generalize (tFun (ps ++ [rty]))
+       fBody   <- zonk e
        return Fun { fName   = thing fName
-                  , fParams = zip (map thing fParams) ps'
-                  , fResult = rty'
-                  , fBody   = e' }
+                  , fParams = map thing fParams
+                  , .. }
+
+
+-- | When generalizing macros, we don't need to consider type variables from the
+-- environment, as local functions are not allowed. As a result, any free
+-- variables present after zonking should be generalized.
+generalize :: Type -> TC Schema
+generalize ty =
+  do ty' <- zonk ty
+     let ps = Set.toList (ftvs ty')
+         gs = [ tv { tvUnique = ix } | (tv, ix) <- zip ps [0 .. ] ]
+
+     -- bind all variables to be generalized
+     zipWithM_ unify (map TFree ps) (map TGen gs)
+
+     ty'' <- zonk ty'
+
+     return (Forall gs ty'')
 
 
 checkFunBody :: Type -> AST.FunBody Name -> TC FunBody
@@ -183,12 +188,12 @@ checkFunBody ty (AST.FBExpr e) =
 checkExpr :: Type -> AST.Expr Name -> TC Expr
 
 checkExpr ty (AST.EVar n) =
-  do ty' <- lookupVar n
+  do (ty',tyApp) <- freshInst =<< lookupVar n
      unify ty ty'
-     return (EVar ty' n)
+     return (tyApp (EVar ty' n))
 
 checkExpr ty (AST.ECon n) =
-  do ty' <- lookupVar n
+  do ty' <- monoInst =<< lookupVar n
      unify ty ty'
      return (ECon ty' n)
 
@@ -350,7 +355,7 @@ checkCases ety e ty cases =
 checkPat :: Type -> Expr -> AST.Pat Name -> TC Expr
 
 checkPat ty e (AST.PCon n) =
-  do nty <- lookupVar n
+  do nty <- monoInst =<< lookupVar n
      unify ty nty
      return (EEq ty e (ECon nty n))
 
@@ -365,13 +370,14 @@ checkPat ty e (AST.PLoc loc) = withLoc loc (checkPat ty e)
 withParams :: Type -> [AST.Loc Name] -> (([Type],Type) -> TC a) -> TC a
 withParams ty params body =
   -- it should be impossible for the number of function arguments and number
-  -- of parameters to be different
+  -- of parameters to be different, as the user never has control over the type
+  -- signature
   let tyParts@(args,_) = destTFun ty
    in withTypes (zip (map thing params) args) (body tyParts)
 
 -- | Produce a type that follows the shape of the function definition.
 guessType :: AST.Loc (AST.Fun Name) -> TC Type
-guessType locFun = withLoc locFun $ \ AST.Fun { fName, fParams } ->
+guessType loc = withLoc loc $ \ AST.Fun { fName, fParams } ->
   do vars <- traverse (`withLoc` (newTVar . Just)) fParams
      res  <- withLoc fName (newTVar . Just)
      return $! mkFun vars res
@@ -388,3 +394,26 @@ translateType (AST.TFun l r)   = do l' <- translateType l
                                     r' <- translateType r
                                     return (TFun l' r')
 translateType (AST.TLoc loc)   = withLoc loc translateType
+
+
+-- Instantiation ---------------------------------------------------------------
+
+monoInst :: Schema -> TC Type
+monoInst (Forall ps ty) =
+  do unless (null ps) (fail "Non-monorphic schema")
+     return ty
+
+-- | Instantiate a type schema with fresh variables.
+freshInst :: Schema -> TC (Type, Expr -> Expr)
+freshInst s@(Forall ps _) =
+  do vs <- traverse (newTVar . tvOrigin) ps
+     instantiate s (map TFree vs)
+
+-- | Instantiate a schema, producing a type and a function that will add type
+-- applications to the expression given.
+instantiate :: Schema -> [Type] -> TC (Type, Expr -> Expr)
+instantiate (Forall ps ty) ts
+  | length ps /= length ts = fail "Invalid instantiation"
+  | otherwise              = return (typeInst ts ty, tyApp)
+  where
+  tyApp e = foldl ETApp (typeInst ts e) ts

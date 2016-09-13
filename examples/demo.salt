@@ -12,6 +12,10 @@ enum Behavior = SearchA | TrackTarget | Refuel
 
 output behavior : Behavior = SearchA
 
+app f x = f x
+
+setBehavior b = behavior == b
+
 -- track target play (safety)
 sys_trans
   if fuel_ok
@@ -19,4 +23,4 @@ sys_trans
              then behavior == TrackTarget
              else behavior == SearchA
 
-     else behavior == Refuel
+     else app setBehavior Refuel
