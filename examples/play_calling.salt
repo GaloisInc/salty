@@ -44,7 +44,7 @@ play c b1 r1 m b2 r2 health =
 play_safety c b1 r1 m b2 r2 health =
      ((command == c /\ region == r1 /\ all health /\ !m) -> (behavior == b1))
   /\ ((command == c /\ region == r2 /\ all health /\  m) -> (behavior == b2))
-  /\ ((command == c) -> (behavior == Refuel \/ behavior <- { b1, b2 }))
+  /\ ((command == c /\ all health) -> (behavior <- { b1, b2 }))
 
 play_goal c health b1 b2 =
   (command == c /\ all health) -> (behavior <- { b1, b2 })
