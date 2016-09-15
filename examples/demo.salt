@@ -1,6 +1,3 @@
--- -*- mode: Haskell; -*-
--- vim: ft=haskell
-
 controller Democontroller1 where
 
 input tt_command : Bool = False
@@ -12,9 +9,9 @@ enum Behavior = SearchA | TrackTarget | Refuel
 
 output behavior : Behavior = SearchA
 
-app f x = f x
+def app f x = f x
 
-setBehavior b = behavior == b
+def setBehavior b = behavior == b
 
 -- track target play (safety)
 sys_trans

@@ -37,6 +37,7 @@ import           Text.Location.Layout
   'False'      { Keyword KFalse      $$ }
 
   -- keywords
+  'def'        { Keyword Kdef        $$ }
   'controller' { Keyword Kcontroller $$ }
   'where'      { Keyword Kwhere      $$ }
   'enum'       { Keyword Kenum       $$ }
@@ -142,8 +143,8 @@ spec :: { Spec PName }
 -- Functions -------------------------------------------------------------------
 
 fun_decl :: { Loc (Fun PName) }
-  : IDENT list(IDENT) '=' fun_body
-    { Fun $1 $2 $4 `at` mconcat [getLoc $1, getLoc $2, getLoc $4] }
+  : 'def' IDENT list(IDENT) '=' fun_body
+    { Fun $2 $3 $5 `at` mconcat [getLoc $2, getLoc $3, getLoc $5] }
 
 fun_body :: { FunBody PName }
   : list1(spec) { FBSpec $1 }

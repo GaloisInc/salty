@@ -51,6 +51,8 @@ $white+ ;
 "sys_liveness" { keyword Ksys_liveness }
 "env_liveness" { keyword Kenv_liveness }
 
+"def"   { keyword Kdef  }
+
 "if"    { keyword Kif   }
 "then"  { keyword Kthen }
 "else"  { keyword Kelse }
@@ -161,6 +163,7 @@ data Keyword = Kif
              | Krarrow
              | KTrue
              | KFalse
+             | Kdef
              | Ksys_trans
              | Kenv_trans
              | Kenv_liveness

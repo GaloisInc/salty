@@ -1,5 +1,3 @@
--- vim: ft=haskell
-
 controller PlayCalling where
 
 -- Sensors ---------------------------------------------------------------------
@@ -32,22 +30,19 @@ enum Command = C_None
 
 input command : Command = C_None
 
-play c b1 r1 m b2 r2 health =
-  sys_trans    play_safety c b1 r1 m b2 r2 health
-  sys_liveness play_goal   c health b1 b2
-
 -- Differences to "LTL Play Calling":
 --
 -- We don't use IFF for the play safety properties, as the commands share
 -- behaviors. If we implement as in the paper, the specification will not be
 -- realizable when multiple commands are implemented.
-play_safety c b1 r1 m b2 r2 health =
-     ((command == c /\ region == r1 /\ all health /\ !m) -> (behavior == b1))
-  /\ ((command == c /\ region == r2 /\ all health /\  m) -> (behavior == b2))
-  /\ ((command == c /\ all health) -> (behavior <- { b1, b2 }))
+def play c b1 r1 m b2 r2 health =
+  sys_trans
+    (command == c /\ region == r1 /\ all health /\ !m) -> behavior == b1
+    (command == c /\ region == r2 /\ all health /\  m) -> behavior == b2
+    (behavior <- { b1, b2 }) -> all health
 
-play_goal c health b1 b2 =
-  (command == c /\ all health) -> (behavior <- { b1, b2 })
+  sys_liveness
+    (command == c /\ all health) -> (behavior <- { b1, b2 })
 
 
 -- Target Tracking -------------------------------------------------------------
@@ -67,7 +62,7 @@ play C_SearchForestPerimeter SearchPerimeter Region_F (!s_Data) DeliverData Regi
 
 -- Contingency -----------------------------------------------------------------
 
-contingency hf ht b r =
+def contingency hf ht b r =
   sys_trans
     (behavior == b) <-> (region == r /\ all ht)
 
@@ -95,7 +90,7 @@ enum Region = Region_0
 -- | The current region of the UAV.
 output region : Region = Region_0
 
-region_trans from to =
+def region_trans from to =
   sys_trans
     region == from -> (region' == from \/ (region' <- to))
 
