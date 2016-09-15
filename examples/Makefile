@@ -45,6 +45,9 @@ clean:
 
 gen: $(built)
 
+gen-%.salt: %.salt
+	$(Q) $(MAKE) build/$*/.token
+
 svg: $(built)
 	$(Q) cd build && \
 	  find . -name \*.dot -exec dot -Tsvg -o{}.svg {} \;
