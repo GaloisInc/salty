@@ -154,15 +154,19 @@ fun_body :: { FunBody PName }
 -- State Var Declarations ------------------------------------------------------
 
 state_var_decl :: { Loc (StateVar PName) }
-  : IDENT ':' type opt(bounds) opt(state_var_init)
+  : IDENT opt(out_name) ':' type opt(bounds) opt(state_var_init)
     { StateVar { svName = $1
-               , svType = $3
-               , svBounds = $4
-               , svInit = $5 } `at` mconcat [getLoc $1, getLoc $3, getLoc $4, getLoc $5] }
+               , svType = $4
+               , svBounds = $5
+               , svInit = $6
+               , svOutName = $2 } `at` mconcat [getLoc $1, getLoc $4, getLoc $5, getLoc $6] }
 
--- XXX should these be restricted to values?
 state_var_init :: { Expr PName }
   : '=' expr { $2 }
+
+-- optional literal name to use during code generation
+out_name :: { Loc L.Text }
+  : '(' IDENT ')' { $2 }
 
 
 -- Types -----------------------------------------------------------------------

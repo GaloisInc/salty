@@ -189,7 +189,7 @@ fromSlugs' file numInputs Slugs.FSM { .. } =
 
   origin    = FromController mempty { rangeSource = Just file }
 
-  (cName,s1) = mkName origin (L.pack (dropExtension file)) emptySupply
+  (cName,s1) = mkName origin (L.pack (dropExtension file)) Nothing emptySupply
 
   (inps,outs) = splitAt numInputs (concat vars)
 
@@ -209,7 +209,7 @@ fromSlugs' file numInputs Slugs.FSM { .. } =
 
     (namePart,bitSpec) = break (== '@') var
 
-    (name,s') = mkName origin (L.pack namePart) s
+    (name,s') = mkName origin (L.pack namePart) Nothing s
 
     state = (name,lo,hi)
 

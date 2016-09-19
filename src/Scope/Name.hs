@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Scope.Name (
-    Name(), nameText, nameOrigin, nameUnique,
+    Name(), nameText, nameOrigin, nameUnique, nameOutText,
     Origin(..),
     Supply(), emptySupply, nextUnique,
     mkName,
@@ -40,6 +40,7 @@ instance HasLoc Origin where
 data Name = Name { nText   :: !L.Text
                  , nUnique :: !Int
                  , nOrigin :: !Origin
+                 , nOutName:: !(Maybe L.Text)
                  } deriving (Show)
 
 instance HasLoc Name where
@@ -65,6 +66,9 @@ nameText  = nText
 nameUnique :: Name -> Int
 nameUnique  = nUnique
 
+nameOutText :: Name -> Maybe L.Text
+nameOutText  = nOutName
+
 
 -- Name Supply -----------------------------------------------------------------
 
@@ -81,7 +85,7 @@ nextUnique (Supply n) =
 
 -- Name Construction -----------------------------------------------------------
 
-mkName :: Origin -> L.Text -> Supply -> (Name,Supply)
-mkName nOrigin nText s =
+mkName :: Origin -> L.Text -> Maybe L.Text -> Supply -> (Name,Supply)
+mkName nOrigin nText nOutName s =
   let (nUnique,s') = nextUnique s
    in (Name { .. }, s')

@@ -148,9 +148,10 @@ checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
   withParams ty fParams $ \ (ps,rty) ->
     do e       <- checkFunBody rty fBody
        fSchema <- generalize (tFun (ps ++ [rty]))
-       fBody   <- zonk e
+       fBody'  <- zonk e
        return Fun { fName   = thing fName
                   , fParams = map thing fParams
+                  , fBody   = fBody'
                   , .. }
 
 

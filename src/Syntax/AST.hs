@@ -57,6 +57,7 @@ data StateVar name = StateVar { svName   :: Loc name
                               , svType   :: Type name
                               , svBounds :: Maybe (Loc (Int,Int))
                               , svInit   :: Maybe (Expr name)
+                              , svOutName:: Maybe (Loc L.Text)
                               } deriving (Functor,Show)
 
 data FunBody name = FBSpec [Spec name]

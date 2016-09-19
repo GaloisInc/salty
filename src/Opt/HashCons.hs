@@ -46,7 +46,7 @@ newtype HC a = HC { unHC :: StateT RW Id a
 fresh :: HC Name
 fresh  = HC $
   do RW {..} <- get
-     let (name,s') = mkName (Generated "CSE") "cse" rwSupply
+     let (name,s') = mkName (Generated "CSE") "cse" Nothing rwSupply
      set $! RW { rwSupply = s', ..}
      return name
 

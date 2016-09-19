@@ -11,6 +11,7 @@ import TypeCheck.AST (EnumDef(..))
 import           Control.Monad (guard)
 import           Data.List (nub)
 import qualified Data.Map.Strict as Map
+import           Data.Maybe (fromMaybe)
 import           System.FilePath ((<.>),pathSeparator)
 import           Text.Location (HasLoc(..))
 
@@ -259,4 +260,4 @@ enum :: Doc -> Doc
 enum k = text "enum" <+> k
 
 javaName :: Name -> Doc
-javaName n = pp (nameText n)
+javaName n = pp (fromMaybe (nameText n) (nameOutText n))

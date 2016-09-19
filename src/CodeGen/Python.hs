@@ -9,8 +9,9 @@ import Scope.Name
 import Slugs.FSM
 import TypeCheck.AST
 
-import qualified Data.Text.Lazy as L
+import           Data.Maybe (fromMaybe)
 import qualified Data.Map.Strict as Map
+import qualified Data.Text.Lazy as L
 
 
 type Package = Map.Map FilePath Doc
@@ -137,7 +138,7 @@ assign :: Doc -> Doc -> Doc
 assign var e = hang (var <+> char '=') 2 e
 
 pythonName :: Name -> Doc
-pythonName n = pp (nameText n)
+pythonName n = pp (fromMaybe (nameText n) (nameOutText n))
 
 upper :: Name -> Doc
 upper n = pp (L.toUpper (nameText n))

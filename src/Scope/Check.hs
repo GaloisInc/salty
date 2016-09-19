@@ -19,7 +19,7 @@ scopeCheck :: Supply -> Controller PName
            -> Either [ScopeError] (Controller Name,Supply)
 scopeCheck sup c =
   let origin    = FromController (getLoc c)
-      (cont,s') = mkName origin (locValue (cName c)) sup
+      (cont,s') = mkName origin (locValue (cName c)) Nothing sup
       (ds',rw)  = runM (unSC (checkTopDecls (cDecls c)))
                        RW { rwEnv  = Map.empty
                           , rwErrs = []
@@ -83,22 +83,27 @@ withNames ns m = SC $
 
 -- Name Introduction -----------------------------------------------------------
 
-newName :: Origin -> L.Text -> SC Name
-newName from txt = SC $
+newName :: Origin -> L.Text -> Maybe L.Text -> SC Name
+newName from txt mbOut = SC $
   do RW { .. } <- get
-     let (n,s') = mkName from txt rwSup
+     let (n,s') = mkName from txt mbOut rwSup
      set RW { rwSup = s', .. }
      return n
 
 newParam :: Name -> L.Text -> SC Name
 newParam fun name =
   do loc <- askLoc
-     newName (FromParam loc fun) name
+     newName (FromParam loc fun) name Nothing
 
 newDecl :: Maybe Name -> L.Text -> SC Name
 newDecl mbParent name =
   do RW { .. } <- SC get
-     newName (FromDecl rwLoc (fromMaybe rwCont mbParent)) name
+     newName (FromDecl rwLoc (fromMaybe rwCont mbParent)) name Nothing
+
+newStateVar :: L.Text -> Maybe L.Text -> SC Name
+newStateVar name mbOutName =
+  do RW { .. } <- SC get
+     newName (FromDecl rwLoc rwCont) name mbOutName
 
 
 -- Name Mappings ---------------------------------------------------------------
@@ -148,7 +153,7 @@ funNames mbParent Fun { .. } =
 
 stateVarNames :: NamesFrom StateVar
 stateVarNames StateVar { .. } =
-  do name <- withLoc_ (newDecl Nothing) svName
+  do name <- withLoc_ (`newStateVar` fmap thing svOutName) svName
      return (Map.singleton (thing svName) [name])
 
 
