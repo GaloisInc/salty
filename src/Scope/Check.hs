@@ -105,6 +105,11 @@ newStateVar name mbOutName =
   do RW { .. } <- SC get
      newName (FromDecl rwLoc rwCont) name mbOutName
 
+newConstr :: (Loc L.Text, Maybe (Loc L.Text)) -> SC Name
+newConstr (name,mbOut) = withLoc (name,mbOut) $
+  do RW { .. } <- SC get
+     newName (FromDecl rwLoc rwCont) (thing name) (fmap thing mbOut)
+
 
 -- Name Mappings ---------------------------------------------------------------
 
@@ -141,10 +146,10 @@ topDeclNames (TDLoc loc)   = topDeclNames (thing loc)
 enumNames :: NamesFrom EnumDef
 enumNames EnumDef { .. } =
   do tyName <- withLoc_ (newDecl Nothing) eName
-     cs     <- traverse (withLoc_ (newDecl (Just tyName))) eCons
+     cs     <- traverse newConstr eCons
      return $ Map.fromList
             $ (thing eName, [tyName])
-            : zip (map thing eCons) (map pure cs)
+            : zip (map (thing . fst) eCons) (map pure cs)
 
 funNames :: Maybe Name -> NamesFrom Fun
 funNames mbParent Fun { .. } =
@@ -209,8 +214,14 @@ checkSpec (SLoc loc)       = SLoc         `fmap` checkLoc loc checkSpec
 checkEnum :: Check EnumDef
 checkEnum EnumDef { .. } =
   do n'  <- checkLoc eName resolve
-     cs' <- traverse (`checkLoc` resolve) eCons
+     cs' <- traverse checkCon eCons
      return EnumDef { eName = n', eCons = cs' }
+
+
+checkCon :: (Loc L.Text, Maybe (Loc L.Text)) -> SC (Loc Name, Maybe (Loc L.Text))
+checkCon (lname, mbOut) =
+  do lname' <- checkLoc lname resolve
+     return (lname', mbOut)
 
 
 checkFun :: Check Fun

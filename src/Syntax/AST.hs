@@ -44,7 +44,7 @@ isFun _           = False
 
 
 data EnumDef name = EnumDef { eName :: Loc name
-                            , eCons :: [Loc name]
+                            , eCons :: [(Loc name, Maybe (Loc L.Text))]
                             } deriving (Functor,Show)
 
 
@@ -129,7 +129,8 @@ instance HasLoc (Spec name) where
 
 instance HasLoc (EnumDef name) where
   type LocSource (EnumDef name) = FilePath
-  getLoc EnumDef { eName, eCons } = foldMap getLoc (eName : eCons)
+  getLoc EnumDef { eName, eCons } =
+    mconcat (getLoc eName : [ getLoc con | (con,_) <- eCons ])
 
 instance HasLoc (FunBody name) where
   type LocSource (FunBody name) = FilePath
@@ -177,7 +178,7 @@ topDeclDs (TDLoc loc)     = topDeclDs (thing loc)
 
 -- | The names of all the constructors.
 enumDs :: Ord name => EnumDef name -> Set.Set name
-enumDs EnumDef { eCons } = Set.fromList [ thing con | con <- eCons ]
+enumDs EnumDef { eCons } = Set.fromList [ thing con | (con,_) <- eCons ]
 
 
 -- | The name of this function.

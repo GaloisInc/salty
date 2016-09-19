@@ -28,7 +28,7 @@ $upper = [A-Z]
 $num   = [0-9]
 
 @number   = $num+
-@ident    = $lower [$lower $upper $num _]*
+@ident    = [_ $lower] [$lower $upper $num _]*
 @conident = $upper [$lower $upper $num _]*
 
 :-

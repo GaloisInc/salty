@@ -105,7 +105,7 @@ controller :: { Controller PName }
 
 top_decl :: { TopDecl PName }
 
-  : 'enum' CONIDENT '=' sep1('|', CONIDENT)
+  : 'enum' CONIDENT '=' sep1('|', con_def)
     { TDLoc (TDEnum (EnumDef $2 $4) `at` getLoc ($1,$4)) }
 
   | fun_decl
@@ -122,6 +122,9 @@ top_decl :: { TopDecl PName }
 
   | expr
     { TDLoc (TDExpr $1 `at` $1) }
+
+con_def :: { (Loc L.Text, Maybe (Loc L.Text)) }
+  : CONIDENT opt(out_name) { ($1,$2) }
 
 
 -- Specification ---------------------------------------------------------------
@@ -166,7 +169,8 @@ state_var_init :: { Expr PName }
 
 -- optional literal name to use during code generation
 out_name :: { Loc L.Text }
-  : '(' IDENT ')' { $2 }
+  : '(' IDENT    ')' { $2 }
+  | '(' CONIDENT ')' { $2 }
 
 
 -- Types -----------------------------------------------------------------------

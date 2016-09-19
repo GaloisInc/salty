@@ -46,7 +46,10 @@ mkEnum EnumDef { .. } =
         (vcat (zipWith mkCon [0 ..] eCons))
 
 mkCon :: Int -> Name -> Doc
-mkCon i n = assign (upper n) (int i)
+mkCon i n =
+  case nameOutText n of
+    Just out -> assign (pp out)  (int i)
+    Nothing  -> assign (upper n) (int i)
 
 defMove :: Doc -> StateVars -> Map.Map Int Node -> Doc
 defMove pfx inps nodes =

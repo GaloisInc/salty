@@ -93,7 +93,7 @@ checkSpec (AST.SLoc loc) = withLoc loc checkSpec
 checkEnum :: AST.EnumDef Name -> TC (Controller -> Controller)
 checkEnum AST.EnumDef { eName, eCons } =
   do let ty   = Forall [] (TEnum (thing eName))
-         cons = map thing eCons
+         cons = [ thing con | (con, _) <- eCons ]
 
      addTypes (zip cons (repeat ty))
 
