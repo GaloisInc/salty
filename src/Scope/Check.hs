@@ -105,10 +105,10 @@ newStateVar name mbOutName =
   do RW { .. } <- SC get
      newName (FromDecl rwLoc rwCont) name mbOutName
 
-newConstr :: (Loc L.Text, Maybe (Loc L.Text)) -> SC Name
-newConstr (name,mbOut) = withLoc (name,mbOut) $
+newConstr :: Name -> (Loc L.Text, Maybe (Loc L.Text)) -> SC Name
+newConstr origin (name,mbOut) = withLoc (name,mbOut) $
   do RW { .. } <- SC get
-     newName (FromDecl rwLoc rwCont) (thing name) (fmap thing mbOut)
+     newName (FromDecl rwLoc origin) (thing name) (fmap thing mbOut)
 
 
 -- Name Mappings ---------------------------------------------------------------
@@ -146,7 +146,7 @@ topDeclNames (TDLoc loc)   = topDeclNames (thing loc)
 enumNames :: NamesFrom EnumDef
 enumNames EnumDef { .. } =
   do tyName <- withLoc_ (newDecl Nothing) eName
-     cs     <- traverse newConstr eCons
+     cs     <- traverse (newConstr tyName) eCons
      return $ Map.fromList
             $ (thing eName, [tyName])
             : zip (map (thing . fst) eCons) (map pure cs)
