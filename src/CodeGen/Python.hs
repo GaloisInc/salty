@@ -21,11 +21,14 @@ pythonFSM :: FSM -> Package
 pythonFSM FSM { .. } =
   Map.fromList [ (render (pythonName fsmName <> text ".py"), impl) ]
   where
+  cont = pythonName fsmName
+
   impl =
-    block (cls (pythonName fsmName)) $ vcat $
+    block (cls cont) $ vcat $
       [ text ""
+
       , block (def "__init__" [text "self"]) $ vcat
-          [ assign (self "state") (int 0)
+          [ assign (self "_state") (int 0)
           ]
 
       ] ++ concat
@@ -33,12 +36,48 @@ pythonFSM FSM { .. } =
       [ [ text "", mkEnum e ] | e <- fsmEnums ] ++
 
       [ text ""
-      , defMove (pythonName fsmName) fsmInputs fsmNodes
+      , mkTable fsmNodes
+
+      , text ""
+      , defMove fsmInputs fsmOutputs
 
       , text ""
       , defError fsmInputs
       ]
 
+
+mkTable :: Map.Map Int Node -> Doc
+mkTable nodes =
+  hang (text "_table" <+> char '=' <+> char '[')
+     4 (vcat (map mkNode (Map.elems nodes)) $$ text "]")
+
+  where
+
+  mkNode node =
+    char '{'
+    $$ nest 4 (vcat (map mkTrans (nodeTrans node)))
+    $$ text "},"
+
+  mkTrans i =
+    let Node { .. } = nodes Map.! i
+     in valueTuple nodeInputs
+        <> char ':'
+       <+> parens (pp i <> comma <+> valueTuple nodeOutputs)
+        <> comma
+
+
+  valueTuple vals
+    | Map.size vals > 1 =
+      parens $ hcat
+             $ punctuate comma
+               [ pythonValue val | val <- Map.elems vals ]
+
+    | Map.null vals =
+      undefined
+
+    | otherwise =
+      let [val] = Map.elems vals
+       in pythonValue val
 
 mkEnum :: EnumDef -> Doc
 mkEnum EnumDef { .. } =
@@ -51,53 +90,52 @@ mkCon i n =
     Just out -> assign (pp out)  (int i)
     Nothing  -> assign (upper n) (int i)
 
-defMove :: Doc -> StateVars -> Map.Map Int Node -> Doc
-defMove pfx inps nodes =
+defMove :: StateVars -> StateVars -> Doc
+defMove inps outs =
   block (def "move" (text "self" : inpVars))
-        (vcat (mkStateCond "if" (Map.toList nodes)))
+        (vcat stmts)
 
   where
 
   inpVars = [ pythonName n | (n,_) <- Map.toList inps ]
 
-  mkStateCond p ((i,node):rest) =
-    block (text p <+> self "state" <+> text "==" <+> int i)
-          (vcat ( text "output = dict()"
-                : text ""
-                : mkNodeCond "if" (nodeTrans node)))
-    : mkStateCond "elif" rest
+  inpTuple
+    | length inpVars > 1 = parens (hcat (punctuate comma inpVars))
+    | null inpVars       = text "nil"
+    | otherwise          = hcat inpVars
 
-  mkStateCond _ [] =
-    [ block (text "else")
-      (text "raise Exception(\"Unrecognized internal state: \" + str(self.state))")
+  stmts =
+    [ block (text "try") $ vcat
+      [ assign (text "table") (self "_table" <> brackets (self "_state"))
+      , assign (text "newState,res") (text "table" <> brackets inpTuple)
+      , assign (self "_state") (text "newState")
+      , mkResult (text "res")
+      ]
 
-    , text "return output"
-    ]
-
-
-  mkNodeCond p (i : rest) =
-    let Node { .. } = nodes Map.! i
-        cond = hcat
-             $ punctuate (text " and")
-             $ [ parens (pythonName n <+> text "==" <+> pythonValue pfx v)
-               | (n,v) <- Map.toList nodeInputs ]
-
-     in block (text p <+> cond) (vcat (mkResult i nodeOutputs))
-        : mkNodeCond "elif" rest
-
-  mkNodeCond _ [] =
-    [ block (text "else")
-      (self "_error" <> parens (hcat (punctuate comma inpVars)))
-    ]
-
-
-  mkResult i outs =
-    [ assign (self "state") (int i)
     , text ""
-    ] ++
-    [ assign (text "output" <> brackets (doubleQuotes (pythonName n)))
-             (pythonValue pfx v)
-    | (n,v) <- Map.toList outs ]
+    , block (text "except IndexError") $ vcat
+      [ text "raise Exception(\"Unrecognized internal state: \" + str(self._state))"
+      ]
+
+    , text ""
+    , block (text "except Exception") $ vcat
+      [ self "_error" <> parens (hcat (punctuate comma inpVars))
+      ]
+
+    ]
+
+  mkResult res
+    | Map.size outs > 1 =
+      hang (text "return {")
+         2 (vcat [ doubleQuotes (pythonName n) <> char ':'
+                   <+> res <> brackets (int i) <> comma
+                 | (n,i) <- zip (Map.keys outs) [0 .. ] ])
+
+        $$ char '}'
+
+    | otherwise =
+      text "return" <+> res
+
 
 
 defError :: StateVars -> Doc
@@ -119,17 +157,17 @@ defError inps =
 
 
 
-pythonValue :: Doc -> Value -> Doc
-pythonValue _ (VBool b) = text (show b)
+pythonValue :: Value -> Doc
+pythonValue (VBool b) = text (show b)
 
-pythonValue pfx (VCon n)  = 
+pythonValue (VCon n) =
   case nameOrigin n of
-    FromController _ -> pfx <> char '.'                             <> upper n
-    FromDecl _ d     -> pfx <> char '.' <> pythonName d <> char '.' <> upper n
-    FromParam _ d    -> pfx <> char '.' <> pythonName d <> char '.' <> upper n
+    FromController _ ->                             upper n
+    FromDecl _ d     -> pythonName d <> char '.' <> upper n
+    FromParam _ d    -> pythonName d <> char '.' <> upper n
     Generated _      -> pythonName n
 
-pythonValue _ (VNum i)  = integer i
+pythonValue (VNum i) = integer i
 
 
 -- Utils -----------------------------------------------------------------------
@@ -138,7 +176,7 @@ self :: String -> Doc
 self field = text "self" <> char '.' <> text field
 
 assign :: Doc -> Doc -> Doc
-assign var e = hang (var <+> char '=') 2 e
+assign var e = var <+> char '=' <+> e
 
 pythonName :: Name -> Doc
 pythonName n = pp (fromMaybe (nameText n) (nameOutText n))
