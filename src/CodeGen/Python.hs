@@ -23,27 +23,31 @@ pythonFSM FSM { .. } =
   where
   cont = pythonName fsmName
 
-  impl =
-    block (cls cont) $ vcat $
-      [ text ""
+  impl = vcat $
+    [ text "from enum import Enum"
+    , text ""
+    , block (cls cont) $ vcat $
+        [ text ""
 
-      , block (def "__init__" [text "self"]) $ vcat
-          [ assign (self "_state") (int 0)
-          ]
+        , block (def "__init__" [text "self"]) $ vcat
+            [ assign (self "_state") (int 0)
+            ]
 
-      ] ++ concat
+        ] ++ concat
 
-      [ [ text "", mkEnum e ] | e <- fsmEnums ] ++
+        [ [ text "", mkEnum e ] | e <- fsmEnums ] ++
 
-      [ text ""
-      , mkTable fsmNodes
+        [ text ""
+        , mkTable fsmNodes
 
-      , text ""
-      , defMove fsmInputs fsmOutputs
+        , text ""
+        , defMove fsmInputs fsmOutputs
 
-      , text ""
-      , defError fsmInputs
-      ]
+        , text ""
+        , defError fsmInputs
+        ]
+
+    ]
 
 
 mkTable :: Map.Map Int Node -> Doc
@@ -81,7 +85,7 @@ mkTable nodes =
 
 mkEnum :: EnumDef -> Doc
 mkEnum EnumDef { .. } =
-  block (cls (pythonName eName))
+  block (cls (pythonName eName) <> parens (text "Enum"))
         (vcat (zipWith mkCon [0 ..] eCons))
 
 mkCon :: Int -> Name -> Doc
