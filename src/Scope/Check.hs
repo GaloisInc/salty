@@ -20,12 +20,12 @@ scopeCheck :: Supply -> Controller PName
 scopeCheck sup c =
   let origin    = FromController (getLoc c)
       (cont,s') = mkName origin (locValue (cName c)) Nothing sup
-      (ds',rw)  = runM (unSC (checkTopDecls (cDecls c)))
-                       RW { rwEnv  = Map.empty
-                          , rwErrs = []
+      (ds',rw)  = runM (unSC (withContext (checkTopDecls (cDecls c))))
+                       RW { rwErrs = []
                           , rwSup  = s'
                           , rwLoc  = locRange (cName c)
-                          , rwCont = cont }
+                          , rwCont = cont
+                          , rwNames = [] }
   in case rwErrs rw of
        [] -> Right (Controller (cont `at` cName c) ds', rwSup rw)
        es -> Left es
@@ -42,12 +42,24 @@ data ScopeError = Unknown (Loc PName)
 newtype SC a = SC { unSC :: StateT RW Lift a
                   } deriving (Functor,Applicative,Monad)
 
-data RW = RW { rwEnv  :: !Names
-             , rwErrs :: [ScopeError]
+data RW = RW { rwErrs :: [ScopeError]
              , rwSup  :: !Supply
              , rwLoc  :: !(Range FilePath)
              , rwCont :: !Name
+
+             , rwNames :: [Names]
+               -- ^ Stack of name environments
              }
+
+-- | Push a fresh naming context. Fresh bindings will always happen in the top
+-- environment, and lookups will crawl down the list.
+withContext :: SC a -> SC a
+withContext (SC m) = SC $
+  do rw <- get
+     set $! rw { rwNames = Map.empty : rwNames rw }
+     a <- m
+     sets_ (\ rw' -> rw' { rwNames = rwNames rw })
+     return a
 
 withLoc :: (LocSource range ~ FilePath, HasLoc range) => range -> SC a -> SC a
 withLoc range m = SC $
@@ -70,15 +82,6 @@ addErrs :: [ScopeError] -> SC ()
 addErrs errs = SC $
   do RW { .. } <- get
      set $! RW { rwErrs = errs ++ rwErrs, .. }
-
-withNames :: Names -> SC a -> SC a
-withNames ns m = SC $
-  do rw  <- get
-     set $! rw { rwEnv = Map.unionWith (++) ns (rwEnv rw) }
-     a   <- unSC m
-     rw' <- get
-     set $! rw' { rwEnv = rwEnv rw }
-     return a
 
 
 -- Name Introduction -----------------------------------------------------------
@@ -164,10 +167,11 @@ stateVarNames StateVar { .. } =
 
 -- Name Resolution -------------------------------------------------------------
 
+
 resolve :: PName -> SC Name
 resolve pn =
   do RW { .. } <- SC get
-     case Map.lookup pn rwEnv of
+     case Map.lookup pn undefined of -- TODO: rwEnv of
        Just [n] -> return n
        Just []  -> error "Invalid naming environment"
        Just ns  -> do addErrs [Ambiguous (pn `at` rwLoc) ns]
@@ -240,7 +244,6 @@ checkStateVar StateVar { .. } =
      ty'   <- checkType svType
      init' <- traverse checkExpr svInit
      return $! StateVar { svName = n', svType = ty', svInit = init', .. }
-
 
 withParams :: Name -> [Loc PName] -> ([Loc Name] -> SC a) -> SC a
 withParams fun ps k = go [] ps

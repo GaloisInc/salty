@@ -6,7 +6,6 @@ module TypeCheck.Infer where
 import           Scope.Name (Name)
 import qualified Syntax.AST as AST
 import           TypeCheck.AST
-import           TypeCheck.Groups
 import           TypeCheck.Monad
 
 import           Control.Monad (when,unless,zipWithM_)
@@ -18,54 +17,37 @@ import           Text.Location (thing,getLoc,at)
 
 inferController :: AST.Controller Name -> TC Controller
 inferController AST.Controller { AST.cName, AST.cDecls } =
-  do updates <- traverse inferTopGroup (sccTopDecls cDecls)
+  do updates <- traverse checkTopDecl cDecls
      return $! foldr (id) (emptyController (thing cName)) updates
 
 
-inferTopGroup :: Group (AST.TopDecl Name) -> TC (Controller -> Controller)
-
-inferTopGroup (NonRecursive td) = simpleTopDecl td
-
--- XXX: for the future, it might be useful to allow recursive functions.
--- Currently, we have no measure to use for the recursion to terminate, so the
--- only recursive functions we could write would be non-terminating.
-inferTopGroup (Recursive tds) = failWith (invalidRecursiveGroup tds)
-
-
-mkLocFun :: AST.TopDecl Name -> Maybe (AST.Loc (AST.Fun Name))
-mkLocFun  = go mempty
-  where
-  go _   (AST.TDLoc loc) = go (getLoc loc) (thing loc)
-  go src (AST.TDFun fun) = Just (fun `at` src)
-  go _   _               = Nothing
-
-
 -- | Check non-recursive declarations.
-simpleTopDecl :: AST.TopDecl Name -> TC (Controller -> Controller)
+checkTopDecl :: AST.TopDecl Name -> TC (Controller -> Controller)
 
-simpleTopDecl (AST.TDEnum enum) = checkEnum enum
+checkTopDecl (AST.TDEnum enum) = checkEnum enum
 
-simpleTopDecl (AST.TDFun fun) =
+checkTopDecl (AST.TDFun fun) =
   do loc <- askLoc
      inferFun (fun `at` loc)
 
-simpleTopDecl (AST.TDInput sv) =
+checkTopDecl (AST.TDInput sv) =
   do sv' <- checkStateVar sv
      return $ \ c -> c { cInputs = sv' : cInputs c }
 
-simpleTopDecl (AST.TDOutput sv) =
+checkTopDecl (AST.TDOutput sv) =
   do sv' <- checkStateVar sv
      return $ \ c -> c { cOutputs = sv' : cOutputs c }
 
-simpleTopDecl (AST.TDSpec s) =
+checkTopDecl (AST.TDSpec s) =
   do s' <- zonk =<< checkSpec s
      return $ \ c -> c { cSpec = cSpec c `mappend` s' }
 
-simpleTopDecl (AST.TDExpr e) =
+checkTopDecl (AST.TDExpr e) =
   do e' <- zonk =<< checkExpr TSpec e
      return $ \ c -> c { cTopExprs = e' : cTopExprs c }
 
-simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
+checkTopDecl (AST.TDLoc loc) = withLoc loc checkTopDecl
+
 
 -- | Check a specification value.
 checkSpec :: AST.Spec Name -> TC Spec
