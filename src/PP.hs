@@ -8,10 +8,13 @@ module PP (
     ticks,
     semicolon,
 
+    ppNameWithOrigin,
+    ppOrigin,
+
     module Text.PrettyPrint.HughesPJ
   ) where
 
-import           Scope.Name (Name,nameText,nameUnique)
+import           Scope.Name (Origin(..),Name,nameOrigin,nameText,nameUnique)
 
 import           Data.Int (Int64)
 import qualified Data.Text.Lazy as L
@@ -63,6 +66,17 @@ instance PP L.Text where
 
 instance PP Name where
   ppPrec _ n = pp (nameText n) <> char '_' <> pp (nameUnique n)
+
+-- | Pretty-print a name with its location.
+ppNameWithOrigin :: Name -> Doc
+ppNameWithOrigin n =
+  pp (nameText n) <+> text "from" <+> ppOrigin (nameOrigin n)
+
+ppOrigin :: Origin -> Doc
+ppOrigin (FromController _) = text "controller"
+ppOrigin (FromDecl d _)     = text "declaration at" <+> pp d
+ppOrigin (FromParam d _)    = text "parameter from" <+> pp d
+ppOrigin (Generated p)      = text "fresh name from pass" <+> text p
 
 instance PP Integer where
   ppPrec _ = integer

@@ -31,7 +31,6 @@ module TypeCheck.Monad (
     collectErrors,
 
     -- ** Errors
-    ppTCError,
     invalidRecursiveGroup,
     tooManyDefaultCases,
   ) where
@@ -75,29 +74,16 @@ data TCError = UnifyError Unify.UnifyError
              | MissingBounds (AST.Loc Name)
                deriving (Show)
 
-ppTCError :: Loc TCError -> Doc
-ppTCError err =
-  vcat [ banner, nest 2 body, text " " ]
+instance PP TCError where
+  ppPrec _ (UnifyError ue) = pp ue
+  ppPrec _ (InvalidRecursiveGroup _) =
+      text "Recursive functions are not supported"
+  ppPrec _ (TooManyDefaultCases _) =
+      text "Too many default cases in case expression"
+  ppPrec _ (MissingBounds n) =
+      text "Numeric state variable"
+      <+> ticks (pp (thing n)) <+> text "is missing bounds"
 
-  where
-  
-  banner = text "[error]" <+> pp (getLoc err)
-
-  body =
-    case thing err of
-      UnifyError ue ->
-        pp ue
-
-      -- XXX print more information
-      InvalidRecursiveGroup _ ->
-        text "Recursive functions are not supported"
-
-      -- XXX print more information
-      TooManyDefaultCases _ ->
-        text "Too many default cases in case expression"
-
-      MissingBounds n ->
-        text "Numeric state variable" <+> ticks (pp (thing n)) <+> text "is missing bounds"
 
 -- | Run a TC action.
 runTC :: Supply -> TC a -> Either [Loc TCError] (a,Supply)

@@ -21,6 +21,7 @@ library
   exposed-modules:     CodeGen.Dot
                        CodeGen.Java
                        CodeGen.Python
+                       Message
                        Opt
                        Opt.HashCons
                        Opt.Simpl

@@ -11,12 +11,13 @@ import qualified Data.Map.Strict as Map
 import           Data.Maybe (fromMaybe)
 import qualified Data.Text.Lazy as L
 import           MonadLib
+import           PP
 import           Text.Location (HasLoc(..),Located(..),Range,at,thing)
 
 
 -- | Resolve names to their binding sites.
 scopeCheck :: Supply -> Controller PName
-           -> Either [ScopeError] (Controller Name,Supply)
+           -> Either [Loc ScopeError] (Controller Name,Supply)
 scopeCheck sup c =
   let origin    = FromController (getLoc c)
       (cont,s') = mkName origin (locValue (cName c)) Nothing sup
@@ -36,6 +37,20 @@ data ScopeError = Unknown (Loc PName)
                 | Ambiguous (Loc PName) [Name]
                   deriving (Eq,Show)
 
+instance PP ScopeError where
+  ppPrec _ (Unknown pn) =
+    text "Unknown identifier:" <+> pp (thing pn)
+
+  ppPrec _ (Duplicate x ns) =
+    hang (text "Identifier " <+> ticks (pp x) <+>
+          text "defined in multiple places:")
+       2 (vcat [ char '*' <+> ppOrigin (nameOrigin n) | n <- ns ])
+
+  ppPrec _ (Ambiguous pn ns) =
+    hang (text "Ambiguous use of " <+> ticks (pp (thing pn)) <+>
+          text "could be one of:")
+       2 (vcat [ char '*' <+> ppOrigin (nameOrigin n) | n <- ns ])
+
 
 -- Monad -----------------------------------------------------------------------
 
@@ -43,7 +58,7 @@ newtype SC a = SC { unSC :: StateT RW Lift a
                   } deriving (Functor,Applicative,Monad)
 
 data RW = RW { rwEnv  :: !Names
-             , rwErrs :: [ScopeError]
+             , rwErrs :: [Loc ScopeError]
              , rwSup  :: !Supply
              , rwLoc  :: !(Range FilePath)
              , rwCont :: !Name
@@ -69,7 +84,7 @@ askLoc  = SC $
 addErrs :: [ScopeError] -> SC ()
 addErrs errs = SC $
   do RW { .. } <- get
-     set $! RW { rwErrs = errs ++ rwErrs, .. }
+     set $! RW { rwErrs = map (`at` rwLoc) errs ++ rwErrs, .. }
 
 withNames :: Names -> SC a -> SC a
 withNames ns m = SC $

@@ -1,6 +1,6 @@
 module TypeCheck (
     typeCheck,
-    TCError(..), ppTCError,
+    TCError(..),
     expand,
   ) where
 

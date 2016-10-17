@@ -5,6 +5,7 @@ import Options
 import CodeGen.Dot (dotFSM)
 import CodeGen.Java (Package,javaFSM)
 import CodeGen.Python (pythonFSM)
+import Message (ppError)
 import Opt (opt)
 import Opt.Simpl (simp)
 import PP (pp)
@@ -52,7 +53,7 @@ genFSM opts (InpSpec path) =
      pCont <-
        case parseController path bytes of
          Right p  -> return p
-         Left err -> do print err
+         Left err -> do print (ppError err)
                         exitFailure
 
      when (optDumpParsed opts) (putStrLn (ppShow pCont))
@@ -60,13 +61,13 @@ genFSM opts (InpSpec path) =
      (scCont,scSup) <-
        case scopeCheck emptySupply pCont of
          Right sc  -> return sc
-         Left errs -> do mapM_ print errs
+         Left errs -> do mapM_ (print . ppError) errs
                          exitFailure
 
      (tcCont,tcSup) <-
        case typeCheck scSup scCont of
          Right tc  -> return tc
-         Left errs -> do mapM_ (print . ppTCError) errs
+         Left errs -> do mapM_ (print . ppError) errs
                          exitFailure
 
      when (optDumpCore opts) (print (pp tcCont))

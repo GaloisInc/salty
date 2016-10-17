@@ -12,6 +12,7 @@ module Syntax.Parser (
 
 import Syntax.AST
 import Syntax.Lexer
+import PP
 
 import qualified Data.Text.Lazy as L
 import           Text.Location
@@ -310,18 +311,28 @@ opt(p)
 
 {
 
-data Error = LexcialError !(Range FilePath)
+data Error = LexicalError !(Range FilePath)
            | ParseError !Lexeme
            | UnexpectedEOF
              deriving (Show)
 
-parseController :: FilePath -> L.Text -> Either Error (Controller PName)
-parseController src bytes = controller (lexWithLayout src bytes)
+instance PP Error where
+  ppPrec _ (LexicalError _) = text "Lexical error"
+  ppPrec _ (ParseError _)   = text "Parse error"
+  ppPrec _ UnexpectedEOF    = text "Unexpected end of file"
+
+parseController :: FilePath -> L.Text -> Either (Loc Error) (Controller PName)
+parseController src bytes =
+  case controller (lexWithLayout src bytes) of
+    Right a -> Right a
+    Left (LexicalError loc) -> Left (LexicalError loc `at` loc)
+    Left (ParseError loc)   -> Left (ParseError   loc `at` loc)
+    Left UnexpectedEOF      -> Left (UnexpectedEOF    `at` (mempty :: Range FilePath))
 
 parseError :: [Lexeme] -> Either Error a
 parseError toks =
   case toks of
-    LexError from : _ -> Left (LexcialError from)
+    LexError from : _ -> Left (LexicalError from)
     []                -> Left UnexpectedEOF
     tok:_             -> Left (ParseError tok)
 
