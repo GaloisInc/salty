@@ -30,8 +30,9 @@ pythonFSM FSM { .. } =
         [ text ""
 
         , hang (text "__slots__ =")
-             2 (brackets (fsep (punctuate comma [text "_state", text "_table" ])))
+             2 (brackets (fsep (punctuate comma (map doubleQuotes [text "_state", text "_table" ]))))
 
+        , text ""
         , block (def "__init__" [text "self"]) $ vcat
             [ assign (self "_state") (int 0)
             ]
