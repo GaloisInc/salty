@@ -26,8 +26,11 @@ pythonFSM FSM { .. } =
   impl = vcat $
     [ text "from enum import Enum"
     , text ""
-    , block (cls cont) $ vcat $
+    , block (cls cont (text "object")) $ vcat $
         [ text ""
+
+        , hang (text "__slots__ =")
+             2 (brackets (fsep (punctuate comma [text "_state", text "_table" ])))
 
         , block (def "__init__" [text "self"]) $ vcat
             [ assign (self "_state") (int 0)
@@ -85,7 +88,7 @@ mkTable nodes =
 
 mkEnum :: EnumDef -> Doc
 mkEnum EnumDef { .. } =
-  block (cls (pythonName eName) <> parens (text "Enum"))
+  block (cls (pythonName eName) (text "Enum"))
         (vcat (zipWith mkCon [0 ..] eCons))
 
 mkCon :: Int -> Name -> Doc
@@ -188,8 +191,8 @@ pythonName n = pp (fromMaybe (nameText n) (nameOutText n))
 upper :: Name -> Doc
 upper n = pp (L.toUpper (nameText n))
 
-cls :: Doc -> Doc
-cls x = text "class" <+> x
+cls :: Doc -> Doc -> Doc
+cls x super = text "class" <+> x <> parens super
 
 block :: Doc -> Doc -> Doc
 block hdr body = (hdr <> char ':') $$ nest 4 body
