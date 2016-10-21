@@ -119,14 +119,14 @@ instance HashCons Controller where
 
 instance HashCons Spec where
   hashCons' Spec { .. } =
-    do ets <- scope (hashCons' sEnvTrans)
-       els <- scope (hashCons' sEnvLiveness)
-       sts <- scope (hashCons' sSysTrans)
-       sls <- scope (hashCons' sSysLiveness)
-       return Spec { sEnvTrans    = ets
-                   , sEnvLiveness = els
-                   , sSysTrans    = sts
-                   , sSysLiveness = sls }
+    do ets <- scope (hashCons' (eAnd sEnvTrans))
+       els <- scope (hashCons' (eAnd sEnvLiveness))
+       sts <- scope (hashCons' (eAnd sSysTrans))
+       sls <- scope (hashCons' (eAnd sSysLiveness))
+       return Spec { sEnvTrans    = [ets]
+                   , sEnvLiveness = [els]
+                   , sSysTrans    = [sts]
+                   , sSysLiveness = [sls] }
 
 instance HashCons StateVar where
   hashCons' StateVar {..} =

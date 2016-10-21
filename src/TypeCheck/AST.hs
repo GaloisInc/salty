@@ -53,17 +53,17 @@ data Controller = Controller { cName        :: !Name
                              , cEnums       :: [EnumDef]
                              } deriving (Show)
 
-data Spec = Spec { sEnvTrans    :: Expr
-                 , sEnvLiveness :: Expr
-                 , sSysTrans    :: Expr
-                 , sSysLiveness :: Expr
+data Spec = Spec { sEnvTrans    :: [Expr]
+                 , sEnvLiveness :: [Expr]
+                 , sSysTrans    :: [Expr]
+                 , sSysLiveness :: [Expr]
                  } deriving (Show)
 
 instance Monoid Spec where
-  mempty = Spec { sEnvTrans    = ETrue
-                , sEnvLiveness = ETrue
-                , sSysTrans    = ETrue
-                , sSysLiveness = ETrue
+  mempty = Spec { sEnvTrans    = []
+                , sEnvLiveness = []
+                , sSysTrans    = []
+                , sSysLiveness = []
                 }
 
   mappend a b = Spec { sEnvTrans    = merge sEnvTrans
@@ -72,7 +72,7 @@ instance Monoid Spec where
                      , sSysLiveness = merge sSysLiveness
                      }
     where
-    merge p = EAnd (p a) (p b)
+    merge p = p a ++ p b
 
 emptyController :: Name -> Controller
 emptyController cName =
@@ -322,6 +322,9 @@ traverseExpr f (ETApp e ty)   = ETApp    <$> f e <*> pure ty
 
 class Subst a where
   subst :: Map.Map Name Expr -> a -> a
+
+instance Subst a => Subst [a] where
+  subst env = map (subst env)
 
 instance Subst FunBody where
   subst env (FunSpec s) = FunSpec (subst env s)

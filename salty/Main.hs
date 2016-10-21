@@ -72,6 +72,10 @@ genFSM opts (InpSpec path) =
 
      when (optDumpCore opts) (print (pp tcCont))
 
+     sMsgs <- sanityCheck (optDumpSanity opts) (optZ3 opts) tcCont
+     mapM_ (print . ppSanityMessage) sMsgs
+     when (not (null (sanityErrors sMsgs))) exitFailure
+
      let exCont = expand tcCont
      when (optDumpExpanded opts) (print (pp exCont))
 

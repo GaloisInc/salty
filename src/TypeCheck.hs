@@ -2,6 +2,8 @@ module TypeCheck (
     typeCheck,
     TCError(..),
     expand,
+
+    module TypeCheck.Sanity,
   ) where
 
 import           Scope.Name (Name,Supply)
@@ -10,6 +12,7 @@ import qualified TypeCheck.AST as Core
 import           TypeCheck.Expand
 import           TypeCheck.Infer (inferController)
 import           TypeCheck.Monad
+import           TypeCheck.Sanity
 
 
 typeCheck :: Supply -> AST.Controller Name

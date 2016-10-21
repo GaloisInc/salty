@@ -72,19 +72,19 @@ checkSpec :: AST.Spec Name -> TC Spec
 
 checkSpec (AST.SSysTrans es) =
   do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sSysTrans = e' }
+     return $ mempty { sSysTrans = [e'] }
 
 checkSpec (AST.SSysLiveness es) =
   do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sSysLiveness = e' }
+     return $ mempty { sSysLiveness = [e'] }
 
 checkSpec (AST.SEnvTrans es) =
   do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sEnvTrans = e' }
+     return $ mempty { sEnvTrans = [e'] }
 
 checkSpec (AST.SEnvLiveness es) =
   do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sEnvLiveness = e' }
+     return $ mempty { sEnvLiveness = [e'] }
 
 checkSpec (AST.SLoc loc) = withLoc loc checkSpec
 

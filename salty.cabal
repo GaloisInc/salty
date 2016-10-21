@@ -41,6 +41,7 @@ library
                        TypeCheck.Groups
                        TypeCheck.Infer
                        TypeCheck.Monad
+                       TypeCheck.Sanity
                        TypeCheck.Unify
   other-modules:       Panic
   build-tools:         happy >= 1.19.5,
@@ -55,7 +56,8 @@ library
                        text,
                        bytestring,
                        pretty,
-                       filepath
+                       filepath,
+                       simple-smt
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall

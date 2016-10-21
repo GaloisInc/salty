@@ -18,12 +18,14 @@ data Options = Options { optHelp         :: !Bool
                        , optInputLen     :: !(Maybe Int)
                        , optOutDir       :: !(Maybe FilePath)
                        , optSlugs        :: !FilePath
+                       , optZ3           :: !FilePath
                        , optDumpParsed   :: !Bool
                        , optDumpCore     :: !Bool
                        , optDumpExpanded :: !Bool
                        , optDumpSimp     :: !Bool
                        , optDumpOpt      :: !Bool
                        , optDumpSpec     :: !Bool
+                       , optDumpSanity   :: !Bool
                        } deriving (Show)
 
 data Input = InpSpec FilePath
@@ -47,12 +49,14 @@ defaultOptions  =
           , optInputLen     = Nothing
           , optOutDir       = Nothing
           , optSlugs        = "slugs"
+          , optZ3           = "z3"
           , optDumpParsed   = False
           , optDumpCore     = False
           , optDumpExpanded = False
           , optDumpSimp     = False
           , optDumpOpt      = False
           , optDumpSpec     = False
+          , optDumpSanity   = False
           }
 
 
@@ -88,6 +92,9 @@ options  =
   , Option "s" ["slugs"] (ReqArg setSlugs "SLUGS_PATH")
     "The path to the slugs executable"
 
+  , Option "z3" ["z3"] (ReqArg setZ3 "Z3_PATH")
+    "The path to the z3 executable"
+
   , Option "l" ["length"] (ReqArg setInputLen "NUMBER")
     "When just using the code generator, this is the number of input variables in the slugs output"
 
@@ -111,6 +118,9 @@ options  =
 
   , Option "" ["ddump-spec"] (NoArg setDumpSpec)
     "Dump the slugs spec before running slugs"
+
+  , Option "" ["ddump-sanity"] (NoArg setDumpSanity)
+    "Dump intermediate output during sanity checking"
   ]
 
 setHelp :: Parser
@@ -139,6 +149,9 @@ setOutDir str = OK (\opts -> opts { optOutDir = Just str })
 setSlugs :: String -> Parser
 setSlugs str = OK (\opts -> opts { optSlugs = str })
 
+setZ3 :: String -> Parser
+setZ3 str = OK (\opts -> opts { optZ3 = str })
+
 setOptLevel :: String -> Parser
 setOptLevel str =
   case reads str of
@@ -162,6 +175,9 @@ setDumpOpt  = OK (\opts -> opts { optDumpOpt = True })
 
 setDumpSpec :: Parser
 setDumpSpec  = OK (\opts -> opts { optDumpSpec = True })
+
+setDumpSanity :: Parser
+setDumpSanity  = OK (\opts -> opts { optDumpSanity = True })
 
 setPython :: Parser
 setPython  = OK (\opts -> opts { optPython = True })

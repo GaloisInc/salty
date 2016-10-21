@@ -24,11 +24,11 @@ mkSpec cont = (Slugs.addLimits slugs,env)
                , .. }
   (env,specInput,specOutput) = mkEnv cont
 
-mkState :: Env -> [StateVar] -> Expr -> Expr -> Slugs.State
+mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> Slugs.State
 mkState env vars trans liveness =
   Slugs.State { Slugs.stInit     = conj inits
-              , Slugs.stTrans    = mkExpr env trans
-              , Slugs.stLiveness = mkExpr env liveness }
+              , Slugs.stTrans    = mkExpr env (eAnd trans)
+              , Slugs.stLiveness = mkExpr env (eAnd liveness) }
 
   where
 
