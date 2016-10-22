@@ -51,6 +51,7 @@ withSolver debug z3 k =
   do mb <- debugLogger debug
      bracket (SMT.newSolver z3 ["-smt2", "-in"] mb) SMT.stop $ \s ->
        do SMT.setOption s ":produce-models" "true"
+          SMT.setOption s ":produce-unsat-cores" "true"
           k s
 
 debugLogger :: Bool -> IO (Maybe SMT.Logger)
@@ -69,16 +70,25 @@ checkController s cont@Controller { .. } = withScope s $
      mapM_ (declareStateVar s) cInputs
      mapM_ (declareStateVar s) cOutputs
 
-     -- it should be the case that 
-     let (e,as) = translate (traverse exprToSMT (sSysTrans cSpec))
+     -- if the 
+     let (es,as) = translate (traverse exprToSMT (sSysTrans cSpec))
      withScope s $
-       do mapM_ (SMT.assert s . SMT.not) e
+       do _   <- assertExprs s "sys_trans" es
           res <- SMT.check s
           unless (res == SMT.Sat) $
-            do m <- getModel s cont
+            do m <- getUnsatCore s
                print m
 
      return []
+
+assertExprs :: SMT.Solver -> String -> [SMT.SExpr] -> IO [SMT.SExpr]
+assertExprs s p = go [] 0
+  where
+  go names i []     = return (reverse names)
+  go names i (x:xs) =
+    do let name = SMT.Atom (p ++ "_" ++ show i)
+       SMT.assert s (SMT.fun "!" [x,SMT.Atom ":named",name])
+       go (name:names) (i+1) xs
 
 
 type Model = Map.Map Name SMT.Value
@@ -93,6 +103,11 @@ getModel s Controller { .. } =
 
   resolve xs vars = [ (name, val) | (key, name) <- vars
                                   , let Just val = lookup key xs ]
+
+
+getUnsatCore :: SMT.Solver -> IO SMT.SExpr
+getUnsatCore s =
+  SMT.command s (SMT.List [SMT.Atom "get-unsat-core"])
 
 
 -- Translation -----------------------------------------------------------------
