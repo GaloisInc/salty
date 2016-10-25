@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module TypeCheck.Expand (expand) where
 
@@ -41,16 +43,16 @@ expandDef env f args =
 
 -- | Translate top-level expressions into specifications, or panic if that's not
 -- possible.
-expandTopExpr :: Env -> Expr -> Spec
-expandTopExpr env e =
-  case destEApp (expand' env e) of
+expandTopExpr :: Env -> Loc Expr -> Spec
+expandTopExpr env loc =
+  case destEApp (expand' env (thing loc)) of
     (EVar _ f, args) -> go (expandDef env f args)
     _                -> panic "Non-spec top-level expression"
 
   where
 
-  go (FunExpr e') = expandTopExpr env e'
-  go (FunSpec s)  = expand' env s
+  go (FunExpr e') = expandTopExpr env (e' `at` loc)
+  go (FunSpec s)  = setSpecLoc loc (expand' env s)
 
 
 class Expand a where
@@ -61,6 +63,9 @@ instance Expand a => Expand (Maybe a) where
 
 instance Expand a => Expand [a] where
   expand' env = map (expand' env)
+
+instance Expand a => Expand (Loc a) where
+  expand' env = fmap (expand' env)
 
 instance Expand StateVar where
   expand' env StateVar { .. } = StateVar { svInit = expand' env svInit, .. }

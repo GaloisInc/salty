@@ -1,6 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Opt.HashCons (hashCons) where
 
@@ -105,6 +107,9 @@ instance HashCons a => HashCons [a] where
 instance HashCons a => HashCons (Maybe a) where
   hashCons' = traverse hashCons'
 
+instance HashCons a => HashCons (Loc a) where
+  hashCons' = traverse hashCons'
+
 instance HashCons Controller where
   hashCons' Controller { .. } =
     do is  <- hashCons' cInputs
@@ -119,14 +124,14 @@ instance HashCons Controller where
 
 instance HashCons Spec where
   hashCons' Spec { .. } =
-    do ets <- scope (hashCons' (eAnd sEnvTrans))
-       els <- scope (hashCons' (eAnd sEnvLiveness))
-       sts <- scope (hashCons' (eAnd sSysTrans))
-       sls <- scope (hashCons' (eAnd sSysLiveness))
-       return Spec { sEnvTrans    = [ets]
-                   , sEnvLiveness = [els]
-                   , sSysTrans    = [sts]
-                   , sSysLiveness = [sls] }
+    do ets <- scope (hashCons' (eAnd (map thing sEnvTrans)))
+       els <- scope (hashCons' (eAnd (map thing sEnvLiveness)))
+       sts <- scope (hashCons' (eAnd (map thing sSysTrans)))
+       sls <- scope (hashCons' (eAnd (map thing sSysLiveness)))
+       return Spec { sEnvTrans    = [noLoc ets]
+                   , sEnvLiveness = [noLoc els]
+                   , sSysTrans    = [noLoc sts]
+                   , sSysLiveness = [noLoc sls] }
 
 instance HashCons StateVar where
   hashCons' StateVar {..} =

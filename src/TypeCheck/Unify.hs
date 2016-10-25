@@ -1,5 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module TypeCheck.Unify (
     Env(), emptyEnv,
@@ -149,6 +151,9 @@ instance Zonk a => Zonk [a] where
   zonk' = traverse zonk'
   ftvs' = F.foldrM (\a b -> Set.union b <$> ftvs' a) Set.empty
 
+instance Zonk a => Zonk (Loc a) where
+  zonk' = traverse zonk'
+  ftvs' = F.foldrM (\a b -> Set.union b <$> ftvs' a) Set.empty
 
 instance Zonk Expr where
   zonk' ETrue           = pure ETrue

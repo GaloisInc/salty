@@ -9,7 +9,12 @@ import qualified Data.Text.Lazy as L
 import           Text.Location
 
 
+type SrcRange = Range FilePath
+
 type Loc = Located FilePath
+
+noLoc :: a -> Loc a
+noLoc a = a `at` (mempty :: SrcRange)
 
 -- | Parsed names.
 type PName = L.Text

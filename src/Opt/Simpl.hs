@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Opt.Simpl where
 
@@ -9,6 +10,9 @@ import Language.Slugs.Lens
 
 class Simp a where
   simp :: a -> a
+
+instance Simp a => Simp (Loc a) where
+  simp = fmap simp
 
 instance Simp a => Simp [a] where
   simp = map simp

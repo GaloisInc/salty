@@ -4,10 +4,16 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 
-module TypeCheck.AST where
+module TypeCheck.AST (
+    module TypeCheck.AST,
+    Loc, thing, HasLoc(getLoc), at, noLoc,
+  ) where
 
 import Scope.Name (Name)
+import Syntax.AST (Loc,noLoc)
 import PP
 import Panic (panic)
 
@@ -15,6 +21,7 @@ import qualified Data.Foldable as F
 import           Data.Function (on)
 import qualified Data.Map.Strict as Map
 import           Language.Slugs.Lens
+import           Text.Location (at,thing,HasLoc(getLoc,LocSource))
 
 
 data TVar = TVar { tvOrigin :: !(Maybe Name)
@@ -48,16 +55,30 @@ data Controller = Controller { cName        :: !Name
                              , cInputs      :: [StateVar]
                              , cOutputs     :: [StateVar]
                              , cSpec        :: Spec
-                             , cTopExprs    :: [Expr]
+                             , cTopExprs    :: [Loc Expr]
                              , cFuns        :: [Group Fun]
                              , cEnums       :: [EnumDef]
                              } deriving (Show)
 
-data Spec = Spec { sEnvTrans    :: [Expr]
-                 , sEnvLiveness :: [Expr]
-                 , sSysTrans    :: [Expr]
-                 , sSysLiveness :: [Expr]
+data Spec = Spec { sEnvTrans    :: [Loc Expr]
+                 , sEnvLiveness :: [Loc Expr]
+                 , sSysTrans    :: [Loc Expr]
+                 , sSysLiveness :: [Loc Expr]
                  } deriving (Show)
+
+-- | Overwrite all location information in the spec with the location
+-- information passed in.
+setSpecLoc :: (HasLoc loc, LocSource loc ~ FilePath) => loc -> Spec -> Spec
+setSpecLoc loc spec =
+  Spec { sEnvTrans    = upd sEnvTrans
+       , sEnvLiveness = upd sEnvLiveness
+       , sSysTrans    = upd sSysTrans
+       , sSysLiveness = upd sSysLiveness
+       }
+  where
+  range = getLoc loc
+
+  upd p = [ thing l `at` range | l <- p spec ]
 
 instance Monoid Spec where
   mempty = Spec { sEnvTrans    = []
@@ -326,6 +347,9 @@ class Subst a where
 instance Subst a => Subst [a] where
   subst env = map (subst env)
 
+instance Subst a => Subst (Loc a) where
+  subst env = fmap (subst env)
+
 instance Subst FunBody where
   subst env (FunSpec s) = FunSpec (subst env s)
   subst env (FunExpr e) = FunExpr (subst env e)
@@ -357,10 +381,10 @@ instance PP Controller where
 
 instance PP Spec where
   ppPrec p Spec { .. } = optParens (p >= 10) $ vcat
-    [ hang (text "env_trans")    2 (pp sEnvTrans)
-    , hang (text "env_liveness") 2 (pp sEnvLiveness)
-    , hang (text "sys_trans")    2 (pp sSysTrans)
-    , hang (text "sys_liveness") 2 (pp sSysLiveness) ]
+    [ hang (text "env_trans")    2 (ppList (map thing sEnvTrans))
+    , hang (text "env_liveness") 2 (ppList (map thing sEnvLiveness))
+    , hang (text "sys_trans")    2 (ppList (map thing sSysTrans))
+    , hang (text "sys_liveness") 2 (ppList (map thing sSysLiveness)) ]
 
 instance PP EnumDef where
   ppPrec _ EnumDef { .. } =
@@ -376,7 +400,7 @@ instance PP Fun where
   ppPrec _ Fun { .. } =
     hang (pp fName
           <+> parens (fsep (punctuate comma (map pp fParams)))
-          <> colon
+           <> colon
           <+> pp fSchema
           <+> char '=')
        2 (pp fBody)

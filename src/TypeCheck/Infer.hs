@@ -59,11 +59,12 @@ simpleTopDecl (AST.TDOutput sv) =
 
 simpleTopDecl (AST.TDSpec s) =
   do s' <- zonk =<< checkSpec s
-     return $ \ c -> c { cSpec = cSpec c `mappend` s' }
+     return $ \ c -> c { cSpec = s' `mappend` cSpec c }
 
 simpleTopDecl (AST.TDExpr e) =
-  do e' <- zonk =<< checkExpr TSpec e
-     return $ \ c -> c { cTopExprs = e' : cTopExprs c }
+  do e'  <- zonk =<< checkExpr TSpec e
+     loc <- askLoc
+     return $ \ c -> c { cTopExprs = (e' `at` loc) : cTopExprs c }
 
 simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
 
@@ -71,20 +72,24 @@ simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
 checkSpec :: AST.Spec Name -> TC Spec
 
 checkSpec (AST.SSysTrans es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sSysTrans = [e'] }
+  do es' <- traverse (checkExpr TBool) es
+     loc <- askLoc
+     return $ mempty { sSysTrans = map (`at` loc) es' }
 
 checkSpec (AST.SSysLiveness es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sSysLiveness = [e'] }
+  do es' <- traverse (checkExpr TBool) es
+     loc <- askLoc
+     return $ mempty { sSysLiveness = map (`at` loc) es' }
 
 checkSpec (AST.SEnvTrans es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sEnvTrans = [e'] }
+  do es' <- traverse (checkExpr TBool) es
+     loc <- askLoc
+     return $ mempty { sEnvTrans = map (`at` loc) es' }
 
 checkSpec (AST.SEnvLiveness es) =
-  do e' <- checkExpr TBool (foldl AST.EAnd AST.ETrue es)
-     return $ mempty { sEnvLiveness = [e'] }
+  do es' <- traverse (checkExpr TBool) es
+     loc <- askLoc
+     return $ mempty { sEnvLiveness = map (`at` loc) es' }
 
 checkSpec (AST.SLoc loc) = withLoc loc checkSpec
 
@@ -161,8 +166,9 @@ checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
 generalize :: Type -> TC Schema
 generalize ty =
   do ty' <- zonk ty
-     let ps = Set.toList (ftvs ty')
-         gs = [ tv { tvUnique = ix } | (tv, ix) <- zip ps [0 .. ] ]
+     ps' <- ftvs ty'
+     let ps = Set.toList ps'
+     let gs = [ tv { tvUnique = ix } | (tv, ix) <- zip ps [0 .. ] ]
 
      -- bind all variables to be generalized
      zipWithM_ unify (map TFree ps) (map TGen gs)

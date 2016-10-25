@@ -71,7 +71,7 @@ checkController s cont@Controller { .. } = withScope s $
      mapM_ (declareStateVar s) cOutputs
 
      -- if the 
-     let (es,as) = translate (traverse exprToSMT (sSysTrans cSpec))
+     let (es,as) = translate (traverse (exprToSMT . thing) (sSysTrans cSpec))
      withScope s $
        do _   <- assertExprs s "sys_trans" es
           res <- SMT.check s
@@ -118,12 +118,18 @@ type Translate = WriterT [SMT.SExpr] Lift
 translate :: Translate a -> (a,[SMT.SExpr])
 translate  = runLift . runWriterT
 
+
+-- | Translate a name to a unique name in the SMT embedding.
 smtName :: Name -> String
 smtName n = L.unpack (nameText n) ++ "_" ++ show (nameUnique n)
 
+
+-- | Translate a name to a unique name in the SMT embedding.
 nameToVar :: Name -> SMT.SExpr
 nameToVar n = SMT.fun (smtName n) []
 
+
+-- | Translate a type to an SMT type.
 typeToSMT :: HasCallStack => Type -> SMT.SExpr
 typeToSMT TBool     = SMT.tBool
 typeToSMT TInt      = SMT.tInt
@@ -135,19 +141,19 @@ typeToSMT TSpec{} = panic "Unexpected Spec type"
 typeToSMT TFree{} = panic "Unexpected free type variable"
 typeToSMT TGen{}  = panic "Unexpected bound type variable"
 
+
+-- | Translate an expression to an SMT expression.
 exprToSMT :: HasCallStack => Expr -> Translate SMT.SExpr
 exprToSMT ETrue      = return (SMT.bool True)
 exprToSMT EFalse     = return (SMT.bool False)
-exprToSMT (EVar t n) = do typeBounds n t
-                          return (nameToVar n)
+exprToSMT (EVar t n) = return (nameToVar n)
 
 exprToSMT (ECon _ n) = return (nameToVar n)
 
 exprToSMT (ENum n) = return (SMT.int n)
 
 exprToSMT (ELet n ty e b) =
-  do typeBounds n ty
-     e' <- exprToSMT e
+  do e' <- exprToSMT e
      b  <- exprToSMT b
      return (letE [(n,e')] b)
 
@@ -170,33 +176,53 @@ exprToSMT (ENot a) =
   do a' <- exprToSMT a
      return (SMT.not a')
 
+exprToSMT (ENext _ (EVar t n)) =
+     return (SMT.Atom (smtName n ++ "_next"))
+
 exprToSMT ETApp{} = panic "Unexpected ETApp"
 exprToSMT ESet{}  = panic "Unexpected ESet"
 exprToSMT EPrim{} = panic "Unexpected EPrim"
 exprToSMT e@EApp{}= panic ("Unexpected EApp: " ++ show e)
 
 
--- | Add bounding constraints for this variable
-typeBounds :: Name -> Type -> Translate ()
-typeBounds var ty = return () -- TODO: finish this
-
-
-
--- SMT Utils -------------------------------------------------------------------
-
+-- | Introduce a locally let-bound variable.
 letE :: [(Name,SMT.SExpr)] -> SMT.SExpr -> SMT.SExpr
 letE []    e = e
 letE binds e = SMT.fun "let" [ SMT.List (map mkBind binds), e ]
   where
   mkBind (n,b) = SMT.List [nameToVar n, b]
 
+
+-- | Declare an enumeration as a datatype in Z3.
 declareEnum :: EnumDef -> SMT.SExpr
 declareEnum EnumDef { .. } =
   SMT.fun "declare-datatypes"
     [ SMT.List []
     , SMT.List [SMT.List (nameToVar eName : map nameToVar eCons)] ]
 
+
+-- | Declare a state variable, including any bounding constraints.
 declareStateVar :: SMT.Solver -> StateVar -> IO ()
 declareStateVar s StateVar { .. } =
-  do _ <- SMT.declare s (smtName svName) (typeToSMT svType)
+  do _ <- declare  name
+     _ <- declare (name ++ "_next")
      return ()
+
+  where 
+  name = smtName svName
+  ty   = typeToSMT svType
+
+  bounds =
+    case svBounds of
+      Just (lo,hi) ->
+        let lo' = SMT.int (toInteger lo)
+            hi' = SMT.int (toInteger hi)
+         in \ n ->
+              SMT.assert s (SMT.and (SMT.geq (SMT.Atom n) lo')
+                                    (SMT.leq (SMT.Atom n) hi'))
+
+      Nothing -> \ _ -> return ()
+
+  declare n =
+    do SMT.declare s n ty
+       bounds n

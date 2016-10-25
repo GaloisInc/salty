@@ -9,6 +9,7 @@ import TypeCheck.AST
 
 import           Data.List (foldl1')
 import qualified Language.Slugs as Slugs
+import           Text.Location (thing)
 
 
 -- Translation -----------------------------------------------------------------
@@ -16,11 +17,16 @@ import qualified Language.Slugs as Slugs
 mkSpec :: Controller -> (Slugs.Spec,Env)
 mkSpec cont = (Slugs.addLimits slugs,env)
   where
-  spec = cSpec cont
+  Spec { .. } = cSpec cont
+
+  envTrans    = map thing sEnvTrans
+  envLiveness = map thing sEnvLiveness
+  sysTrans    = map thing sSysTrans
+  sysLiveness = map thing sSysLiveness
 
   slugs =
-    Slugs.Spec { Slugs.specEnv = mkState env (cInputs cont)  (sEnvTrans spec) (sEnvLiveness spec)
-               , Slugs.specSys = mkState env (cOutputs cont) (sSysTrans spec) (sSysLiveness spec)
+    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envTrans envLiveness
+               , Slugs.specSys = mkState env (cOutputs cont) sysTrans sysLiveness
                , .. }
   (env,specInput,specOutput) = mkEnv cont
 
