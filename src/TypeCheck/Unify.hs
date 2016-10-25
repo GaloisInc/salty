@@ -13,6 +13,7 @@ import PP
 import TypeCheck.AST
 
 import           Control.Monad (zipWithM_)
+import qualified Data.Foldable as F
 import qualified Data.IntMap.Strict as IntMap
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -33,6 +34,12 @@ match a b = runUnify_ (match' a b)
 zonk :: Zonk ty => ty -> Env -> Either UnifyError ty
 zonk a env =
   case runUnify (zonk' a) env of
+    Right (a',_) -> Right a'
+    Left err     -> Left err
+
+ftvs :: Zonk ty => ty -> Env -> Either UnifyError (Set.Set TVar)
+ftvs a env =
+  case runUnify (ftvs' a) env of
     Right (a',_) -> Right a'
     Left err     -> Left err
 
@@ -126,16 +133,22 @@ class Zonk ty where
   zonk' :: ty -> Unify ty
 
   -- | Free type variables.
-  ftvs :: ty -> Set.Set TVar
+  ftvs' :: ty -> Unify (Set.Set TVar)
+
+instance (Zonk a, Zonk b) => Zonk (a,b) where
+  zonk' (a,b) = (,)       <$> zonk' a <*> zonk' b
+  ftvs' (a,b) = Set.union <$> ftvs' a <*> ftvs' b
 
 instance Zonk a => Zonk (Maybe a) where
   zonk' = traverse zonk'
-  ftvs  = maybe Set.empty ftvs
+
+  ftvs' Nothing  = return Set.empty
+  ftvs' (Just a) = ftvs' a
 
 instance Zonk a => Zonk [a] where
   zonk' = traverse zonk'
+  ftvs' = F.foldrM (\a b -> Set.union b <$> ftvs' a) Set.empty
 
-  ftvs as = Set.unions (map ftvs as)
 
 instance Zonk Expr where
   zonk' ETrue           = pure ETrue
@@ -149,16 +162,16 @@ instance Zonk Expr where
   zonk' (EPrim p)       = EPrim  <$> zonk' p
   zonk' (ETApp e ty)    = ETApp  <$> zonk' e  <*> zonk' ty
 
-  ftvs ETrue           = Set.empty
-  ftvs EFalse          = Set.empty
-  ftvs EVar{}          = Set.empty
-  ftvs ECon{}          = Set.empty
-  ftvs ENum{}          = Set.empty
-  ftvs (EApp f x)      = Set.union (ftvs f)  (ftvs x)
-  ftvs (ESet ty es)    = Set.union (ftvs ty) (ftvs es)
-  ftvs (ELet _ ty b e) = Set.unions [ftvs ty, ftvs b, ftvs e]
-  ftvs (EPrim p)       = ftvs p
-  ftvs (ETApp e ty)    = Set.union (ftvs e) (ftvs ty)
+  ftvs' ETrue           = pure Set.empty
+  ftvs' EFalse          = pure Set.empty
+  ftvs' EVar{}          = pure Set.empty
+  ftvs' ECon{}          = pure Set.empty
+  ftvs' ENum{}          = pure Set.empty
+  ftvs' (EApp f x)      = Set.union  <$> ftvs' f  <*> ftvs' x
+  ftvs' (ESet ty es)    = Set.union  <$> ftvs' ty <*> ftvs' es
+  ftvs' (ELet _ ty b e) = Set.unions <$> sequence [ftvs' ty, ftvs' b, ftvs' e]
+  ftvs' (EPrim p)       = ftvs' p
+  ftvs' (ETApp e ty)    = Set.union  <$> ftvs' e   <*> ftvs' ty
 
 instance Zonk Prim where
   zonk' (PIn   ty) = PIn   <$> zonk' ty
@@ -166,34 +179,34 @@ instance Zonk Prim where
   zonk' (PNext ty) = PNext <$> zonk' ty
   zonk' ef         = pure ef
 
-  ftvs (PIn   ty) = ftvs ty
-  ftvs (PEq   ty) = ftvs ty
-  ftvs (PNext ty) = ftvs ty
-  ftvs _          = Set.empty
+  ftvs' (PIn   ty) = ftvs' ty
+  ftvs' (PEq   ty) = ftvs' ty
+  ftvs' (PNext ty) = ftvs' ty
+  ftvs' _          = pure Set.empty
 
 instance Zonk FunBody where
   zonk' (FunSpec s) = FunSpec <$> zonk' s
   zonk' (FunExpr e) = FunExpr <$> zonk' e
 
-  ftvs (FunSpec s) = ftvs s
-  ftvs (FunExpr e) = ftvs e
+  ftvs' (FunSpec s) = ftvs' s
+  ftvs' (FunExpr e) = ftvs' e
 
 instance Zonk Spec where
   zonk' Spec { .. } =
-    do st <- zonk' sSysTrans
-       sl <- zonk' sSysLiveness
-       et <- zonk' sEnvTrans
-       el <- zonk' sEnvLiveness
+    do st <- traverse (traverse zonk') sSysTrans
+       sl <- traverse (traverse zonk') sSysLiveness
+       et <- traverse (traverse zonk') sEnvTrans
+       el <- traverse (traverse zonk') sEnvLiveness
        return Spec { sSysTrans    = st
                    , sSysLiveness = sl
                    , sEnvTrans    = et
                    , sEnvLiveness = el }
 
-  ftvs Spec { .. } = Set.unions
-    [ ftvs sSysTrans
-    , ftvs sSysLiveness
-    , ftvs sEnvTrans
-    , ftvs sEnvLiveness ]
+  ftvs' Spec { .. } = Set.unions <$> sequence
+    [ ftvs' sSysTrans
+    , ftvs' sSysLiveness
+    , ftvs' sEnvTrans
+    , ftvs' sEnvLiveness ]
 
 instance Zonk Type where
   zonk' t0 = go Set.empty t0
@@ -221,14 +234,19 @@ instance Zonk Type where
 
     go _ ty = return ty
 
-  ftvs (TFree v)  = Set.singleton v
-  ftvs (TSet ty)  = ftvs ty
-  ftvs (TFun a b) = Set.union (ftvs a) (ftvs b)
-  ftvs TGen{}     = Set.empty
-  ftvs TBool      = Set.empty
-  ftvs TInt       = Set.empty
-  ftvs TEnum{}    = Set.empty
-  ftvs TSpec      = Set.empty
+  ftvs' (TFree v)  =
+    do Env { .. } <- get
+       case Map.lookup v envCanon of
+         Just ix | Just ty' <- IntMap.lookup ix envVars -> ftvs' ty'
+         _                                              -> pure (Set.singleton v)
+
+  ftvs' (TSet ty)  = ftvs' ty
+  ftvs' (TFun a b) = Set.union <$> ftvs' a <*> ftvs' b
+  ftvs' TGen{}     = pure Set.empty
+  ftvs' TBool      = pure Set.empty
+  ftvs' TInt       = pure Set.empty
+  ftvs' TEnum{}    = pure Set.empty
+  ftvs' TSpec      = pure Set.empty
 
 
 class Zonk ty => Types ty where

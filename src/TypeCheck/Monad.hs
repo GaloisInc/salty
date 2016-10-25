@@ -14,7 +14,7 @@ module TypeCheck.Monad (
     -- ** Unification
     unify,
     zonk,
-    Unify.ftvs,
+    ftvs,
 
     -- ** Type Environment 
     lookupVar,
@@ -44,6 +44,7 @@ import qualified TypeCheck.Unify as Unify
 
 import           Data.Either (partitionEithers)
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import qualified MonadLib
 import           MonadLib hiding (try)
 import           Text.Location (HasLoc(..),Range,thing,at)
@@ -128,6 +129,14 @@ zonk ty =
      case Unify.zonk ty rwSubst of
        Right ty' -> return ty'
        Left  err -> failWith (UnifyError err)
+
+-- | Compute free variables.
+ftvs :: Unify.Zonk ty => ty -> TC (Set.Set TVar)
+ftvs ty =
+  do RW { .. } <- TC get
+     case Unify.ftvs ty rwSubst of
+       Right fvs -> return fvs
+       Left err  -> failWith (UnifyError err)
 
 
 -- Type Environment ------------------------------------------------------------
