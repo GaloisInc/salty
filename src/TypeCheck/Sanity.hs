@@ -9,7 +9,9 @@
 --
 -- Sanity checking for GR(1) specifications using an SMT solver.
 --
+
 {-# LANGUAGE RecordWildCards #-}
+
 module TypeCheck.Sanity (
     SanityMessage(..), isSanityError, sanityErrors, ppSanityMessage,
     sanityCheck,
@@ -24,7 +26,7 @@ import           Control.Exception (bracket)
 import           Control.Monad (guard,unless)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text.Lazy as L
-import           MonadLib (WriterT, runWriterT, Lift, runLift)
+import           MonadLib (StateT, runStateT, runStateT, get, set, inBase)
 import qualified SimpleSMT as SMT
 
 
@@ -44,15 +46,30 @@ sanityErrors  = filter isSanityError
 -- NOTE: this requires that the controller has been passed through the expand
 -- pass, as it's unable to deal with macros.
 sanityCheck :: Bool -> FilePath -> Controller -> IO [SanityMessage]
-sanityCheck debug z3 cont = withSolver debug z3 (`checkController` cont)
+sanityCheck debug z3 cont =
+  do (_,msgs) <- runSMT debug z3 (checkController cont)
+     return msgs
 
-withSolver :: Bool -> FilePath -> (SMT.Solver -> IO r) -> IO r
-withSolver debug z3 k =
-  do mb <- debugLogger debug
-     bracket (SMT.newSolver z3 ["-smt2", "-in"] mb) SMT.stop $ \s ->
-       do SMT.setOption s ":produce-models" "true"
-          SMT.setOption s ":produce-unsat-cores" "true"
-          k s
+
+-- SMT Monad -------------------------------------------------------------------
+
+type SMT = StateT RW IO
+
+data RW = RW { rwSolver   :: !SMT.Solver
+             , rwMessages :: [SanityMessage]
+             , rwContext  :: [SMT.SExpr]
+             }
+
+runSMT :: Bool -> FilePath -> SMT a -> IO (a,[SanityMessage])
+runSMT debug z3 m =
+  do mb     <- debugLogger debug
+     (a,rw) <- bracket (SMT.newSolver z3 ["-smt2", "-in"] mb) SMT.stop $ \ s ->
+                do SMT.setOption s ":produce-models" "true"
+                   SMT.setOption s ":produce-unsat-cores" "true"
+                   runStateT RW { rwSolver   = s
+                                , rwMessages = []
+                                , rwContext  = [] } m
+     return (a, rwMessages rw)
 
 debugLogger :: Bool -> IO (Maybe SMT.Logger)
 debugLogger False = return Nothing
@@ -60,41 +77,64 @@ debugLogger True  =
   do l <- SMT.newLogger 0
      return (Just l)
 
-withScope :: SMT.Solver -> IO a -> IO a
-withScope s m = bracket (SMT.push s) (\_ -> SMT.pop s) (\_ -> m)
+collectContext :: SMT a -> SMT (a,[SMT.SExpr])
+collectContext m =
+  do rw  <- get
+     set $! rw { rwContext = [] }
+     a   <- m
+     rw' <- get
+     set $! rw' { rwContext = rwContext rw }
+     return (a, rwContext rw')
 
-checkController :: SMT.Solver -> Controller -> IO [SanityMessage]
-checkController s cont@Controller { .. } = withScope s $
-  do mapM_ (SMT.ackCommand s . declareEnum) cEnums
+withScope :: SMT a -> SMT a
+withScope m =
+  do rw      <- get
+     (a,rw') <- inBase (bracket (SMT.push (rwSolver rw))
+                                (\_ -> SMT.pop (rwSolver rw))
+                                (\_ -> runStateT rw m))
+     set $! rw'
+     return a
 
-     mapM_ (declareStateVar s) cInputs
-     mapM_ (declareStateVar s) cOutputs
+withSolver :: (SMT.Solver -> IO a) -> SMT a
+withSolver k =
+  do RW { .. } <- get
+     inBase (k rwSolver)
 
-     -- if the 
-     let (es,as) = translate (traverse (exprToSMT . thing) (sSysTrans cSpec))
-     withScope s $
-       do _   <- assertExprs s "sys_trans" es
-          res <- SMT.check s
+checkController :: Controller -> SMT ()
+checkController cont@Controller { .. } = withScope $
+  do mapM_ declareEnum cEnums
+
+     mapM_ declareStateVar cInputs
+     mapM_ declareStateVar cOutputs
+
+     (es,as) <- collectContext (traverse (exprToSMT . thing) (sSysTrans cSpec))
+     withScope $
+       do _   <- assertNamed "sys_trans" es
+          res <- checkSat
           unless (res == SMT.Sat) $
-            do m <- getUnsatCore s
-               print m
+            do m <- getUnsatCore
+               inBase (print m)
 
-     return []
+checkSat :: SMT SMT.Result
+checkSat  = withSolver SMT.check
 
-assertExprs :: SMT.Solver -> String -> [SMT.SExpr] -> IO [SMT.SExpr]
-assertExprs s p = go [] 0
+assert :: SMT.SExpr -> SMT ()
+assert e = withSolver (`SMT.assert` e)
+
+assertNamed :: String -> [SMT.SExpr] -> SMT [SMT.SExpr]
+assertNamed p es = withSolver (\s -> go s [] 0 es)
   where
-  go names i []     = return (reverse names)
-  go names i (x:xs) =
+  go s names i []     = return (reverse names)
+  go s names i (x:xs) =
     do let name = SMT.Atom (p ++ "_" ++ show i)
        SMT.assert s (SMT.fun "!" [x,SMT.Atom ":named",name])
-       go (name:names) (i+1) xs
+       go s (name:names) (i+1) xs
 
 
 type Model = Map.Map Name SMT.Value
 
-getModel :: SMT.Solver -> Controller -> IO (Map.Map Name SMT.Value)
-getModel s Controller { .. } =
+getModel :: Controller -> SMT (Map.Map Name SMT.Value)
+getModel Controller { .. } = withSolver $ \s ->
   do xs <- SMT.getExprs s (map fst (inputs ++ outputs))
      return (Map.fromList (resolve xs inputs ++ resolve xs outputs))
   where
@@ -105,18 +145,12 @@ getModel s Controller { .. } =
                                   , let Just val = lookup key xs ]
 
 
-getUnsatCore :: SMT.Solver -> IO SMT.SExpr
-getUnsatCore s =
+getUnsatCore :: SMT SMT.SExpr
+getUnsatCore  = withSolver $ \ s ->
   SMT.command s (SMT.List [SMT.Atom "get-unsat-core"])
 
 
 -- Translation -----------------------------------------------------------------
-
-type Translate = WriterT [SMT.SExpr] Lift
-
--- | Run a translation expression, and gather up its additional assertions.
-translate :: Translate a -> (a,[SMT.SExpr])
-translate  = runLift . runWriterT
 
 
 -- | Translate a name to a unique name in the SMT embedding.
@@ -143,7 +177,7 @@ typeToSMT TGen{}  = panic "Unexpected bound type variable"
 
 
 -- | Translate an expression to an SMT expression.
-exprToSMT :: HasCallStack => Expr -> Translate SMT.SExpr
+exprToSMT :: HasCallStack => Expr -> SMT SMT.SExpr
 exprToSMT ETrue      = return (SMT.bool True)
 exprToSMT EFalse     = return (SMT.bool False)
 exprToSMT (EVar t n) = return (nameToVar n)
@@ -194,16 +228,16 @@ letE binds e = SMT.fun "let" [ SMT.List (map mkBind binds), e ]
 
 
 -- | Declare an enumeration as a datatype in Z3.
-declareEnum :: EnumDef -> SMT.SExpr
-declareEnum EnumDef { .. } =
-  SMT.fun "declare-datatypes"
+declareEnum :: EnumDef -> SMT ()
+declareEnum EnumDef { .. } = withSolver $ \ s ->
+  SMT.ackCommand s $ SMT.fun "declare-datatypes"
     [ SMT.List []
     , SMT.List [SMT.List (nameToVar eName : map nameToVar eCons)] ]
 
 
 -- | Declare a state variable, including any bounding constraints.
-declareStateVar :: SMT.Solver -> StateVar -> IO ()
-declareStateVar s StateVar { .. } =
+declareStateVar :: StateVar -> SMT ()
+declareStateVar StateVar { .. } =
   do _ <- declare  name
      _ <- declare (name ++ "_next")
      return ()
@@ -218,11 +252,11 @@ declareStateVar s StateVar { .. } =
         let lo' = SMT.int (toInteger lo)
             hi' = SMT.int (toInteger hi)
          in \ n ->
-              SMT.assert s (SMT.and (SMT.geq (SMT.Atom n) lo')
-                                    (SMT.leq (SMT.Atom n) hi'))
+              assert (SMT.and (SMT.geq (SMT.Atom n) lo')
+                              (SMT.leq (SMT.Atom n) hi'))
 
       Nothing -> \ _ -> return ()
 
   declare n =
-    do SMT.declare s n ty
+    do withSolver (\s -> SMT.declare s n ty)
        bounds n
