@@ -24,7 +24,7 @@ import           Panic
 import           Scope.Name (Name,nameText,nameUnique)
 import           TypeCheck.AST
 
-import           Control.Exception (bracket)
+import           Control.Exception (bracket,catch)
 import           Control.Monad (guard,unless)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text.Lazy as L
@@ -34,6 +34,9 @@ import qualified SimpleSMT as SMT
 
 data SanityMessage = SafetyConflict [SrcRange]
                      -- ^ Safety formulas at these locations are in conflict
+                   | CouldntFindZ3
+                     -- ^ Failed to start Z3, indicates that sanity checking was
+                     -- not done.
                      deriving (Show)
 
 ppSanityMessage :: SanityMessage -> Doc
@@ -41,8 +44,13 @@ ppSanityMessage (SafetyConflict locs) = ppMessage "[error]" $
   hang (text "Safety constraints are in conflict:")
      2 (bullets (map pp locs))
 
+ppSanityMessage CouldntFindZ3 = ppMessage "[warning]" $
+  text "Unable to find z3 (try passing the location with --z3)"
+
+
 isSanityError :: SanityMessage -> Bool
 isSanityError SafetyConflict{} = True
+isSanityError _                = False
 
 sanityErrors :: [SanityMessage] -> [SanityMessage]
 sanityErrors  = filter isSanityError
@@ -53,8 +61,10 @@ sanityErrors  = filter isSanityError
 -- pass, as it's unable to deal with macros.
 sanityCheck :: Bool -> FilePath -> Controller -> IO [SanityMessage]
 sanityCheck debug z3 cont =
-  do (_,msgs) <- runSMT debug z3 (checkController cont)
-     return msgs
+  do mb <- runSMT debug z3 (checkController cont)
+     case mb of
+       Just (_,msgs) -> return msgs
+       Nothing       -> return [CouldntFindZ3]
 
 -- | Check that all of the safety constraints are satisfiable.
 checkController :: Controller -> SMT ()
@@ -104,16 +114,26 @@ addMessage msg =
   do RW { .. } <- get
      set $! RW { rwMessages = rwMessages ++ [msg], .. }
 
-runSMT :: Bool -> FilePath -> SMT a -> IO (a,[SanityMessage])
+runSMT :: Bool -> FilePath -> SMT a -> IO (Maybe (a,[SanityMessage]))
 runSMT debug z3 m =
-  do mb     <- debugLogger debug
-     (a,rw) <- bracket (SMT.newSolver z3 ["-smt2", "-in"] mb) SMT.stop $ \ s ->
-                do SMT.setOption s ":produce-models" "true"
-                   SMT.setOption s ":produce-unsat-cores" "true"
-                   runStateT RW { rwSolver   = s
-                                , rwMessages = []
-                                , rwContext  = [] } m
-     return (a, rwMessages rw)
+  do logger <- debugLogger debug
+     mb     <- bracket (SMT.newSolver z3 ["-smt2", "-in"] logger) SMT.stop body
+                 `catch` handler
+
+     return $ do (a,rw) <- mb
+                 return (a, rwMessages rw)
+
+  where
+
+  body s =
+    do SMT.setOption s ":produce-models" "true"
+       SMT.setOption s ":produce-unsat-cores" "true"
+       Just <$> runStateT RW { rwSolver   = s
+                             , rwMessages = []
+                             , rwContext  = [] } m
+
+  handler :: IOError -> IO (Maybe (a, RW))
+  handler _ = return Nothing
 
 debugLogger :: Bool -> IO (Maybe SMT.Logger)
 debugLogger False = return Nothing
