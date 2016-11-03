@@ -59,13 +59,11 @@ instance PP UnifyError where
 
   ppPrec _ (UnifyError a b) =
     hang (text "Unable to unify the types:")
-       2 (vcat [ char '*' <+> pp a
-               , char '*' <+> pp b ])
+       2 (bullets (map pp [a,b]))
 
   ppPrec _ (MatchError a b) =
     hang (text "Types do not match:")
-       2 (vcat [ char '*' <+> pp a
-               , char '*' <+> pp b ])
+       2 (bullets (map pp [a,b]))
 
   ppPrec _ (OccursCheckFailure ty) =
     hang (text "Cannot construct the infinite type:")

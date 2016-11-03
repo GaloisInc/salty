@@ -11,12 +11,14 @@
 --
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ParallelListComp #-}
 
 module TypeCheck.Sanity (
     SanityMessage(..), isSanityError, sanityErrors, ppSanityMessage,
     sanityCheck,
   ) where
 
+import           Message
 import           PP
 import           Panic
 import           Scope.Name (Name,nameText,nameUnique)
@@ -30,13 +32,17 @@ import           MonadLib (StateT, runStateT, runStateT, get, set, inBase)
 import qualified SimpleSMT as SMT
 
 
-data SanityMessage
+data SanityMessage = SafetyConflict [SrcRange]
+                     -- ^ Safety formulas at these locations are in conflict
+                     deriving (Show)
 
 ppSanityMessage :: SanityMessage -> Doc
-ppSanityMessage  = undefined
+ppSanityMessage (SafetyConflict locs) = ppMessage "[error]" $
+  hang (text "Safety constraints are in conflict:")
+     2 (bullets (map pp locs))
 
 isSanityError :: SanityMessage -> Bool
-isSanityError _ = False
+isSanityError SafetyConflict{} = True
 
 sanityErrors :: [SanityMessage] -> [SanityMessage]
 sanityErrors  = filter isSanityError
@@ -50,6 +56,39 @@ sanityCheck debug z3 cont =
   do (_,msgs) <- runSMT debug z3 (checkController cont)
      return msgs
 
+-- | Check that all of the safety constraints are satisfiable.
+checkController :: Controller -> SMT ()
+checkController cont@Controller { .. } = withScope $
+  do mapM_ declareEnum cEnums
+
+     mapM_ declareStateVar cInputs
+     mapM_ declareStateVar cOutputs
+
+     withScope $
+       do interp <- assertSafety cont
+          res    <- checkSat
+          unless (res == SMT.Sat) $
+            do ms <- getUnsatCore
+               addMessage (SafetyConflict [ getLoc (interp Map.! clause) | clause <- ms ])
+
+
+
+data Origin = SysTrans
+            | EnvTrans
+              deriving (Eq,Ord,Show)
+
+-- | Assert all safety constraints from the controller.
+assertSafety :: Controller -> SMT (Map.Map String (Loc Origin))
+assertSafety Controller { .. } =
+ do (es,as) <- collectContext (traverse (exprToSMT . thing) (sEnvTrans cSpec))
+    (ss,as) <- collectContext (traverse (exprToSMT . thing) (sSysTrans cSpec))
+    ens     <- assertNamed "env_trans" es
+    sns     <- assertNamed "sys_trans" ss
+    return $ Map.fromList
+           $ [ (n, SysTrans <$ loc) | n <- sns | loc <- sSysTrans cSpec ]
+          ++ [ (n, EnvTrans <$ loc) | n <- ens | loc <- sEnvTrans cSpec ]
+                     
+
 
 -- SMT Monad -------------------------------------------------------------------
 
@@ -59,6 +98,11 @@ data RW = RW { rwSolver   :: !SMT.Solver
              , rwMessages :: [SanityMessage]
              , rwContext  :: [SMT.SExpr]
              }
+
+addMessage :: SanityMessage -> SMT ()
+addMessage msg =
+  do RW { .. } <- get
+     set $! RW { rwMessages = rwMessages ++ [msg], .. }
 
 runSMT :: Bool -> FilePath -> SMT a -> IO (a,[SanityMessage])
 runSMT debug z3 m =
@@ -100,34 +144,19 @@ withSolver k =
   do RW { .. } <- get
      inBase (k rwSolver)
 
-checkController :: Controller -> SMT ()
-checkController cont@Controller { .. } = withScope $
-  do mapM_ declareEnum cEnums
-
-     mapM_ declareStateVar cInputs
-     mapM_ declareStateVar cOutputs
-
-     (es,as) <- collectContext (traverse (exprToSMT . thing) (sSysTrans cSpec))
-     withScope $
-       do _   <- assertNamed "sys_trans" es
-          res <- checkSat
-          unless (res == SMT.Sat) $
-            do m <- getUnsatCore
-               inBase (print m)
-
 checkSat :: SMT SMT.Result
 checkSat  = withSolver SMT.check
 
 assert :: SMT.SExpr -> SMT ()
 assert e = withSolver (`SMT.assert` e)
 
-assertNamed :: String -> [SMT.SExpr] -> SMT [SMT.SExpr]
+assertNamed :: String -> [SMT.SExpr] -> SMT [String]
 assertNamed p es = withSolver (\s -> go s [] 0 es)
   where
   go s names i []     = return (reverse names)
   go s names i (x:xs) =
-    do let name = SMT.Atom (p ++ "_" ++ show i)
-       SMT.assert s (SMT.fun "!" [x,SMT.Atom ":named",name])
+    do let name = p ++ "_" ++ show i
+       SMT.assert s (SMT.fun "!" [x,SMT.Atom ":named",SMT.Atom name])
        go s (name:names) (i+1) xs
 
 
@@ -145,9 +174,12 @@ getModel Controller { .. } = withSolver $ \s ->
                                   , let Just val = lookup key xs ]
 
 
-getUnsatCore :: SMT SMT.SExpr
+getUnsatCore :: SMT [String]
 getUnsatCore  = withSolver $ \ s ->
-  SMT.command s (SMT.List [SMT.Atom "get-unsat-core"])
+  do res <- SMT.command s (SMT.List [SMT.Atom "get-unsat-core"])
+     case res of
+       SMT.List es -> return [ e | SMT.Atom e <- es ]
+       _           -> panic ("Unexpected result from (get-unsat-core):\n" ++ show res)
 
 
 -- Translation -----------------------------------------------------------------

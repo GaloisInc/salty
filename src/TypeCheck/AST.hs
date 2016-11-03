@@ -9,11 +9,11 @@
 
 module TypeCheck.AST (
     module TypeCheck.AST,
-    Loc, thing, HasLoc(getLoc), at, noLoc,
+    Loc, thing, HasLoc(getLoc), at, noLoc, SrcRange
   ) where
 
 import Scope.Name (Name)
-import Syntax.AST (Loc,noLoc)
+import Syntax.AST (SrcRange,Loc,noLoc)
 import PP
 import Panic (panic)
 

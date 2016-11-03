@@ -1,5 +1,5 @@
 
-SLUGS ?= ../../slugs/src/slugs
+SLUGS ?= slugs
 
 SALTY ?=
 
@@ -13,7 +13,7 @@ ifeq ($(SALTY),)
   else
     exists := $(shell test -f ../../cabal.project && echo "exists")
     ifeq ($(exists),exists)
-      SALTY := $(wildcard ../../dist-newstyle/build/salty-*/build/salty/salty)
+      SALTY := $(shell find ../../dist-newstyle/build -name salty -type f)
     else
       SALTY := stack exec -- salty
     endif

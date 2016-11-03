@@ -7,6 +7,7 @@ module PP (
     optParens,
     ticks,
     semicolon,
+    bullets,
 
     ppNameWithOrigin,
     ppOrigin,
@@ -33,6 +34,10 @@ optParens False = id
 
 ticks :: Doc -> Doc
 ticks d = char '`' <> d <> char '`'
+
+-- | Join a bunch of lines together with bullet points.
+bullets :: [Doc] -> Doc
+bullets ds = vcat [ char '*' <+> nest 2 d | d <- ds ]
 
 semicolon :: Doc
 semicolon  = char ';'

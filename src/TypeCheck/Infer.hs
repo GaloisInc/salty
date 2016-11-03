@@ -72,26 +72,28 @@ simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
 checkSpec :: AST.Spec Name -> TC Spec
 
 checkSpec (AST.SSysTrans es) =
-  do es' <- traverse (checkExpr TBool) es
-     loc <- askLoc
-     return $ mempty { sSysTrans = map (`at` loc) es' }
+  do es' <- checkSpecEntry es
+     return $ mempty { sSysTrans = es' }
 
 checkSpec (AST.SSysLiveness es) =
-  do es' <- traverse (checkExpr TBool) es
-     loc <- askLoc
-     return $ mempty { sSysLiveness = map (`at` loc) es' }
+  do es' <- checkSpecEntry es
+     return $ mempty { sSysLiveness = es' }
 
 checkSpec (AST.SEnvTrans es) =
-  do es' <- traverse (checkExpr TBool) es
-     loc <- askLoc
-     return $ mempty { sEnvTrans = map (`at` loc) es' }
+  do es' <- checkSpecEntry es
+     return $ mempty { sEnvTrans = es' }
 
 checkSpec (AST.SEnvLiveness es) =
-  do es' <- traverse (checkExpr TBool) es
-     loc <- askLoc
-     return $ mempty { sEnvLiveness = map (`at` loc) es' }
+  do es' <- checkSpecEntry es
+     return $ mempty { sEnvLiveness = es' }
 
 checkSpec (AST.SLoc loc) = withLoc loc checkSpec
+
+
+checkSpecEntry :: [AST.Expr Name] -> TC [Loc Expr]
+checkSpecEntry  = traverse $ \e ->
+  do e' <- checkExpr TBool e
+     return (e' `at` getLoc e)
 
 
 -- | Add all of the constructors to the typing environment.

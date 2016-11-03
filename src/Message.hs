@@ -6,7 +6,11 @@ import Syntax.AST (Loc)
 import Text.Location (thing,getLoc)
 
 
+ppMessage :: String -> Doc -> Doc
+ppMessage msg body =
+  vcat [ text "--" <+> text msg <+> text (replicate (76 - length msg) '-')
+       , nest 2 body
+       , text " " ]
+
 ppError :: PP a => Loc a -> Doc
-ppError loc = vcat [ banner, nest 2 (pp (thing loc)), text " " ]
-  where
-  banner = text "[error]" <+> pp (getLoc loc)
+ppError loc = ppMessage ("[error] " ++ render (getLoc loc)) (pp (thing loc))
