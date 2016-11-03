@@ -117,7 +117,7 @@ options  =
     "Dump the optimized core representation of the type-checked controller"
 
   , Option "" ["ddump-spec"] (NoArg setDumpSpec)
-    "Dump the slugs spec before running slugs"
+    "Dump the input to slugs and its output"
 
   , Option "" ["ddump-sanity"] (NoArg setDumpSanity)
     "Dump intermediate output during sanity checking"
