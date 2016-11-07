@@ -21,15 +21,26 @@ source from a `GR(1)` specification.
 
 ### Dependencies
 
-It's easiest to build salty using the
-[stack](http://docs.haskellstack.org/en/stable/README/#how-to-install) tool.
-Stack will manage the installation of all haskell dependencies, as well as the
-GHC compiler itself.
+#### Stack
 
-Additionally, you will need to build and install the
-[slugs](https://github.com/VerifiableRobotics/slugs) `GR(1)` synthesis tool.
+It's easiest to build salty using the [stack][stack] tool.  Stack will manage
+the installation of all haskell dependencies, as well as the GHC compiler
+itself. One downside to using `stack` is that it won't automatically pull
+changes from the `language-slugs` repository.
+
+#### Slugs
+
+You will need to build and install the [slugs `GR(1)` synthesis tool][slugs].
 Once installed, you can tell salty where to find the slugs executable by passing
-the `-s` or `--slugs` flag.
+the `-s` or `--slugs` flag. There is no installation target in the slugs
+Makefile, however the `slugs` executable has no runtime dependencies, and can
+just be copied into your `$PATH`.
+
+#### Z3 (Optional)
+
+If z3 is installed, salty will do some additional sanity checking of
+specifications before sending them to slugs. On linux, z3 is likely available in
+your package manager, and on OSX it's available through [homebrew][homebrew]
 
 ### Building
 
@@ -45,3 +56,7 @@ which will place the salty binary in `$HOME/.local/bin`.
 
 The examples can be built by running `make` in the `examples/` directory, and
 will place all of the generated Java code in the `examples/build` directory.
+
+[stack]: http://docs.haskellstack.org/en/stable/README/#how-to-install
+[slugs]: https://github.com/VerifiableRobotics/slugs
+[homebrew]: https://brew.sh
