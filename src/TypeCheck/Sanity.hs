@@ -19,37 +19,45 @@ module TypeCheck.Sanity (
   ) where
 
 import           Message
-import           PP
+import           PP hiding (ppOrigin)
 import           Panic
 import           Scope.Name (Name,nameText,nameUnique)
 import           TypeCheck.AST
 
 import           Control.Exception (bracket,catch)
-import           Control.Monad (guard,unless)
+import           Control.Monad (unless)
 import qualified Data.Map.Strict as Map
+import           Data.Maybe (catMaybes)
 import qualified Data.Text.Lazy as L
 import           MonadLib (StateT, runStateT, runStateT, get, set, inBase)
 import qualified SimpleSMT as SMT
 
 
-data SanityMessage = SafetyConflict [SrcRange]
+data SanityMessage = SafetyConflict [Loc Origin]
                      -- ^ Safety formulas at these locations are in conflict
                    | CouldntFindZ3
                      -- ^ Failed to start Z3, indicates that sanity checking was
                      -- not done.
+                   | InitConflict [Loc Origin]
+                     -- ^ Variable initialization is not consistent
                      deriving (Show)
 
 ppSanityMessage :: SanityMessage -> Doc
 ppSanityMessage (SafetyConflict locs) = ppMessage "[error]" $
   hang (text "Safety constraints are in conflict:")
-     2 (bullets (map pp locs))
+     2 (bullets (map ppOrigin locs))
 
 ppSanityMessage CouldntFindZ3 = ppMessage "[warning]" $
   text "Unable to find z3 (try passing the location with --z3)"
 
+ppSanityMessage (InitConflict ms) = ppMessage "[error]" $
+  hang (text "Initialization constraints violate safety:")
+     2 (bullets (map ppOrigin ms))
+
 
 isSanityError :: SanityMessage -> Bool
 isSanityError SafetyConflict{} = True
+isSanityError InitConflict{}   = True
 isSanityError _                = False
 
 sanityErrors :: [SanityMessage] -> [SanityMessage]
@@ -74,30 +82,89 @@ checkController cont@Controller { .. } = withScope $
      mapM_ declareStateVar cInputs
      mapM_ declareStateVar cOutputs
 
-     withScope $
-       do interp <- assertSafety cont
-          res    <- checkSat
-          unless (res == SMT.Sat) $
-            do ms <- getUnsatCore
-               addMessage (SafetyConflict [ getLoc (interp Map.! clause) | clause <- ms ])
+     -- check safety constraints in all states
+     safety <- assertSafety cont
+     res    <- checkSat
 
+     -- only continue checking if safety constraints are not violated, as
+     -- everything else will fail without them.
+     if res /= SMT.Sat
+       then
+         do ms <- getUnsatCore
+            addMessage (SafetyConflict [ safety Map.! clause | clause <- ms ])
 
+       else
+         do withScope (checkInit cont safety)
 
 data Origin = SysTrans
             | EnvTrans
+            | InputVar Name
+            | OutputVar Name
               deriving (Eq,Ord,Show)
 
+ppOrigin :: Loc Origin -> Doc
+ppOrigin loc =
+  case thing loc of
+    SysTrans    -> text "system safety constraint at"       <+> pp (getLoc loc)
+    EnvTrans    -> text "environment safety constraint at"  <+> pp (getLoc loc)
+    InputVar  n -> fsep [ text "initialization of input variable", ticks (pp (nameText n))
+                        , text "at", pp (getLoc loc) ]
+    OutputVar n -> fsep [ text "initialization output variable", ticks (pp (nameText n))
+                        , text "at", pp (getLoc loc) ]
+
+
+type LocMap = Map.Map String (Loc Origin)
+
 -- | Assert all safety constraints from the controller.
-assertSafety :: Controller -> SMT (Map.Map String (Loc Origin))
+assertSafety :: Controller -> SMT LocMap
 assertSafety Controller { .. } =
- do (es,as) <- collectContext (traverse (exprToSMT . thing) (sEnvTrans cSpec))
-    (ss,as) <- collectContext (traverse (exprToSMT . thing) (sSysTrans cSpec))
+ do (es,_)  <- collectContext (traverse (exprToSMT . thing) (sEnvTrans cSpec))
+    (ss,_)  <- collectContext (traverse (exprToSMT . thing) (sSysTrans cSpec))
     ens     <- assertNamed "env_trans" es
     sns     <- assertNamed "sys_trans" ss
     return $ Map.fromList
            $ [ (n, SysTrans <$ loc) | n <- sns | loc <- sSysTrans cSpec ]
           ++ [ (n, EnvTrans <$ loc) | n <- ens | loc <- sEnvTrans cSpec ]
-                     
+
+
+
+-- | Check that the initial state satisfies all safety constraints.
+checkInit :: Controller -> LocMap -> SMT ()
+checkInit cont locs =
+  do locs' <- assertInit cont
+     res   <- checkSat
+     unless (res == SMT.Sat) $
+       do ms <- getUnsatCore
+          let env = locs `mappend` locs'
+          addMessage (InitConflict [ env Map.! clause | clause <- ms ])
+
+-- | Assert all variable initialization formulas.
+assertInit :: Controller -> SMT (Map.Map String (Loc Origin))
+assertInit Controller { .. } =
+  do ins  <- nameVars "input"  =<< traverse initInput  cInputs
+     outs <- nameVars "output" =<< traverse initOutput cOutputs
+     return (Map.fromList (ins ++ outs))
+  where
+  nameVars pfx mbs =
+    do let (es,locs) = unzip (catMaybes mbs)
+       ns <- assertNamed pfx es
+       return (zip ns locs)
+
+initInput :: StateVar -> SMT (Maybe (SMT.SExpr, Loc Origin))
+initInput  = initVar InputVar
+
+initOutput :: StateVar -> SMT (Maybe (SMT.SExpr, Loc Origin))
+initOutput  = initVar OutputVar
+
+initVar :: (Name -> Origin) -> StateVar -> SMT (Maybe (SMT.SExpr, Loc Origin))
+initVar mkOrigin = \ StateVar { .. } ->
+  case svInit of
+    Just e ->
+      do e' <- exprToSMT (EEq svType (EVar svType svName) e)
+         return (Just (e', mkOrigin svName `at` getLoc svName))
+
+    Nothing ->
+         return Nothing
 
 
 -- SMT Monad -------------------------------------------------------------------
@@ -173,25 +240,25 @@ assert e = withSolver (`SMT.assert` e)
 assertNamed :: String -> [SMT.SExpr] -> SMT [String]
 assertNamed p es = withSolver (\s -> go s [] 0 es)
   where
-  go s names i []     = return (reverse names)
+  go _ names _ []     = return (reverse names)
   go s names i (x:xs) =
-    do let name = p ++ "_" ++ show i
+    do let name = p ++ "_" ++ show (i :: Int)
        SMT.assert s (SMT.fun "!" [x,SMT.Atom ":named",SMT.Atom name])
        go s (name:names) (i+1) xs
 
 
-type Model = Map.Map Name SMT.Value
+-- type Model = Map.Map Name SMT.Value
 
-getModel :: Controller -> SMT (Map.Map Name SMT.Value)
-getModel Controller { .. } = withSolver $ \s ->
-  do xs <- SMT.getExprs s (map fst (inputs ++ outputs))
-     return (Map.fromList (resolve xs inputs ++ resolve xs outputs))
-  where
-  inputs  = [ (nameToVar svName, svName) | StateVar { .. } <- cInputs  ]
-  outputs = [ (nameToVar svName, svName) | StateVar { .. } <- cOutputs ]
+-- getModel :: Controller -> SMT Model
+-- getModel Controller { .. } = withSolver $ \s ->
+--   do xs <- SMT.getExprs s (map fst (inputs ++ outputs))
+--      return (Map.fromList (resolve xs inputs ++ resolve xs outputs))
+--   where
+--   inputs  = [ (nameToVar svName, svName) | StateVar { .. } <- cInputs  ]
+--   outputs = [ (nameToVar svName, svName) | StateVar { .. } <- cOutputs ]
 
-  resolve xs vars = [ (name, val) | (key, name) <- vars
-                                  , let Just val = lookup key xs ]
+--   resolve xs vars = [ (name, val) | (key, name) <- vars
+--                                   , let Just val = lookup key xs ]
 
 
 getUnsatCore :: SMT [String]
@@ -232,16 +299,16 @@ typeToSMT TGen{}  = panic "Unexpected bound type variable"
 exprToSMT :: HasCallStack => Expr -> SMT SMT.SExpr
 exprToSMT ETrue      = return (SMT.bool True)
 exprToSMT EFalse     = return (SMT.bool False)
-exprToSMT (EVar t n) = return (nameToVar n)
+exprToSMT (EVar _ n) = return (nameToVar n)
 
 exprToSMT (ECon _ n) = return (nameToVar n)
 
 exprToSMT (ENum n) = return (SMT.int n)
 
-exprToSMT (ELet n ty e b) =
+exprToSMT (ELet n _ e b) =
   do e' <- exprToSMT e
-     b  <- exprToSMT b
-     return (letE [(n,e')] b)
+     b'  <- exprToSMT b
+     return (letE [(n,e')] b')
 
 exprToSMT (EAnd x y) =
   do x' <- exprToSMT x
@@ -262,7 +329,7 @@ exprToSMT (ENot a) =
   do a' <- exprToSMT a
      return (SMT.not a')
 
-exprToSMT (ENext _ (EVar t n)) =
+exprToSMT (ENext _ (EVar _ n)) =
      return (SMT.Atom (smtName n ++ "_next"))
 
 exprToSMT ETApp{} = panic "Unexpected ETApp"
@@ -310,5 +377,5 @@ declareStateVar StateVar { .. } =
       Nothing -> \ _ -> return ()
 
   declare n =
-    do withSolver (\s -> SMT.declare s n ty)
+    do _ <- withSolver (\s -> SMT.declare s n ty)
        bounds n
