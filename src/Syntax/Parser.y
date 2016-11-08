@@ -225,7 +225,7 @@ bexpr :: { Expr PName }
     { ELoc (EImp $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
   | bexpr '!=' bexpr
-    { ELoc (EImp $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { ELoc (ENeq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
   | bexpr '==' bexpr
     { ELoc (EEq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
