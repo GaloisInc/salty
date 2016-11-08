@@ -14,7 +14,7 @@
 {-# LANGUAGE ParallelListComp #-}
 
 module TypeCheck.Sanity (
-    SanityMessage(..), isSanityError, sanityErrors, ppSanityMessage,
+    SanityMessage(..), sanityErrors, ppSanityMessage,
     sanityCheck,
   ) where
 
@@ -26,20 +26,32 @@ import           TypeCheck.AST
 
 import           Control.Exception (bracket,catch)
 import           Control.Monad (unless)
+import           Data.Foldable (forM_)
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (catMaybes)
 import qualified Data.Text.Lazy as L
+import           Data.Traversable (forM)
 import           MonadLib (StateT, runStateT, runStateT, get, set, inBase)
 import qualified SimpleSMT as SMT
 
 
 data SanityMessage = SafetyConflict [Loc Origin]
                      -- ^ Safety formulas at these locations are in conflict
+
                    | CouldntFindZ3
                      -- ^ Failed to start Z3, indicates that sanity checking was
                      -- not done.
+
                    | InitConflict [Loc Origin]
                      -- ^ Variable initialization is not consistent
+
+                   | EnvLivenessSafety [Loc Origin]
+                     -- ^ Environment liveness constraint will eventually cause
+                     -- environmental safety constraints to be violated.
+
+                   | SysLivenessSafety Bool [Loc Origin]
+                     -- ^ A system liveness constraint will cause the system to
+                     -- eventually violate safety.
                      deriving (Show)
 
 ppSanityMessage :: SanityMessage -> Doc
@@ -54,11 +66,23 @@ ppSanityMessage (InitConflict ms) = ppMessage "[error]" $
   hang (text "Initialization constraints violate safety:")
      2 (bullets (map ppOrigin ms))
 
+ppSanityMessage (EnvLivenessSafety ms) = ppMessage "[warning]" $
+  hang (text "Environment will eventually violate safety constraints:")
+     2 (bullets (map ppOrigin ms))
+
+ppSanityMessage (SysLivenessSafety err ms) = ppMessage ty $
+  hang (text "System will eventually violate safety constraints:")
+     2 (bullets (map ppOrigin ms))
+  where
+  ty | err       = "[error]"
+     | otherwise = "[warning]"
+
 
 isSanityError :: SanityMessage -> Bool
-isSanityError SafetyConflict{} = True
-isSanityError InitConflict{}   = True
-isSanityError _                = False
+isSanityError SafetyConflict{}          = True
+isSanityError InitConflict{}            = True
+isSanityError (SysLivenessSafety err _) = err
+isSanityError _                         = False
 
 sanityErrors :: [SanityMessage] -> [SanityMessage]
 sanityErrors  = filter isSanityError
@@ -95,11 +119,15 @@ checkController cont@Controller { .. } = withScope $
 
        else
          do withScope (checkInit cont safety)
+            err <- withScope (checkEnvLiveness cont safety)
+            withScope (checkSysLiveness err cont safety)
 
 data Origin = SysTrans
             | EnvTrans
             | InputVar Name
             | OutputVar Name
+            | EnvLiveness
+            | SysLiveness
               deriving (Eq,Ord,Show)
 
 ppOrigin :: Loc Origin -> Doc
@@ -112,16 +140,19 @@ ppOrigin loc =
     OutputVar n -> fsep [ text "initialization output variable", ticks (pp (nameText n))
                         , text "at", pp (getLoc loc) ]
 
+    EnvLiveness -> text "environment liveness constraint at" <+> pp (getLoc loc)
+    SysLiveness -> text "system liveness constraint at" <+> pp (getLoc loc)
+
 
 type LocMap = Map.Map String (Loc Origin)
 
 -- | Assert all safety constraints from the controller.
 assertSafety :: Controller -> SMT LocMap
 assertSafety Controller { .. } =
- do (es,_)  <- collectContext (traverse (exprToSMT . thing) (sEnvTrans cSpec))
-    (ss,_)  <- collectContext (traverse (exprToSMT . thing) (sSysTrans cSpec))
-    ens     <- assertNamed "env_trans" es
-    sns     <- assertNamed "sys_trans" ss
+ do es  <- traverse (exprToSMT . thing) (sEnvTrans cSpec)
+    ss  <- traverse (exprToSMT . thing) (sSysTrans cSpec)
+    ens <- assertNamed "env_trans" es
+    sns <- assertNamed "sys_trans" ss
     return $ Map.fromList
            $ [ (n, SysTrans <$ loc) | n <- sns | loc <- sSysTrans cSpec ]
           ++ [ (n, EnvTrans <$ loc) | n <- ens | loc <- sEnvTrans cSpec ]
@@ -139,7 +170,7 @@ checkInit cont locs =
           addMessage (InitConflict [ env Map.! clause | clause <- ms ])
 
 -- | Assert all variable initialization formulas.
-assertInit :: Controller -> SMT (Map.Map String (Loc Origin))
+assertInit :: Controller -> SMT LocMap
 assertInit Controller { .. } =
   do ins  <- nameVars "input"  =<< traverse initInput  cInputs
      outs <- nameVars "output" =<< traverse initOutput cOutputs
@@ -167,13 +198,47 @@ initVar mkOrigin = \ StateVar { .. } ->
          return Nothing
 
 
+-- | Check for system liveness constraints that will eventually violate safety.
+checkSysLiveness :: Bool -> Controller -> LocMap -> SMT ()
+checkSysLiveness envWarns cont locs =
+  do conflicts <- checkLiveness (sSysLiveness (cSpec cont)) locs
+     forM_ conflicts $ \ (loc, safety) ->
+       addMessage (SysLivenessSafety (not envWarns) (SysLiveness `at` loc : safety))
+
+-- | Check for environmental liveness constraints that will eventually violate
+-- environmental safety constraints.
+checkEnvLiveness :: Controller -> LocMap -> SMT Bool
+checkEnvLiveness cont locs =
+  do conflicts <- checkLiveness (sEnvLiveness (cSpec cont)) locs
+     forM_ conflicts $ \ (loc, safety) ->
+       addMessage (EnvLivenessSafety (EnvLiveness `at` loc : safety))
+
+     return (not (null conflicts))
+
+-- | Assert liveness constraints one at a time, recording when they violate the
+-- safety constraints of the specification.
+checkLiveness :: [Loc Expr] -> LocMap -> SMT [(Loc SMT.SExpr, [Loc Origin])]
+checkLiveness es safety =
+  do rs <- forM es $ \ loc -> withScope $
+        do e' <- exprToSMT (thing loc)
+           assert e'
+           res <- checkSat
+           if res /= SMT.Sat
+              then
+                do ms <- getUnsatCore
+                   return [ (e' `at` loc, [ safety Map.! m | m <- ms ]) ]
+              else return []
+
+     return (concat rs)
+
+
+
 -- SMT Monad -------------------------------------------------------------------
 
 type SMT = StateT RW IO
 
 data RW = RW { rwSolver   :: !SMT.Solver
              , rwMessages :: [SanityMessage]
-             , rwContext  :: [SMT.SExpr]
              }
 
 addMessage :: SanityMessage -> SMT ()
@@ -196,8 +261,7 @@ runSMT debug z3 m =
     do SMT.setOption s ":produce-models" "true"
        SMT.setOption s ":produce-unsat-cores" "true"
        Just <$> runStateT RW { rwSolver   = s
-                             , rwMessages = []
-                             , rwContext  = [] } m
+                             , rwMessages = [] } m
 
   handler :: IOError -> IO (Maybe (a, RW))
   handler _ = return Nothing
@@ -207,15 +271,6 @@ debugLogger False = return Nothing
 debugLogger True  =
   do l <- SMT.newLogger 0
      return (Just l)
-
-collectContext :: SMT a -> SMT (a,[SMT.SExpr])
-collectContext m =
-  do rw  <- get
-     set $! rw { rwContext = [] }
-     a   <- m
-     rw' <- get
-     set $! rw' { rwContext = rwContext rw }
-     return (a, rwContext rw')
 
 withScope :: SMT a -> SMT a
 withScope m =
