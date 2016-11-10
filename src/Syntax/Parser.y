@@ -91,6 +91,7 @@ import           Text.Location.Layout
 %right '&&'
 %right NOT
 %nonassoc '==' '!=' '<-'
+%right 'any' 'all' 'mutex'
 
 
 %monad { Either Error }
@@ -147,8 +148,11 @@ spec :: { Spec PName }
 -- Functions -------------------------------------------------------------------
 
 fun_decl :: { Loc (Fun PName) }
-  : 'def' IDENT list(IDENT) '=' fun_body
+  : 'def' IDENT parens(sep(',', IDENT)) '=' fun_body
     { Fun $2 $3 $5 `at` mconcat [getLoc $2, getLoc $3, getLoc $5] }
+
+  | 'def' IDENT '=' fun_body
+    { Fun $2 [] $4 `at` mconcat [getLoc $2, getLoc $4] }
 
 fun_body :: { FunBody PName }
   : list1(spec) { FBSpec $1 }
@@ -236,15 +240,23 @@ bexpr :: { Expr PName }
   | bexpr '<-' bexpr
     { ELoc (EIn $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
 
-  | app_expr
+  | 'any' bexpr
+    { mkEApp (ELoc (EAny `at` $1)) [$2] }
+
+  | 'all' bexpr
+    { mkEApp (ELoc (EAll `at` $1)) [$2] }
+
+  | 'mutex' bexpr
+    { mkEApp (ELoc (EMutex `at` $1)) [$2] }
+
+  | aexpr
     { $1 }
 
-app_expr :: { Expr PName }
-  : list1(aexpr)
-    { mkEApp $1 }
-
 aexpr :: { Expr PName }
-  : IDENT opt('prime')
+  : IDENT parens(sep(',', expr))
+    { mkEApp (ELoc (EVar (thing $1) `at` $1)) $2 }
+
+  | IDENT opt('prime')
     { let var = ELoc (fmap EVar $1)
        in case $2 of
             Just p  -> ELoc (ENext var `at` mappend (getLoc var) p)
@@ -259,15 +271,6 @@ aexpr :: { Expr PName }
   | 'True'
     { ELoc (ETrue `at` $1) }
 
-  | 'any'
-    { ELoc (EAny `at` $1) }
-
-  | 'all'
-    { ELoc (EAll `at` $1) }
-
-  | 'mutex'
-    { ELoc (EMutex `at` $1) }
-
   | 'False'
     { ELoc (EFalse `at` $1) }
 
@@ -279,6 +282,9 @@ aexpr :: { Expr PName }
 
 
 -- Utilities -------------------------------------------------------------------
+
+parens(p)
+  : '(' p ')' { $2 }
 
 layout(p)
   : 'v{' sep('v;', p) 'v}'  { $2 }
@@ -362,7 +368,6 @@ pattern Keyword kw range <- Located { locValue = Token { tokType = TKeyword kw }
 pattern Virt v range <- Located { locValue = Token { tokType = TVirt v }
                                 , locRange = range }
 
-mkEApp :: [Expr PName] -> Expr PName
-mkEApp [e] = e
-mkEApp es  = ELoc (foldl1 EApp es `at` es)
+mkEApp :: Expr PName -> [Expr PName] -> Expr PName
+mkEApp f es = ELoc (foldl EApp f es `at` mconcat (getLoc f : map getLoc es))
 }

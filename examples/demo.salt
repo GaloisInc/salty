@@ -9,9 +9,9 @@ enum Behavior = SearchA | TrackTarget | Refuel
 
 output behavior : Behavior = SearchA
 
-def app f x = f x
+def app(f,x) = f(x)
 
-def setBehavior b = behavior == b
+def setBehavior(b) = behavior == b
 
 -- track target play (safety)
 sys_trans
@@ -20,4 +20,4 @@ sys_trans
              then behavior == TrackTarget
              else behavior == SearchA
 
-     else app setBehavior Refuel
+     else app(setBehavior,Refuel)

@@ -35,23 +35,23 @@ sys_trans
   (p_2_Loiter_0_0 /\ !m_2_Fuel_0_0) -> b_2_Loiter_0_0
 
 
-def play cmd health switch b1 b2 =
+def play(cmd,health,switch,b1,b2) =
   sys_trans
     (cmd /\ health /\  switch) -> b1
     (cmd /\ health /\ !switch) -> b2
 
-play p_1_ST_2_A (!m_1_Fuel_0_0) m_1_Found_2_0 b_1_Search_0_0 b_1_Track_2_0
-play p_1_ST_2_B (!m_1_Fuel_0_0) m_1_Found_2_0 b_1_Search_0_1 b_1_Track_2_0
+play(p_1_ST_2_A,!m_1_Fuel_0_0,m_1_Found_2_0,b_1_Search_0_0,b_1_Track_2_0)
+play(p_1_ST_2_B,!m_1_Fuel_0_0,m_1_Found_2_0,b_1_Search_0_1,b_1_Track_2_0)
 
 
 -- Contingency -----------------------------------------------------------------
 
-def contingency health action =
+def contingency(health,action) =
   sys_trans
     ! health -> action
 
-contingency (!m_1_Fuel_0_0) b_1_Refuel_0_0
-contingency (!m_2_Fuel_0_0) b_2_Refuel_0_0
+contingency(!m_1_Fuel_0_0,b_1_Refuel_0_0)
+contingency(!m_2_Fuel_0_0,b_2_Refuel_0_0)
 
 
 -- Default Action --------------------------------------------------------------
