@@ -61,6 +61,10 @@ data Fun name = Fun { fAnn    :: Maybe Ann
 
 data Ann = AnnSym L.Text
          | AnnApp L.Text [Ann]
+         | AnnArr [Ann]
+         | AnnObj [(L.Text,Ann)]
+         | AnnStr L.Text
+         | AnnCode L.Text L.Text
          | AnnLoc (Loc Ann)
            deriving (Show)
 

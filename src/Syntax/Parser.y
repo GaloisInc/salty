@@ -26,6 +26,8 @@ import           Text.Location.Layout
   IDENT    { (matchIdent    -> Just $$) }
   CONIDENT { (matchConIdent -> Just $$) }
   NUM      { (matchNum      -> Just $$) }
+  STRING   { (matchString   -> Just $$) }
+  CODE     { (matchCode     -> Just $$) }
 
   -- types
   'Bool'       { Keyword KBool       $$ }
@@ -58,6 +60,8 @@ import           Text.Location.Layout
   ')'          { Keyword Krparen     $$ }
   '{'          { Keyword Klbrace     $$ }
   '}'          { Keyword Krbrace     $$ }
+  '['          { Keyword Klbracket   $$ }
+  ']'          { Keyword Krbracket   $$ }
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
@@ -303,6 +307,25 @@ ann_expr :: { Ann }
   | IDENT
     { AnnLoc (AnnSym `fmap` $1) }
 
+  | STRING
+    { AnnLoc (AnnStr `fmap` $1) }
+
+  | '{' sep(',', ann_obj_entry) '}'
+    { AnnLoc (AnnObj $2 `at` map snd $2) }
+
+  | '[' sep(',', ann_expr) ']'
+    { AnnLoc (AnnArr $2 `at` $2) }
+
+  | CODE
+    { let { (a,b) = thing $1 } in AnnLoc (AnnCode a b `at` $1) }
+
+ann_obj_entry :: { (L.Text, Ann) }
+  : CONIDENT '=' ann_expr
+    { (thing $1, $3) }
+
+  | IDENT '=' ann_expr
+    { (thing $1, $3) }
+
 
 -- Utilities -------------------------------------------------------------------
 
@@ -381,6 +404,15 @@ matchIdent _                                                         = Nothing
 matchNum :: Lexeme -> Maybe (Loc Integer)
 matchNum Located { locValue = Token { tokType = TNum i }, .. } = Just (i `at` locRange)
 matchNum _                                                     = Nothing
+
+matchString :: Lexeme -> Maybe (Loc L.Text)
+matchString Located { locValue = Token { tokType = TString str}, .. } = Just (str `at` locRange)
+matchString _                                                         = Nothing
+
+matchCode :: Lexeme -> Maybe (Loc (L.Text,L.Text))
+matchCode Located { locValue = Token { tokType = TCode n str }, .. } =
+  Just ((n,str) `at` locRange)
+matchCode _ = Nothing
 
 
 pattern LexError range <- Located { locValue = Token { tokType = TLexicalError }, locRange = range }

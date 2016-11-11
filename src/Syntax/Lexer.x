@@ -13,6 +13,8 @@ module Syntax.Lexer (
     lexWithLayout,
   ) where
 
+import Panic (panic)
+
 import           Data.Char (ord,isAscii,isSpace)
 import           Data.Maybe (fromMaybe)
 import qualified Data.Text.Lazy as L
@@ -31,6 +33,8 @@ $num   = [0-9]
 @ident    = [_ $lower] [$lower $upper $num _]*
 @conident = $upper [$lower $upper $num _]*
 
+@strPart  = [^\\\"]+
+
 :-
 
 <0> {
@@ -40,6 +44,8 @@ $white+ ;
 
 -- single-line comments
 "--" .* { emits TLineComment }
+
+"[" @ident "|" { startCode }
 
 "controller" { keyword Kcontroller }
 "where"      { keyword Kwhere      }
@@ -102,10 +108,28 @@ $white+ ;
 
 "'"     { keyword Kprime }
 
+\"      { startString }
+
+"["     { keyword Klbracket }
+"]"     { keyword Krbracket }
+
 @number   { emits mkTNum }
 @ident    { emits TIdent }
 @conident { emits TConIdent }
 
+}
+
+<string> {
+@strPart { addString }
+\"       { endString }
+\\.      { addString }
+}
+
+<code> {
+[^\|]+  { addCode }
+"|]"    { endCode }
+.       { addCode }
+$white+ { addCode }
 }
 
 {
@@ -126,6 +150,8 @@ data TokenType = TLineComment !L.Text
                | TNum !Integer
                | TKeyword !Keyword
                | TVirt !Virtual
+               | TString !L.Text
+               | TCode !L.Text !L.Text
                  deriving (Eq,Show)
 
 data Keyword = Kif
@@ -140,6 +166,8 @@ data Keyword = Kif
              | Krparen
              | Klbrace
              | Krbrace
+             | Klbracket
+             | Krbracket
              | Kprime
              | Kenum
              | Kpipe
@@ -232,7 +260,7 @@ lexer src mbPos bytes = go AlexInput { aiPos = start, aiText = bytes } Normal
             pos'    = L.foldl' (flip move) (aiPos ai') as
             ai2     = AlexInput { aiPos = pos', aiText = bs }
             loc     = Range { rangeStart = aiPos ai', rangeEnd = pos', .. }
-         in (Token { tokText = as, tokType = TLexicalError } `at` loc) : go ai2 st
+         in (Token { tokText = as, tokType = TLexicalError } `at` loc) : go ai2 Normal
 
       AlexSkip ai' _ ->
         go ai' st
@@ -241,8 +269,8 @@ lexer src mbPos bytes = go AlexInput { aiPos = start, aiText = bytes } Normal
         case act rangeSource len ai st of
           (st',xs) -> xs ++ go ai' st'
 
-data AlexInput = AlexInput { aiPos  :: !Position
-                           , aiText :: !L.Text
+data AlexInput = AlexInput { aiPos   :: !Position
+                           , aiText  :: !L.Text
                            }
 
 alexGetByte :: AlexInput -> Maybe (Word8,AlexInput)
@@ -252,10 +280,14 @@ alexGetByte AlexInput { .. } =
 
 
 data Mode = Normal
+          | InString Position [L.Text]
+          | InCode Position L.Text [L.Text]
             deriving (Show)
 
 modeToInt :: Mode -> Int
-modeToInt Normal = 0
+modeToInt Normal     = 0
+modeToInt InString{} = string
+modeToInt InCode{}   = code
 
 
 -- Actions ---------------------------------------------------------------------
@@ -280,6 +312,58 @@ emits mk src len ai st = (st, [withInput mk src len ai])
 
 keyword :: Keyword -> AlexAction
 keyword kw src len ai st = (st, [withInput (const (TKeyword kw)) src len ai])
+
+startString :: AlexAction
+startString _ _ ai Normal = (InString (aiPos ai) [], [])
+startString _ _ _ _ =
+  panic "startString: invalid state"
+
+
+addString :: AlexAction
+addString _ len ai (InString start chunks) = (InString start (chunk:chunks), [])
+  where
+  chunk = L.take (fromIntegral len) (aiText ai)
+addString _ _ _ _ =
+  panic "addString: invalid state"
+
+endString :: AlexAction
+endString rangeSource _ ai (InString rangeStart chunks) =
+  (Normal, [Token str (TString str) `at` Range { rangeEnd = aiPos ai, .. }])
+  where
+  str = L.concat (reverse chunks)
+endString _ _ _ _ =
+  panic "endString: invalid state"
+
+
+startCode, addCode, endCode :: AlexAction
+
+startCode _ len ai Normal = (InCode (aiPos ai) ty [], [])
+  where
+  ty = L.take (fromIntegral len - 2) (L.drop 1 (aiText ai))
+
+startCode _ _ _ _ = panic "startCode: invalid state"
+
+addCode _ len ai (InCode n s chunks) = (InCode n s (chunk:chunks), [])
+  where
+  chunk = L.take (fromIntegral len) (aiText ai)
+
+addCode _ _ _ _ = panic "addCode: invalid state"
+
+endCode rangeSource len ai (InCode rangeStart n chunks) =
+  (Normal, [Token txt (TCode n txt) `at` Range { rangeEnd = aiPos ai, .. }])
+  where
+  -- remove common leading whitespace from lines
+  txt = L.unlines (map (L.drop leadingSpace) ls)
+
+  ls = filter (not . empty) (L.lines (L.concat (reverse chunks)))
+
+  empty str    = L.null str || L.all isSpace str
+  leadingSpace = minimum [ L.length (L.takeWhile isSpace line) | line <- ls
+                                                               , not (empty line) ]
+
+
+endCode _ _ _ _ = panic "endCode: invalid state"
+
 
 
 -- Utility ---------------------------------------------------------------------

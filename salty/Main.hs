@@ -24,6 +24,7 @@ import qualified Data.Aeson.Encode.Pretty as JSON
 import qualified Data.ByteString.Lazy.Char8 as LB
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (mapMaybe)
+import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.IO as L
 import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
@@ -172,8 +173,21 @@ jsonAnnotation (AnnApp f xs) =
   JSON.object [ "name" JSON..= f
               , "args" JSON..= map jsonAnnotation xs ]
 
+jsonAnnotation (AnnArr xs) =
+  JSON.toJSON (map jsonAnnotation xs)
+
+jsonAnnotation (AnnObj xs) =
+  JSON.object [ L.toStrict l JSON..= jsonAnnotation x | (l,x) <- xs ]
+
 jsonAnnotation (AnnSym sym) =
   JSON.toJSON sym
+
+jsonAnnotation (AnnStr str) =
+  JSON.toJSON str
+
+jsonAnnotation (AnnCode ty str) =
+  JSON.object [ "language" JSON..= ty
+              , "code"     JSON..= str ]
 
 jsonAnnotation (AnnLoc loc) =
   jsonAnnotation (thing loc)
