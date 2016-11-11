@@ -11,6 +11,7 @@ import System.FilePath (takeExtension)
 
 data Options = Options { optHelp         :: !Bool
                        , optOptLevel     :: !Int
+                       , optAnnotations  :: !Bool
                        , optJava         :: !(Maybe String)
                        , optPython       :: !Bool
                        , optDot          :: !Bool
@@ -42,6 +43,7 @@ defaultOptions :: Options
 defaultOptions  =
   Options { optHelp         = False
           , optOptLevel     = 1
+          , optAnnotations  = False
           , optJava         = Nothing
           , optPython       = False
           , optDot          = False
@@ -76,6 +78,9 @@ options :: [OptDescr Parser]
 options  =
   [ Option "h" ["help"] (NoArg setHelp)
     "Display this message"
+
+  , Option "a" ["annotations"] (NoArg setAnnotations)
+    "Output information about annotations"
 
   , Option "j" ["java"] (OptArg setJava "PACKAGE_STRING")
     "Output a java implementation of the controller, as this package"
@@ -145,6 +150,9 @@ setInputLen str =
 
 setOutDir :: String -> Parser
 setOutDir str = OK (\opts -> opts { optOutDir = Just str })
+
+setAnnotations :: Parser
+setAnnotations  = OK (\opts -> opts { optAnnotations = True })
 
 setSlugs :: String -> Parser
 setSlugs str = OK (\opts -> opts { optSlugs = str })

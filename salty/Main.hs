@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 import Options
 
@@ -12,17 +13,22 @@ import PP (pp)
 import Scope.Check
 import Scope.Name (emptySupply)
 import Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
+import Syntax.AST
 import Syntax.Parser
 import TypeCheck
 
 import           Control.Exception (catch,IOException)
 import           Control.Monad (when)
-import qualified Data.ByteString.Lazy as LB
+import qualified Data.Aeson as JSON
+import qualified Data.Aeson.Encode.Pretty as JSON
+import qualified Data.ByteString.Lazy.Char8 as LB
 import qualified Data.Map.Strict as Map
+import           Data.Maybe (mapMaybe)
 import qualified Data.Text.Lazy.IO as L
 import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
 import           System.FilePath (takeDirectory,(</>))
+import           Text.Location (thing)
 import           Text.Show.Pretty (ppShow)
 
 main :: IO ()
@@ -57,6 +63,8 @@ genFSM opts (InpSpec path) =
                         exitFailure
 
      when (optDumpParsed opts) (putStrLn (ppShow pCont))
+
+     when (optAnnotations opts) (dumpAnnotations pCont)
 
      (scCont,scSup) <-
        case scopeCheck emptySupply pCont of
@@ -144,3 +152,28 @@ writePackage opts pkg = mapM_ writeClass (Map.toList pkg)
        createDirectoryIfMissing True (takeDirectory outFile)
 
        writeFile outFile (show doc)
+
+
+dumpAnnotations :: Controller PName -> IO ()
+dumpAnnotations Controller { .. } =
+  LB.putStrLn $ JSON.encodePretty
+              $ JSON.toJSON
+              $ mapMaybe dump cDecls
+
+  where
+
+  dump (TDFun Fun { .. }) = jsonAnnotation <$> fAnn
+  dump (TDLoc loc)        = dump (thing loc)
+  dump _                  = Nothing
+
+jsonAnnotation :: Ann -> JSON.Value
+
+jsonAnnotation (AnnApp f xs) =
+  JSON.object [ "name" JSON..= f
+              , "args" JSON..= map jsonAnnotation xs ]
+
+jsonAnnotation (AnnSym sym) =
+  JSON.toJSON sym
+
+jsonAnnotation (AnnLoc loc) =
+  jsonAnnotation (thing loc)

@@ -61,6 +61,8 @@ import           Text.Location.Layout
   ','          { Keyword Kcomma      $$ }
   ':'          { Keyword Kcolon      $$ }
 
+  '@'          { Keyword Kann        $$ }
+
   'any'        { Keyword Kany        $$ }
   'all'        { Keyword Kall        $$ }
   'mutex'      { Keyword Kmutex      $$ }
@@ -148,11 +150,11 @@ spec :: { Spec PName }
 -- Functions -------------------------------------------------------------------
 
 fun_decl :: { Loc (Fun PName) }
-  : 'def' IDENT parens(sep(',', IDENT)) '=' fun_body
-    { Fun $2 $3 $5 `at` mconcat [getLoc $2, getLoc $3, getLoc $5] }
+  : opt(ann) 'def' IDENT parens(sep(',', IDENT)) '=' fun_body
+    { Fun $1 $3 $4 $6 `at` mconcat [getLoc $1, getLoc $3, getLoc $4, getLoc $6] }
 
-  | 'def' IDENT '=' fun_body
-    { Fun $2 [] $4 `at` mconcat [getLoc $2, getLoc $4] }
+  | opt(ann) 'def' IDENT '=' fun_body
+    { Fun $1 $3 [] $5 `at` mconcat [getLoc $1, getLoc $3, getLoc $5] }
 
 fun_body :: { FunBody PName }
   : list1(spec) { FBSpec $1 }
@@ -279,6 +281,27 @@ aexpr :: { Expr PName }
 
   | '(' expr ')'
     { $2 }
+
+
+-- Annotations -----------------------------------------------------------------
+
+ann :: { Ann }
+  : '@' ann_expr
+    { $2 }
+
+ann_app :: { Ann }
+  : CONIDENT parens(sep(',', ann_expr))
+    { AnnLoc (AnnApp (thing $1) $2 `at` mappend (getLoc $1) (getLoc $2)) }
+
+ann_expr :: { Ann }
+  : ann_app
+    { $1 }
+
+  | CONIDENT
+    { AnnLoc (AnnSym `fmap` $1) }
+
+  | IDENT
+    { AnnLoc (AnnSym `fmap` $1) }
 
 
 -- Utilities -------------------------------------------------------------------

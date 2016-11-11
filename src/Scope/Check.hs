@@ -246,7 +246,8 @@ checkFun Fun { .. } =
        do b' <- checkFunBody fBody
           return Fun { fName   = n'
                      , fParams = ps'
-                     , fBody   = b' }
+                     , fBody   = b'
+                     , .. }
 
 
 checkStateVar :: Check StateVar

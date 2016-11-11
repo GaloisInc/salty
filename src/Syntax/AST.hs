@@ -53,10 +53,16 @@ data EnumDef name = EnumDef { eName :: Loc name
                             } deriving (Functor,Show)
 
 
-data Fun name = Fun { fName   :: Loc name
+data Fun name = Fun { fAnn    :: Maybe Ann
+                    , fName   :: Loc name
                     , fParams :: [Loc name]
                     , fBody   :: FunBody name
                     } deriving (Functor,Show)
+
+data Ann = AnnSym L.Text
+         | AnnApp L.Text [Ann]
+         | AnnLoc (Loc Ann)
+           deriving (Show)
 
 data StateVar name = StateVar { svName   :: Loc name
                               , svType   :: Type name
@@ -136,6 +142,11 @@ instance HasLoc (EnumDef name) where
   type LocSource (EnumDef name) = FilePath
   getLoc EnumDef { eName, eCons } =
     mconcat (getLoc eName : [ getLoc con | (con,_) <- eCons ])
+
+instance HasLoc Ann where
+  type LocSource Ann = FilePath
+  getLoc (AnnLoc loc) = getLoc loc
+  getLoc _            = mempty
 
 instance HasLoc (FunBody name) where
   type LocSource (FunBody name) = FilePath

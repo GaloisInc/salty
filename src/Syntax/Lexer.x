@@ -69,6 +69,8 @@ $white+ ;
 "all"   { keyword Kall   }
 "mutex" { keyword Kmutex }
 
+"@"     { keyword Kann }
+
 ":"     { keyword Kcolon  }
 "="     { keyword Kassign }
 "=="    { keyword Keq     }
@@ -168,6 +170,8 @@ data Keyword = Kif
              | Kenv_trans
              | Kenv_liveness
              | Ksys_liveness
+
+             | Kann
                deriving (Eq,Show)
 
 data Virtual = VBegin
