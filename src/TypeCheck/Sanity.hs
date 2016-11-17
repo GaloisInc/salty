@@ -25,7 +25,7 @@ import           Scope.Name (Name,nameText,nameUnique)
 import           TypeCheck.AST
 
 import           Control.Exception (bracket,catch)
-import           Control.Monad (unless)
+import           Control.Monad (when)
 import           Data.Foldable (forM_)
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (catMaybes)
@@ -35,10 +35,7 @@ import           MonadLib (StateT, runStateT, runStateT, get, set, inBase)
 import qualified SimpleSMT as SMT
 
 
-data SanityMessage = SafetyConflict [Loc Origin]
-                     -- ^ Safety formulas at these locations are in conflict
-
-                   | CouldntFindZ3
+data SanityMessage = CouldntFindZ3
                      -- ^ Failed to start Z3, indicates that sanity checking was
                      -- not done.
 
@@ -52,13 +49,18 @@ data SanityMessage = SafetyConflict [Loc Origin]
                    | SysLivenessSafety Bool [Loc Origin]
                      -- ^ A system liveness constraint will cause the system to
                      -- eventually violate safety.
+
+                   | UnsatEnv [Loc Origin]
+                     -- ^ The environment is never satisfiable. This will yield
+                     -- a realizable, but useless controller, that will work at
+                     -- the first step, and behave randomly for the rest of
+                     -- time.
+
+                   | UnsatSys [Loc Origin]
+                     -- ^ The system safety properties are never satisfiable.
                      deriving (Show)
 
 ppSanityMessage :: SanityMessage -> Doc
-ppSanityMessage (SafetyConflict locs) = ppMessage "[error]" $
-  hang (text "Safety constraints are in conflict:")
-     2 (bullets (map ppOrigin locs))
-
 ppSanityMessage CouldntFindZ3 = ppMessage "[warning]" $
   text "Unable to find z3 (try passing the location with --z3)"
 
@@ -67,21 +69,31 @@ ppSanityMessage (InitConflict ms) = ppMessage "[error]" $
      2 (bullets (map ppOrigin ms))
 
 ppSanityMessage (EnvLivenessSafety ms) = ppMessage "[warning]" $
-  hang (text "Environment will eventually violate safety constraints:")
+  hang (text "Environment will eventually violate safety:")
      2 (bullets (map ppOrigin ms))
 
 ppSanityMessage (SysLivenessSafety err ms) = ppMessage ty $
-  hang (text "System will eventually violate safety constraints:")
+  hang (text "System will eventually violate safety:")
      2 (bullets (map ppOrigin ms))
   where
   ty | err       = "[error]"
      | otherwise = "[warning]"
 
+ppSanityMessage (UnsatEnv ms) = ppMessage "[error]" $
+  hang (text "Environment safety constraints are never satisfiable:")
+     2 (bullets (map ppOrigin ms))
+
+ppSanityMessage (UnsatSys ms) = ppMessage "[error]" $
+  hang (text "System safety constraints are never satisfiable")
+     2 (bullets (map ppOrigin ms))
+
+
 
 isSanityError :: SanityMessage -> Bool
-isSanityError SafetyConflict{}          = True
 isSanityError InitConflict{}            = True
 isSanityError (SysLivenessSafety err _) = err
+isSanityError UnsatEnv{}                = True
+isSanityError UnsatSys{}                = True
 isSanityError _                         = False
 
 sanityErrors :: [SanityMessage] -> [SanityMessage]
@@ -107,20 +119,15 @@ checkController cont@Controller { .. } = withScope $
      mapM_ declareStateVar cOutputs
 
      -- check safety constraints in all states
-     safety <- assertSafety cont
-     res    <- checkSat
+     safe <- checkSafety cont
 
      -- only continue checking if safety constraints are not violated, as
      -- everything else will fail without them.
-     if res /= SMT.Sat
-       then
-         do ms <- getUnsatCore
-            addMessage (SafetyConflict [ safety Map.! clause | clause <- ms ])
-
-       else
-         do withScope (checkInit cont safety)
-            err <- withScope (checkEnvLiveness cont safety)
-            withScope (checkSysLiveness err cont safety)
+     when safe $ withScope $
+       do safety <- assertSafety cont
+          _      <- checkInit cont safety
+          err    <- checkEnvLiveness cont safety
+          checkSysLiveness err cont safety
 
 data Origin = SysTrans
             | EnvTrans
@@ -146,28 +153,81 @@ ppOrigin loc =
 
 type LocMap = Map.Map String (Loc Origin)
 
--- | Assert all safety constraints from the controller.
+
+-- | Check for satisfiability, and generate a message using the unsat core if
+-- not satisfiable.
+check :: ([String] -> SanityMessage) -> SMT Bool
+check mkMessage =
+  do res <- checkSat
+     if res /= SMT.Sat
+        then do ms <- getUnsatCore
+                addMessage (mkMessage ms)
+                return False
+
+        else return True
+
+
+-- Safety ----------------------------------------------------------------------
+
+checkSafety :: Controller -> SMT Bool
+checkSafety cont =
+  do -- check if the environmental safety constraints are satisfiable at all
+     envSafe <- withScope (checkEnvSafety cont)
+
+     -- check that the environment safety constraints imply the system safety
+     -- constraints
+     sysSafe <- withScope (checkSysSafety envSafe cont)
+
+     return (envSafe && sysSafe)
+
+-- | Check that the environmental safety constraints are satisfiable by
+-- themselves.
+checkEnvSafety :: Controller -> SMT Bool
+checkEnvSafety Controller { .. } =
+  do env <- assertExprs EnvTrans "env_trans" Nothing (sEnvTrans cSpec)
+     check (\ ms -> UnsatEnv [ env Map.! clause | clause <- ms ])
+
+-- | Check that the environmental safety constraints imply the system safety
+-- constraints.
+checkSysSafety :: Bool -> Controller -> SMT Bool
+checkSysSafety envSafe Controller { .. } =
+  do let cxt = case sEnvTrans cSpec of
+                 es | envSafe && not (null es) -> Just (eAnd (map thing es))
+                 _                             -> Nothing
+     sys <- assertExprs SysTrans "sys_trans" cxt (sSysTrans cSpec)
+
+     check (\ms -> UnsatSys [ sys Map.! clause | clause <- ms ])
+
+
+-- | Assert the safety properties of a controller.
 assertSafety :: Controller -> SMT LocMap
 assertSafety Controller { .. } =
- do es  <- traverse (exprToSMT . thing) (sEnvTrans cSpec)
-    ss  <- traverse (exprToSMT . thing) (sSysTrans cSpec)
-    ens <- assertNamed "env_trans" es
-    sns <- assertNamed "sys_trans" ss
-    return $ Map.fromList
-           $ [ (n, SysTrans <$ loc) | n <- sns | loc <- sSysTrans cSpec ]
-          ++ [ (n, EnvTrans <$ loc) | n <- ens | loc <- sEnvTrans cSpec ]
+  do env <- assertExprs EnvTrans "env_trans" Nothing (sEnvTrans cSpec)
+     sys <- assertExprs SysTrans "sys_trans" Nothing (sSysTrans cSpec)
+     return (env `mappend` sys)
 
 
+-- | Assert all safety constraints from the controller.
+assertExprs :: Origin -> String -> Maybe Expr -> [Loc Expr] -> SMT LocMap
+assertExprs origin pfx mbCxt locs =
+  do mbCxt' <- traverse exprToSMT mbCxt
+     let addCxt = case mbCxt' of
+                    Just cxt -> SMT.implies cxt
+                    Nothing  -> id
+     es     <- traverse (exprToSMT . thing) locs
+     ens    <- assertNamed pfx [ addCxt e | e <- es ]
+     return $ Map.fromList [ (n, origin <$ loc) | n <- ens | loc <- locs ]
+
+
+-- Initial State ---------------------------------------------------------------
 
 -- | Check that the initial state satisfies all safety constraints.
-checkInit :: Controller -> LocMap -> SMT ()
-checkInit cont locs =
+checkInit :: Controller -> LocMap -> SMT Bool
+checkInit cont locs = withScope $
   do locs' <- assertInit cont
-     res   <- checkSat
-     unless (res == SMT.Sat) $
-       do ms <- getUnsatCore
-          let env = locs `mappend` locs'
-          addMessage (InitConflict [ env Map.! clause | clause <- ms ])
+     check $ \ ms ->
+       let env = locs `mappend` locs'
+        in InitConflict [ env Map.! clause | clause <- ms ]
 
 -- | Assert all variable initialization formulas.
 assertInit :: Controller -> SMT LocMap
@@ -198,6 +258,8 @@ initVar mkOrigin = \ StateVar { .. } ->
          return Nothing
 
 
+-- Liveness --------------------------------------------------------------------
+
 -- | Check for system liveness constraints that will eventually violate safety.
 checkSysLiveness :: Bool -> Controller -> LocMap -> SMT ()
 checkSysLiveness envWarns cont locs =
@@ -218,7 +280,7 @@ checkEnvLiveness cont locs =
 -- | Assert liveness constraints one at a time, recording when they violate the
 -- safety constraints of the specification.
 checkLiveness :: [Loc Expr] -> LocMap -> SMT [(Loc SMT.SExpr, [Loc Origin])]
-checkLiveness es safety =
+checkLiveness es safety = withScope $
   do rs <- forM es $ \ loc -> withScope $
         do e' <- exprToSMT (thing loc)
            assert e'
