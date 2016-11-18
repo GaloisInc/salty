@@ -7,7 +7,7 @@ module TypeCheck.Unify (
     Env(), emptyEnv,
     UnifyError(..),
     Types(),
-    Unify, unify, match,
+    Unify, unify,
     Zonk, zonk, ftvs,
   ) where
 
@@ -17,6 +17,7 @@ import TypeCheck.AST
 import           Control.Monad (zipWithM_)
 import qualified Data.Foldable as F
 import qualified Data.IntMap.Strict as IntMap
+import qualified Data.IntSet as IntSet
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           MonadLib
@@ -27,10 +28,6 @@ import           MonadLib
 -- | Unify these two types, and update the environment.
 unify :: Types ty => ty -> ty -> Env -> Either UnifyError Env
 unify a b = runUnify_ (unify' a b)
-
--- | Matching unification, allowing variables on the LHS to be bound.
-match :: Types ty => ty -> ty -> Env -> Either UnifyError Env
-match a b = runUnify_ (match' a b)
 
 -- | Remove type variables from this type.
 zonk :: Zonk ty => ty -> Env -> Either UnifyError ty
@@ -48,11 +45,8 @@ ftvs a env =
 data UnifyError = UnifyError Type Type
                   -- ^ Unification failed -- these two types don't unify.
 
-                | MatchError Type Type
-                  -- ^ Matching failed -- can't turn the left into the right.
-
-                | OccursCheckFailure Type
-                  -- ^ The occurs check failed during zonking.
+                | OccursCheckFailure TVar Type
+                  -- ^ The occurs check failed.
                   deriving (Show)
 
 instance PP UnifyError where
@@ -61,13 +55,9 @@ instance PP UnifyError where
     hang (text "Unable to unify the types:")
        2 (bullets (map pp [a,b]))
 
-  ppPrec _ (MatchError a b) =
-    hang (text "Types do not match:")
-       2 (bullets (map pp [a,b]))
-
-  ppPrec _ (OccursCheckFailure ty) =
+  ppPrec _ (OccursCheckFailure var ty) =
     hang (text "Cannot construct the infinite type:")
-       2 (pp ty)
+       2 (pp var <+> char '=' <+> pp ty)
 
 
 -- Environment -----------------------------------------------------------------
@@ -112,21 +102,6 @@ nextIx  =
      set $! Env { envNext = envNext + 1, .. }
      return envNext
 
--- | Bind a variable.
-bindVar :: TVar -> Type -> Unify ()
-bindVar var ty =
-  do Env { .. } <- get
-     case Map.lookup var envCanon of
-       Just ix ->
-         case IntMap.lookup ix envVars of
-           Just ty' -> unify' ty' ty
-           Nothing  -> set $! Env { envVars = IntMap.insert ix ty envVars, .. }
-
-       Nothing ->
-         do ix <- nextIx
-            env <- get
-            set $! env { envVars  = IntMap.insert ix ty envVars
-                       , envCanon = Map.insert var ix envCanon }
 
 class Zonk ty where
   -- | Remove type variables by looking them up in the environment.
@@ -212,7 +187,7 @@ instance Zonk Spec where
     , ftvs' sEnvLiveness ]
 
 instance Zonk Type where
-  zonk' t0 = go Set.empty t0
+  zonk' t0 = go IntSet.empty t0
     where
 
     go seen ty@(TFree x) =
@@ -220,8 +195,8 @@ instance Zonk Type where
          case Map.lookup x envCanon of
            Just ix ->
              case IntMap.lookup ix envVars of
-               Just ty' | ix `Set.member` seen -> raise (OccursCheckFailure t0)
-                        | otherwise            -> go (Set.insert ix seen) ty'
+               Just ty' | ix `IntSet.member` seen -> raise (OccursCheckFailure x ty')
+                        | otherwise               -> go (IntSet.insert ix seen) ty'
 
                Nothing -> return ty
            Nothing -> return ty
@@ -256,47 +231,48 @@ class Zonk ty => Types ty where
   -- | Unify two types, effecting the environment.
   unify' :: ty -> ty -> Unify ()
 
-  -- | Matching unification. Only allow variables on the LHS to bind.
-  match' :: ty -> ty -> Unify ()
+
+-- | Bind a variable.
+bindVar :: IntSet.IntSet -> TVar -> Type -> Unify ()
+bindVar seen var ty =
+  do Env { .. } <- get
+     case Map.lookup var envCanon of
+       Just ix ->
+         case IntMap.lookup ix envVars of
+           Just ty'
+             | ix `IntSet.member` seen -> raise (OccursCheckFailure var ty)
+             | otherwise               -> unifyType (IntSet.insert ix seen) ty' ty
+           Nothing  -> set $! Env { envVars = IntMap.insert ix ty envVars, .. }
+
+       Nothing ->
+         do ix <- nextIx
+            env <- get
+            set $! env { envVars  = IntMap.insert ix ty envVars
+                       , envCanon = Map.insert var ix envCanon }
+
+unifyType :: IntSet.IntSet -> Type -> Type -> Unify ()
+
+unifyType seen (TFree x) y = bindVar seen x y
+unifyType seen y (TFree x) = bindVar seen x y
+
+unifyType seen (TFun x1 y1) (TFun x2 y2) =
+  do unifyType seen x1 x2
+     unifyType seen y1 y2
+
+unifyType seen (TSet a) (TSet b) = unifyType seen a b
+
+unifyType _ TSpec TSpec = return ()
+unifyType _ TBool TBool = return ()
+unifyType _ TInt  TInt  = return ()
+
+unifyType _ (TEnum x) (TEnum y) | x == y = return ()
+
+unifyType _ x y = raise (UnifyError x y)
+
 
 instance Types Type where
-
-  unify' (TFree x) y = bindVar x y
-  unify' y (TFree x) = bindVar x y
-
-  unify' (TFun x1 y1) (TFun x2 y2) =
-    do unify' x1 x2
-       unify' y1 y2
-
-  unify' (TSet a) (TSet b) = unify' a b
-
-  unify' TSpec TSpec = return ()
-  unify' TBool TBool = return ()
-  unify' TInt  TInt  = return ()
-
-  unify' (TEnum x) (TEnum y) | x == y = return ()
-
-  unify' x y = raise (UnifyError x y)
-
-
-  match' (TFree x) y = bindVar x y
-  match' (TFun x1 y1) (TFun x2 y2) =
-    do match' x1 x2
-       match' y1 y2
-
-  match' (TSet a) (TSet b) = match' a b
-
-  match' TSpec TSpec = return ()
-  match' TBool TBool = return ()
-  match' TInt  TInt  = return ()
-
-  match' (TEnum x) (TEnum y) | x == y = return ()
-
-  match' x y = raise (MatchError x y)
+  unify' = unifyType IntSet.empty
 
 instance Types a => Types [a] where
   unify' as bs | length as == length bs = zipWithM_ unify' as bs
                | otherwise              = fail "Can't unify different length lists"
-
-  match' as bs | length as == length bs = zipWithM_ match' as bs
-               | otherwise              = fail "Can't match different length lists"
