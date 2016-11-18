@@ -1,6 +1,8 @@
 # This file has been generated -- see https://github.com/hvr/multi-ghc-travis
 sudo: false
+dist: precise
 language: c
+
 
 cache:
   directories:
@@ -28,6 +30,7 @@ before_install:
  - export PATH=~/.local/bin:/opt/ghc/$GHCVER/bin:$PATH
  - ghc --version
  - g++ --version
+ - z3 --version
 
 install:
  - stack --no-terminal install --only-dependencies

@@ -27,3 +27,8 @@ fi
 if [ ! -f ~/slugs-master/src/slugs ]; then
     (cd ~/slugs-master/src && make)
 fi
+
+if [ ! -f ~/.local/bin/z3 ]; then
+    curl http://saw.galois.com/builds/z3/z3 > ~/.local/bin/z3
+    chmod +x ~/.local/bin/z3
+fi
