@@ -81,6 +81,63 @@ number of possible cases for an enumeration grow, the size of the bit-vector
 grows at `log_2` of the number of constructors.
 
 
+## Debugging
 
+During specification development, you will likely encounter situations where the
+specification is not realizable. Salty can help a little bit with this, by
+identifying a few situations that will cause slugs to reject your specification,
+before realizability is checked.
+
+### Unsatisfiable Safety Constraints
+
+As you can specify safety constraints on the environment and system in many
+different places, it's easy to end up with an unsatisfiable specification. As an
+example, consider the following specification:
+
+```
+controller Example where
+
+input  x1: Bool
+input  x2: Bool
+output y1: Bool
+output y2: Bool
+
+env_trans   x1
+env_trans ! x1
+
+env_trans x2' == !x2
+
+sys_trans   y1
+sys_trans ! y1
+
+sys_trans y2' == !y2
+```
+
+The sanity checker in salty will reject this specification for two reasons:
+
+1. The environment safety properties are unsatisfiable. This by itself isn't a
+   problem for slugs, as the semantics it uses allow it to produce a controller,
+   as long as the system satisfies its safety properties for at least one step.
+2. The system safety properties are unsatisfiable. This is a problem, and slugs
+   will refuse to synthesize a controller for the specification.
+
+Salty will output two errors in response to these problems:
+
+```
+-- [error] ---------------------------------------------------------------------
+  Environment safety constraints are never satisfiable:
+    * environment safety constraint at example.salt:8,13-8,15
+    * environment safety constraint at example.salt:9,11-9,15
+
+-- [error] ---------------------------------------------------------------------
+  System safety constraints are never satisfiable
+    * system safety constraint at example.salt:14,11-14,15
+    * system safety constraint at example.salt:13,13-13,15
+```
+
+The errors attempt to report a minimal set of conflicting safety properties, to
+aid specification debugging; the errors above don't mention the safety
+properties on lines 11 and 15 because they are not contributing to the
+unsatisfiability of the environment or system.
 
 [1]: https://github.com/VerifiableRobotics/slugs
