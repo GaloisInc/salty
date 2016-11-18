@@ -118,6 +118,9 @@ The sanity checker in salty will reject this specification for two reasons:
 1. The environment safety properties are unsatisfiable. This by itself isn't a
    problem for slugs, as the semantics it uses allow it to produce a controller,
    as long as the system satisfies its safety properties for at least one step.
+   However, the sanity checker in salty rejects this situation, as it produces a
+   controller that would satisfy system safety for exactly one step, and then
+   behave unpredictably forever.
 2. The system safety properties are unsatisfiable. This is a problem, and slugs
    will refuse to synthesize a controller for the specification.
 
