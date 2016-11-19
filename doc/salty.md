@@ -22,6 +22,15 @@ input  a : Bool = False
 output b : Bool = False
 ```
 
+The initial values of the variables is optional, so the same example with
+variables that are unconstrained in the initial state just omits the `= False`
+syntax:
+
+```
+input  a : Bool
+output b : Bool
+```
+
 ### Environment and System Safety/Liveness
 
 Safety and liveness constraints can be put on either the environment or the
@@ -143,5 +152,54 @@ The errors attempt to report a minimal set of conflicting safety properties, to
 aid specification debugging; the errors above don't mention the safety
 properties on lines 11 and 15 because they are not contributing to the
 unsatisfiability of the environment or system.
+
+
+### Unsatisfiable initial constraints
+
+Once salty has managed to determine that the safety properties of the system are
+satisfiable, it will continue by checking the initial state of the controller.
+If any of the initial value constraints for state variables cause the
+environment or system safety properties to become unsatisfiable, an error is
+raised.
+
+Although slugs would be able to synthesize a controller whose variable
+initialization violated environmental safety properties, salty considers that to
+be an error. The reasoning for this is the same as when checking environmental
+safety properties for satisfiability: if the controller produced would only
+satisfy its system safety properties for a single time step, that is not a
+useful controller.
+
+
+### Liveness properties that eventually violate safety
+
+Liveness properties in the system and environment can eventually cause safety
+properties to be violated. Consider this example specification:
+
+```
+controller Example where
+
+input a : Bool = False
+
+env_trans ! a
+
+env_liveness a
+```
+
+This specification will generate a warning, because it will eventually violate
+its environmental safety properties. The reason that this isn't rejected is that
+the semantics of slugs requires that the system be able to satisfy its safety
+properties during the state transition when the environment violates its own.
+All states after that are allowed to violate system safety.
+
+If we augment the same example with a system safety property that will be
+violated by a liveness property, this will also produce a warning, as salty is
+not able to tell if the environment or the system would violate safety first. As
+a result, this specification will still be sent to slugs, and may be
+unrealizable.
+
+However, if there is a liveness property that would cause a system safety
+violation, and no environment safety violation can be established, the sanity
+checker generates an error and salty rejects the specification.
+
 
 [1]: https://github.com/VerifiableRobotics/slugs
