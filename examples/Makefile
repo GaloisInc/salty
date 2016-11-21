@@ -10,12 +10,15 @@ ifeq ($(SALTY),)
   exists := $(shell test -f ../dist/build/salty/salty && echo "exists")
   ifeq ($(exists),exists)
     SALTY := ../dist/build/salty/salty
+    $(info INFO: Using salty from cabal dist directory)
   else
-    exists := $(shell test -f ../../cabal.project && echo "exists")
-    ifeq ($(exists),exists)
-      SALTY := $(shell find ../../dist-newstyle/build -name salty -type f)
+    exists := $(shell find ../dist-newstyle/build -name salty -type f)
+    ifneq ($(exists),)
+      SALTY := $(exists)
+      $(info INFO: Using salty from cabal dist-newstyle directory)
     else
       SALTY := stack exec -- salty
+      $(info INFO: Using stack to run salty)
     endif
   endif
 endif

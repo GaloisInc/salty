@@ -1,5 +1,8 @@
 .cabal-sandbox/
 cabal.sandbox.config
+cabal.project.local
+language-slugs
+dist-newstyle/
 dist/
 .stack-work/
 /*.salt
