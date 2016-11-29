@@ -290,7 +290,7 @@ aexpr :: { Expr PName }
 -- Annotations -----------------------------------------------------------------
 
 ann :: { Ann }
-  : '@' ann_expr
+  : '@' ann_expr 'v;'
     { $2 }
 
 ann_app :: { Ann }
