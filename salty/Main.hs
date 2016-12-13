@@ -11,7 +11,7 @@ import Opt (opt)
 import Opt.Simpl (simp)
 import PP (pp)
 import Scope.Check
-import Scope.Name (emptySupply)
+import Scope.Name (Name,emptySupply,nameText)
 import Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
 import Syntax.AST
 import Syntax.Parser
@@ -65,13 +65,13 @@ genFSM opts (InpSpec path) =
 
      when (optDumpParsed opts) (putStrLn (ppShow pCont))
 
-     when (optAnnotations opts) (dumpAnnotations pCont)
-
      (scCont,scSup) <-
        case scopeCheck emptySupply pCont of
          Right sc  -> return sc
          Left errs -> do mapM_ (print . ppError) errs
                          exitFailure
+
+     when (optAnnotations opts) (dumpAnnotations scCont)
 
      (tcCont,tcSup) <-
        case typeCheck scSup scCont of
@@ -155,7 +155,7 @@ writePackage opts pkg = mapM_ writeClass (Map.toList pkg)
        writeFile outFile (show doc)
 
 
-dumpAnnotations :: Controller PName -> IO ()
+dumpAnnotations :: Controller Name -> IO ()
 dumpAnnotations Controller { .. } =
   LB.putStrLn $ JSON.encodePretty
               $ JSON.toJSON
@@ -163,31 +163,38 @@ dumpAnnotations Controller { .. } =
 
   where
 
-  dump (TDFun Fun { .. }) = jsonAnnotation <$> fAnn
+  dump (TDFun Fun { .. }) = jsonAnnotation fName <$> fAnn
   dump (TDLoc loc)        = dump (thing loc)
   dump _                  = Nothing
 
-jsonAnnotation :: Ann -> JSON.Value
+jsonAnnotation :: Loc Name -> Ann -> JSON.Value
+jsonAnnotation n ann =
+  JSON.object [ "macro"      JSON..= jsonName n
+              , "annotation" JSON..= go ann ]
+  where
+  go (AnnApp f xs) =
+    JSON.object [ "name" JSON..= f
+                , "args" JSON..= map go xs ]
 
-jsonAnnotation (AnnApp f xs) =
-  JSON.object [ "name" JSON..= f
-              , "args" JSON..= map jsonAnnotation xs ]
+  go (AnnArr xs) =
+    JSON.toJSON (map go xs)
 
-jsonAnnotation (AnnArr xs) =
-  JSON.toJSON (map jsonAnnotation xs)
+  go (AnnObj xs) =
+    JSON.object [ L.toStrict l JSON..= go x | (l,x) <- xs ]
 
-jsonAnnotation (AnnObj xs) =
-  JSON.object [ L.toStrict l JSON..= jsonAnnotation x | (l,x) <- xs ]
+  go (AnnSym sym) =
+    JSON.toJSON sym
 
-jsonAnnotation (AnnSym sym) =
-  JSON.toJSON sym
+  go (AnnStr str) =
+    JSON.toJSON str
 
-jsonAnnotation (AnnStr str) =
-  JSON.toJSON str
+  go (AnnCode ty str) =
+    JSON.object [ "language" JSON..= ty
+                , "code"     JSON..= str ]
 
-jsonAnnotation (AnnCode ty str) =
-  JSON.object [ "language" JSON..= ty
-              , "code"     JSON..= str ]
+  go (AnnLoc loc) =
+    go (thing loc)
 
-jsonAnnotation (AnnLoc loc) =
-  jsonAnnotation (thing loc)
+
+jsonName :: Loc Name -> JSON.Value
+jsonName n = JSON.toJSON (nameText (thing n))
