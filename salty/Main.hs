@@ -3,25 +3,27 @@
 
 import Options
 
-import CodeGen.Dot (dotFSM)
-import CodeGen.Java (Package,javaFSM)
-import CodeGen.Python (pythonFSM)
-import Message (ppError)
-import Opt (opt)
-import Opt.Simpl (simp)
-import PP (pp)
-import Scope.Check
-import Scope.Name (Name,emptySupply,nameText)
-import Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
-import Syntax.AST
-import Syntax.Parser
-import TypeCheck
+import           CodeGen.Dot (dotFSM)
+import           CodeGen.Java (Package,javaFSM)
+import           CodeGen.Python (pythonFSM)
+import           Message (ppError)
+import           Opt (opt)
+import           Opt.Simpl (simp)
+import           PP (pp)
+import           Scope.Check
+import           Scope.Name (Name,emptySupply,nameText)
+import           Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
+import           Syntax.AST
+import           Syntax.Parser
+import           TypeCheck
+import qualified TypeCheck.AST as TC
 
 import           Control.Exception (catch,IOException)
 import           Control.Monad (when)
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Encode.Pretty as JSON
 import qualified Data.ByteString.Lazy.Char8 as LB
+import qualified Data.Foldable as F
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (mapMaybe)
 import qualified Data.Text.Lazy as L
@@ -71,13 +73,13 @@ genFSM opts (InpSpec path) =
          Left errs -> do mapM_ (print . ppError) errs
                          exitFailure
 
-     when (optAnnotations opts) (dumpAnnotations scCont)
-
      (tcCont,tcSup) <-
        case typeCheck scSup scCont of
          Right tc  -> return tc
          Left errs -> do mapM_ (print . ppError) errs
                          exitFailure
+
+     when (optAnnotations opts) (dumpAnnotations tcCont)
 
      when (optDumpCore opts) (print (pp tcCont))
 
@@ -155,19 +157,18 @@ writePackage opts pkg = mapM_ writeClass (Map.toList pkg)
        writeFile outFile (show doc)
 
 
-dumpAnnotations :: Controller Name -> IO ()
-dumpAnnotations Controller { .. } =
+dumpAnnotations :: TC.Controller -> IO ()
+dumpAnnotations TC.Controller { .. } =
   LB.putStrLn $ JSON.encodePretty
               $ JSON.toJSON
-              $ mapMaybe dump cDecls
+              $ mapMaybe dump
+              $ concatMap F.toList cFuns
 
   where
 
-  dump (TDFun Fun { .. }) = jsonAnnotation fName <$> fAnn
-  dump (TDLoc loc)        = dump (thing loc)
-  dump _                  = Nothing
+  dump TC.Fun { .. } = jsonAnnotation fName <$> fAnn
 
-jsonAnnotation :: Loc Name -> Ann -> JSON.Value
+jsonAnnotation :: Name -> Ann -> JSON.Value
 jsonAnnotation n ann =
   JSON.object [ "macro"      JSON..= jsonName n
               , "annotation" JSON..= go ann ]
@@ -196,5 +197,5 @@ jsonAnnotation n ann =
     go (thing loc)
 
 
-jsonName :: Loc Name -> JSON.Value
-jsonName n = JSON.toJSON (nameText (thing n))
+jsonName :: Name -> JSON.Value
+jsonName n = JSON.toJSON (nameText n)

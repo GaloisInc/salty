@@ -151,12 +151,13 @@ inferFun locFun = withLoc locFun $ \ AST.Fun { fName } ->
 -- propagate this information down, so that the function can ultimately be
 -- re-written to not include that parameter.
 checkFun :: Type -> AST.Loc (AST.Fun Name) -> TC Fun
-checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody } ->
+checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody, fAnn } ->
   withParams ty fParams $ \ (ps,rty) ->
     do e       <- checkFunBody rty fBody
        fSchema <- generalize (tFun (ps ++ [rty]))
        fBody'  <- zonk e
        return Fun { fName   = thing fName
+                  , fAnn    = fAnn
                   , fParams = map thing fParams
                   , fBody   = fBody'
                   , .. }

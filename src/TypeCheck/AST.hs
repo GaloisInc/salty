@@ -9,11 +9,12 @@
 
 module TypeCheck.AST (
     module TypeCheck.AST,
-    Loc, thing, HasLoc(getLoc), at, noLoc, SrcRange
+    Loc, thing, HasLoc(getLoc), at, noLoc, SrcRange,
+    Ann(..),
   ) where
 
 import Scope.Name (Name)
-import Syntax.AST (SrcRange,Loc,noLoc)
+import Syntax.AST (SrcRange,Loc,noLoc,Ann(..))
 import PP
 import Panic (panic)
 
@@ -125,6 +126,7 @@ data Schema = Forall [TVar] Type
               deriving (Show)
 
 data Fun = Fun { fName   :: !Name
+               , fAnn    :: !(Maybe Ann)
                , fSchema :: Schema
                , fParams :: [Name]
                , fBody   :: FunBody
