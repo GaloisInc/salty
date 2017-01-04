@@ -177,8 +177,9 @@ dumpAnnotations TC.Controller { .. } =
   dumpEnum TC.EnumDef { .. } = 
     do ann <- eAnn
        return $ JSON.object [ "enum"       JSON..= jsonName eName
-                            , "annotation" JSON..= jsonAnnotation ann ]
-
+                            , "annotation" JSON..= jsonAnnotation ann
+                            , "values"     JSON..= map jsonName eCons ]
+ 
   stateVars = mapMaybe (dumpStateVar "input")  cInputs
            ++ mapMaybe (dumpStateVar "output") cOutputs
 
