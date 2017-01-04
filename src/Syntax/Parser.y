@@ -113,17 +113,17 @@ controller :: { Controller PName }
 
 top_decl :: { TopDecl PName }
 
-  : 'enum' CONIDENT '=' sep1('|', con_def)
-    { TDLoc (TDEnum (EnumDef $2 $4) `at` getLoc ($1,$4)) }
+  : opt(ann) 'enum' CONIDENT '=' sep1('|', con_def)
+    { TDLoc (TDEnum (EnumDef $1 $3 $5) `at` getLoc ($1,$2,$5)) }
 
   | fun_decl
     { TDLoc (fmap TDFun $1) }
 
-  | 'input' state_var_decl
-    { TDLoc (fmap TDInput $2) }
+  | opt(ann) 'input' state_var_decl
+    { TDLoc (fmap TDInput ($3 $1)) }
 
-  | 'output' state_var_decl
-    { TDLoc (fmap TDOutput $2) }
+  | opt(ann) 'output' state_var_decl
+    { TDLoc (fmap TDOutput ($3 $1)) }
 
   | spec
     { TDLoc (TDSpec $1 `at` $1) }
@@ -167,13 +167,15 @@ fun_body :: { FunBody PName }
 
 -- State Var Declarations ------------------------------------------------------
 
-state_var_decl :: { Loc (StateVar PName) }
+state_var_decl :: { Maybe Ann -> Loc (StateVar PName) }
   : IDENT opt(out_name) ':' type opt(bounds) opt(state_var_init)
-    { StateVar { svName = $1
+    { \ svAnn ->
+      StateVar { svName = $1
                , svType = $4
                , svBounds = $5
                , svInit = $6
-               , svOutName = $2 } `at` mconcat [getLoc $1, getLoc $4, getLoc $5, getLoc $6] }
+               , svOutName = $2
+               , .. } `at` mconcat [getLoc $1, getLoc $4, getLoc $5, getLoc $6] }
 
 state_var_init :: { Expr PName }
   : '=' expr { $2 }
@@ -290,7 +292,7 @@ aexpr :: { Expr PName }
 -- Annotations -----------------------------------------------------------------
 
 ann :: { Ann }
-  : '@' ann_expr 'v;'
+  : '@' ann_expr opt('v;')
     { $2 }
 
 ann_app :: { Ann }

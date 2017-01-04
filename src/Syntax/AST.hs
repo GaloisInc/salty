@@ -48,7 +48,8 @@ isFun TDFun{}     = True
 isFun _           = False
 
 
-data EnumDef name = EnumDef { eName :: Loc name
+data EnumDef name = EnumDef { eAnn  :: Maybe Ann
+                            , eName :: Loc name
                             , eCons :: [(Loc name, Maybe (Loc L.Text))]
                             } deriving (Functor,Show)
 
@@ -68,7 +69,8 @@ data Ann = AnnSym L.Text
          | AnnLoc (Loc Ann)
            deriving (Show)
 
-data StateVar name = StateVar { svName   :: Loc name
+data StateVar name = StateVar { svAnn    :: Maybe Ann
+                              , svName   :: Loc name
                               , svType   :: Type name
                               , svBounds :: Maybe (Loc (Int,Int))
                               , svInit   :: Maybe (Expr name)

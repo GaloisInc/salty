@@ -98,19 +98,20 @@ checkSpecEntry  = traverse $ \e ->
 
 -- | Add all of the constructors to the typing environment.
 checkEnum :: AST.EnumDef Name -> TC (Controller -> Controller)
-checkEnum AST.EnumDef { eName, eCons } =
+checkEnum AST.EnumDef { eAnn, eName, eCons } =
   do let ty   = Forall [] (TEnum (thing eName))
          cons = [ thing con | (con, _) <- eCons ]
 
      addTypes (zip cons (repeat ty))
 
-     return $ \ c -> c { cEnums = EnumDef { eName = thing eName
+     return $ \ c -> c { cEnums = EnumDef { eAnn  = eAnn
+                                          , eName = thing eName
                                           , eCons = cons
                                           } : cEnums c }
 
 
 checkStateVar :: AST.StateVar Name -> TC StateVar
-checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
+checkStateVar AST.StateVar { svAnn, svName, svType, svInit, svBounds } =
   do ty' <- translateType svType
      e'  <- zonk =<< traverse (checkExpr ty') svInit
 
@@ -126,7 +127,8 @@ checkStateVar AST.StateVar { svName, svType, svInit, svBounds } =
      when (ty' == TInt && bounds == Nothing)
           (record (MissingBounds svName))
 
-     return StateVar { svName   = thing svName
+     return StateVar { svAnn    = svAnn
+                     , svName   = thing svName
                      , svType   = ty'
                      , svBounds = bounds
                      , svInit   = e' }

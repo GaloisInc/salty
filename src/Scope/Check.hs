@@ -230,7 +230,7 @@ checkEnum :: Check EnumDef
 checkEnum EnumDef { .. } =
   do n'  <- checkLoc eName resolve
      cs' <- traverse checkCon eCons
-     return EnumDef { eName = n', eCons = cs' }
+     return EnumDef { eName = n', eCons = cs', .. }
 
 
 checkCon :: (Loc L.Text, Maybe (Loc L.Text)) -> SC (Loc Name, Maybe (Loc L.Text))

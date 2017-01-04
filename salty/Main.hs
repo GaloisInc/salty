@@ -161,17 +161,36 @@ dumpAnnotations :: TC.Controller -> IO ()
 dumpAnnotations TC.Controller { .. } =
   LB.putStrLn $ JSON.encodePretty
               $ JSON.toJSON
-              $ mapMaybe dump
-              $ concatMap F.toList cFuns
+              $ funs ++ enums ++ stateVars
 
   where
 
-  dump TC.Fun { .. } = jsonAnnotation fName <$> fAnn
+  funs = mapMaybe dumpFun (concatMap F.toList cFuns)
 
-jsonAnnotation :: Name -> Ann -> JSON.Value
-jsonAnnotation n ann =
-  JSON.object [ "macro"      JSON..= jsonName n
-              , "annotation" JSON..= go ann ]
+  dumpFun TC.Fun { .. } =
+    do ann <- fAnn
+       return $ JSON.object [ "macro"      JSON..= jsonName fName
+                            , "annotation" JSON..= jsonAnnotation ann ]
+
+  enums = mapMaybe dumpEnum cEnums
+
+  dumpEnum TC.EnumDef { .. } = 
+    do ann <- eAnn
+       return $ JSON.object [ "enum"       JSON..= jsonName eName
+                            , "annotation" JSON..= jsonAnnotation ann ]
+
+  stateVars = mapMaybe (dumpStateVar "input")  cInputs
+           ++ mapMaybe (dumpStateVar "output") cOutputs
+
+  dumpStateVar ty = \ TC.StateVar { .. } ->
+    do ann <- svAnn
+       return $ JSON.object [ ty           JSON..= jsonName svName
+                            , "annotation" JSON..= jsonAnnotation ann ]
+
+
+
+jsonAnnotation :: Ann -> JSON.Value
+jsonAnnotation  = go
   where
   go (AnnApp f xs) =
     JSON.object [ "name" JSON..= f

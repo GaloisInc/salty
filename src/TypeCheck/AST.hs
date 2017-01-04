@@ -110,11 +110,13 @@ data Group a = NonRecursive a
              | Recursive [a]
                deriving (Functor,Foldable,Traversable,Show)
 
-data EnumDef = EnumDef { eName :: !Name
+data EnumDef = EnumDef { eAnn  :: !(Maybe Ann)
+                       , eName :: !Name
                        , eCons :: [Name]
                        } deriving (Show)
 
-data StateVar = StateVar { svName   :: !Name
+data StateVar = StateVar { svAnn    :: !(Maybe Ann)
+                         , svName   :: !Name
                          , svType   :: !Type
                          , svBounds :: !(Maybe (Int,Int))
                            -- ^ When the state var is of type TInt, the bounds
