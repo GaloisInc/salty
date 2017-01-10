@@ -5,7 +5,21 @@ front-end to the [Slugs][1] synthesis tool.
 
 ## Layout
 
-TODO
+Salty programs use indentation, rather than delimiters to indicate scoping. For
+example, when introducing system transition formulas, `a`, `b`, and `c` are all
+within the scope of the `sys_trans` block, while `d` is not.
+
+```
+sys_trans
+  a
+  b
+  c
+
+d
+```
+
+Anywhere that indentation is significant will be explicitly called out in the
+remainder of this document.
 
 ## Top-level Declarations
 
