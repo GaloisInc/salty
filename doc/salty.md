@@ -1,7 +1,13 @@
-# Salty
+% The Salty Language
+
+
+# Introduction
 
 Salty is a language for aiding GR(1) synthesis that provides a type-checked
 front-end to the [Slugs][1] synthesis tool.
+
+
+# Syntax
 
 ## Layout
 
@@ -104,14 +110,14 @@ number of possible cases for an enumeration grow, the size of the bit-vector
 grows at `log_2` of the number of constructors.
 
 
-## Debugging
+# Debugging
 
 During specification development, you will likely encounter situations where the
 specification is not realizable. Salty can help a little bit with this, by
 identifying a few situations that will cause slugs to reject your specification,
 before realizability is checked.
 
-### Unsatisfiable Safety Constraints
+## Unsatisfiable Safety Constraints
 
 As you can specify safety constraints on the environment and system in many
 different places, it's easy to end up with an unsatisfiable specification. As an
@@ -168,7 +174,7 @@ properties on lines 11 and 15 because they are not contributing to the
 unsatisfiability of the environment or system.
 
 
-### Unsatisfiable initial constraints
+## Unsatisfiable initial constraints
 
 Once salty has managed to determine that the safety properties of the system are
 satisfiable, it will continue by checking the initial state of the controller.
@@ -184,7 +190,7 @@ satisfy its system safety properties for a single time step, that is not a
 useful controller.
 
 
-### Liveness properties that eventually violate safety
+## Liveness properties that eventually violate safety
 
 Liveness properties in the system and environment can eventually cause safety
 properties to be violated. Consider this example specification:
