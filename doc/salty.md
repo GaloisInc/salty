@@ -4,13 +4,39 @@
 
 # Introduction
 
-Salty is a language for aiding GR(1) synthesis that provides a type-checked
+Salty is a strongly-typed language for aiding GR(1) synthesis that provides a
 front-end to the [Slugs][1] synthesis tool.
 
 
 # Syntax
 
-## Layout
+## Lexical Structure
+
+Salty specifications are organized as a collection of top-level declarations,
+all belonging to a single `controller` specification. The declarations are
+assumed to be un-ordered, so it's perfectly reasonable to use a variable or
+macro before its declaration.
+
+## Controllers
+
+The main compilation unit in Salty is the `controller`. A `controller` consists
+of a types, state variables, macro definitions, and environment/system
+constraint formulae. When synthesis is successful for a controller
+specification, it takes the form of a function that accepts values for all of
+the input variables, and produces values for all of the output variables.
+
+The syntax for controllers is specified by the following grammar fragment:
+
+```ebnf
+Identifier      = lower-case-letter { IdentifierRest } ;
+UpperIdentifier = upper-case-letter { IdentifierRest } ;
+
+IdentifierRest  = letter | '0' - '9' | '_' ;
+
+Controller      = 'controller' UpperIdentifier 'where' TopDecls ;
+```
+
+### Aside: Layout
 
 Salty programs use indentation, rather than delimiters to indicate scoping. For
 example, when introducing system transition formulas, `a`, `b`, and `c` are all
@@ -26,47 +52,209 @@ d
 ```
 
 Anywhere that indentation is significant will be explicitly called out in the
-remainder of this document.
+remainder of this document. Additionally, in any grammar fragment where layout
+is assumed to separate terminals, the terminals will be separated by a `'v;'`
+terminal.
 
 ## Top-level Declarations
 
-### Inputs/Outputs
-
-Inputs (environment variables) and outputs (system variables) can be defined
-through the use of the `input` and `output` declarations, respectively. For
-example, if we wanted to make a simple controller that had a single boolean
-input and a single boolean output, both initialized to `False`, this controller
-fragment would accomplish that:
+All of the top-level declarations in salty are subject to layout. For example,
+the following program fragment will cause a parse error:
 
 ```
-input  a : Bool = False
-output b : Bool = False
+sys_trans a
+  input b : Bool
 ```
 
-The initial values of the variables is optional, so the same example with
-variables that are unconstrained in the initial state just omits the `= False`
-syntax:
+as the sys_trans and input declarations do not start at the same column. As long
+as they're consistent, the specification should parse; this is a valid fragment:
 
 ```
-input  a : Bool
-output b : Bool
+sys_trans a
+input b : Bool
 ```
 
-### Environment and System Safety/Liveness
-
-Safety and liveness constraints can be put on either the environment or the
-system, through use of the `env_trans`, `env_liveness`, `sys_trans`,
-`sys_liveness` declarations. For example, if you would like to have the output
-`b` always be equal to the input `a`, you can use the following declaration:
+as is this:
 
 ```
-sys_trans b == a
+  sys_trans a
+  input b : Bool
 ```
 
-Each of these top-level declarations accepts one or more boolean-typed
-expressions as input.
+The top-level declaration grammar is determined by the following grammar
+fragment:
+
+```ebnf
+TopDecls = TopDecl | TopDecl 'v;' TopDecls | <empty> ;
+
+TopDecl = InputDecl | OutputDecl | EnumDecl | Constraint | MacroDecl ;
+```
+
+### Types
+
+The type-language of Salty consists of a few built-in types, and user-defined
+enumerations. The built-in types are: the function arrow `->`, `Bool`, `Int`,
+and `Spec`. User-defined enumerations will be introduced in the following
+section.
+
+* `Bool` is the type of boolean-valued expressions, like the constants True and
+False, as well as inputs and outputs the are introduced with the `Bool` type.
+* `-> is the type of user-defined macros, and any built-in functions.
+* `Int` is the type of numeric expressions.
+* `Spec` is the type of constraints, which will be defined in the [Constraints]
+  section.
+
+The types are described by the following grammar:
+
+```ebnf
+Type = 'Bool' | 'Int' | UpperIdentifier | Type '->' Type
+```
 
 ### Enumerations
+
+Enumerations allow users to introduce a new type and its values. The syntax for
+introducing an enumeration type is shown below.
+
+```ebnf
+EnumDecl = 'enum' UpperIdent '=' UpperIdent { '|' UpperIdent }
+```
+
+For example, if you needed to express a number of different locations as an
+input to your controller, this would be one way to describe that scenario:
+
+```
+enum Locations = Home | Work | InTransit
+
+input current_location : Locations
+```
+
+With this controller fragment, the user may write constraints about the value of
+`current_location`, with the confidence that it is always one of the values of
+the `Location` enumeration (`Home`, `Work`, or `InTransit`).
+
+
+### Expressions
+
+Expressions can be constants, variables, macro invocations or combinations of
+those using built-in operators.
+
+```ebnf
+Exprs = Expr | Expr 'v;' Exprs
+
+Constant = 'True' | 'False' | integer | UpperIdent
+
+Expr = Identifier | Number | Constant | Identifier '(' ExprArgs ')'
+     | '{' ExprArgs '}' | 'mutex' Expr | 'all' Expr | 'any' Expr
+     | Expr Op Expr | '!' Expr
+     | 'if' Expr 'then' Expr 'else' Expr
+
+Op = '||' | '\/' | '&&' | '/\' | '==' | '->' | '<->'
+
+ExprArgs = Expr | Expr ',' Args
+```
+
+For example, if there is one boolean input, and one boolean output, and you wish
+to make the value of the output the same as the value of the input, the
+following controller fragment would achieve that goal:
+
+```
+sys_trans inpVar <-> outVar
+```
+
+#### If-then-else
+
+The `if-then-else` syntax that Salty provides is just syntactic sugar for the
+following expression:
+
+```
+if a then b else c == (a -> b) /\ (! a -> c)
+```
+
+In some cases, this construct can increase the readability of a specification,
+but there is no special handling associated with it.
+
+### Inputs and Outputs
+
+Input and output declarations define how the controller can interact with the
+world. Inputs and outputs both follow the same basic structure, but differ in
+the keyword used to introduce them. The general form is shown below:
+
+```ebnf
+InputDecl = ( 'input' | 'output' ) Identifier ':' Type [ InitValue ]
+
+InitValue = '=' Expr
+```
+
+Both inputs and outputs have optional initial values, which allows the user to
+constrain the initial state of the state machine produced. If the initial values
+are left unspecified for either, the resulting state machine can be a little
+more complicated.
+
+### Constraints
+
+The behavior of the desired state machine is described by adding safety and
+liveness constraints on either the environment or system, as top-level
+declarations. Those declarations take the form shown below:
+
+```ebnf
+Constraint = RawConstraint | Ident '(' 
+( 'sys_trans' | 'sys_liveness' | 'env_trans' | 'env_liveness' ) Exprs ;
+```
+
+For example, if you had an input variable named `a` and an output variable named
+`b` that were both `Bool`-typed, you could enforce this through the following
+system safety constraint:
+
+```
+sys_trans a == b
+```
+
+### Macros
+
+As there can sometimes be quite a lot of repetition in specifications, Salty
+supports user-defined macros to name common patterns. The basic structure of a
+macro is given by the following grammar fragment:
+
+```ebnf
+MacroDecl = 'def' '(' ArgList ')' '=' (Expr | Constraints) ;
+
+ArgList = Identifier | Identifier ',' ArgList | <empty> ;
+
+Constraints = Constraint | Constraint 'v;' Constraints ;
+```
+
+As you can see from the grammar, the RHS of a macro definition can be either a
+single expression, or one or more [Constraints]. The reason for this is that
+macros can be used in two places:
+
+* In an expression, where it is being used to compute a single value
+* At the top-level, where it is used to name a pattern of constraints
+
+The second case is useful for giving a name to a complicated property. For
+example, if you are designing a command for an autonomous agent, and notice that
+many commands have a similar structure, you can abstract out the parts that
+differ, and use one top-level macro invocation instead. For example:
+
+```
+def action(enabled, loc, healthy, behavior) =
+  sys_trans
+    (enabled /\ healthy) -> (behavior_out == behavior /\ location_out == loc)
+
+  sys_liveness
+    enabled -> behavior_out == behavior
+
+action(command_var == FindTrash, Hallway, BatteryOK == True, Search)
+action(command_var == DeliverTrash, Garage, BatteryOK == True, Transport)
+```
+
+This way, the intent of the `sys_trans` and `sys_liveness` properties is encoded
+in the name of the macro, `action`. Then, it can be used in place of writing
+those formulae, but instantiated to their specific purpose.
+
+
+# Additional Details
+
+## Enumerations
 
 Sometimes, the inputs to a controller will be mutually exclusive. In this
 scenario, salty provides two options:
