@@ -194,11 +194,15 @@ more complicated.
 
 The behavior of the desired state machine is described by adding safety and
 liveness constraints on either the environment or system, as top-level
-declarations. Those declarations take the form shown below:
+declarations. Each of the constraint declaraions can accept one or more
+expressions, and when more than one are present the declaration is assumed to be
+the conjunction of all of those expressions. Constraint declarations take the
+form shown below:
 
 ```ebnf
-Constraint = RawConstraint | Ident '(' 
-( 'sys_trans' | 'sys_liveness' | 'env_trans' | 'env_liveness' ) Exprs ;
+Constraint = RawConstraint | Ident '(' ExprArgs ')'
+
+RawConstraint = ( 'sys_trans' | 'sys_liveness' | 'env_trans' | 'env_liveness' ) Exprs ;
 ```
 
 For example, if you had an input variable named `a` and an output variable named
@@ -208,6 +212,12 @@ system safety constraint:
 ```
 sys_trans a == b
 ```
+
+In the case where the constraint declaration is a macro invocation (the second
+case of the `Constraint` production), the macro must have a result type of
+`Spec`, which indicates that it is made up of uses of the raw constraint
+declarations, or other macros that add constraints.
+
 
 ### Macros
 
