@@ -99,7 +99,7 @@ section.
 
 * `Bool` is the type of boolean-valued expressions, like the constants True and
 False, as well as inputs and outputs the are introduced with the `Bool` type.
-* `-> is the type of user-defined macros, and any built-in functions.
+* `->` is the type of user-defined macros, and any built-in functions.
 * `Int` is the type of numeric expressions.
 * `Spec` is the type of constraints, which will be defined in the [Constraints]
   section.
