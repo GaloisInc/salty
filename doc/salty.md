@@ -87,7 +87,8 @@ fragment:
 ```ebnf
 TopDecls = TopDecl | TopDecl 'v;' TopDecls | <empty> ;
 
-TopDecl = InputDecl | OutputDecl | EnumDecl | Constraint | MacroDecl ;
+TopDecl = InputDecl | OutputDecl | EnumDecl
+        | Constraint | MacroDecl ;
 ```
 
 ### Types
@@ -180,7 +181,9 @@ world. Inputs and outputs both follow the same basic structure, but differ in
 the keyword used to introduce them. The general form is shown below:
 
 ```ebnf
-InputDecl = ( 'input' | 'output' ) Identifier ':' Type [ InitValue ]
+VarDecl = 'input' | 'output'
+
+InputDecl = VarDecl Identifier ':' Type [ InitValue ]
 
 InitValue = '=' Expr
 ```
@@ -202,7 +205,9 @@ form shown below:
 ```ebnf
 Constraint = RawConstraint | Ident '(' ExprArgs ')'
 
-RawConstraint = ( 'sys_trans' | 'sys_liveness' | 'env_trans' | 'env_liveness' ) Exprs ;
+ConstraintOp = 'sys_trans' | 'sys_liveness'
+             | 'env_trans' | 'env_liveness' ;
+RawConstraint = ConstraintOp Exprs ;
 ```
 
 For example, if you had an input variable named `a` and an output variable named
@@ -248,13 +253,16 @@ differ, and use one top-level macro invocation instead. For example:
 ```
 def action(enabled, loc, healthy, behavior) =
   sys_trans
-    (enabled /\ healthy) -> (behavior_out == behavior /\ location_out == loc)
+    (enabled /\ healthy) ->
+      (behavior_out == behavior /\ location_out == loc)
 
   sys_liveness
     enabled -> behavior_out == behavior
 
-action(command_var == FindTrash, Hallway, BatteryOK == True, Search)
-action(command_var == DeliverTrash, Garage, BatteryOK == True, Transport)
+action(command_var == FindTrash, Hallway, BatteryOK == True,
+    Search)
+action(command_var == DeliverTrash, Garage, BatteryOK == True,
+    Transport)
 ```
 
 This way, the intent of the `sys_trans` and `sys_liveness` properties is encoded
@@ -266,13 +274,15 @@ those formulae, but instantiated to their specific purpose.
 
 ## Enumerations
 
-Sometimes, the inputs to a controller will be mutually exclusive. In this
-scenario, salty provides two options:
+Sometimes you will have multiple input or output variables whose values are all
+mutually exclusive. In this case, there are two features that Salty provides to
+ease implementation:
 
 1. You can use the `mutex` built-in function to show that at most one of a set
    of variables is allowed to be true
-2. You can define a new enumeration for all of the values, and use one input
-   that is typed as that enumeration
+2. You can define a new enumeration for all of the values, and use one input or
+   output instead of the mutually exclusive group (NOTE: this requires that all
+   variables be either inputs or outputs, but not a mix of the two)
 
 For the first approach, the resulting controller fragment looks like this:
 
