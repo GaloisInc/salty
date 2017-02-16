@@ -95,9 +95,12 @@ mkVar mk (Right var@Slugs.VarNum{})  =
 
 -- | Translate an expression that's expected to be a variable (or a use of Next
 -- with a variable)
-slugsUse :: Env -> Expr -> Maybe Slugs.Use
-slugsUse env (EVar _ v)           = Just (Slugs.UVar  (lookupVar v env))
-slugsUse env (ENext _ (EVar _ v)) = Just (Slugs.UNext (lookupVar v env))
+slugsUse :: HasCallStack => Env -> Expr -> Maybe (Either Int Slugs.Use)
+slugsUse env (EVar _ v)           = Just $!
+  case lookupVarExpr v env of
+    Left ref  -> Left ref
+    Right var -> Right (Slugs.UVar var)
+slugsUse env (ENext _ (EVar _ v)) = Just (Right (Slugs.UNext (lookupVar v env)))
 slugsUse _   _                    = Nothing
 
 
@@ -107,10 +110,14 @@ mkAssign :: HasCallStack => Env -> Expr -> Expr -> Slugs.Expr
 
 -- constant enum values
 mkAssign env (slugsUse env -> Just use) (ECon _ c) =
-  Slugs.assignConst use (lookupConstr c env)
+  case use of
+    Left ref  -> panic "Reference in assign"
+    Right var -> Slugs.assignConst var (lookupConstr c env)
 
 mkAssign env (ECon _ c) (slugsUse env -> Just use) =
-  Slugs.assignConst use (lookupConstr c env)
+  case use of
+    Left ref  -> panic "Reference in assign"
+    Right var -> Slugs.assignConst var (lookupConstr c env)
 
 -- constant booleans
 mkAssign env (slugsVar env -> Just var) ETrue  =            var
@@ -124,20 +131,24 @@ mkAssign env (ENum a) (EVar _ n) = Slugs.assignConst (lookupVar n env) (a - lowe
 
 -- variable assignment
 mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
-  case (Slugs.toVar sa,Slugs.toVar sb) of
+  case (sa,sb) of
 
-    (Slugs.VarBool{}, Slugs.VarBool{}) ->
-      mkEq (Slugs.EVar sa) (Slugs.EVar sb)
 
-    (Slugs.VarNum _ _ hia, Slugs.VarNum _ _ hib) ->
-      let numBits = Slugs.numBits (min hia hib)
-       in mkEAnd [ mkEq (mkEBit sa i) (mkEBit sb i) | i <- [0 .. numBits - 1] ]
+    (Right va, Right vb)
+      | Slugs.VarNum _ _ hia <- Slugs.toVar va,
+        Slugs.VarNum _ _ hib <- Slugs.toVar vb ->
+        let numBits = Slugs.numBits (min hia hib)
+         in mkEAnd [ mkEq (mkEBit va i) (mkEBit vb i) | i <- [0 .. numBits - 1] ]
 
-    _ -> panic "Incompatible variables in assignment"
+    _ ->
+      mkEq (toExpr sa) (toExpr sb)
+
+  where
+  toExpr (Left ref) = Slugs.ERef ref
+  toExpr (Right u)  = Slugs.EVar u
 
 
 mkAssign _ a b = panic ("Invalid arguments to assign: " ++ show (a,b))
-
 
 mkEq :: Slugs.Expr -> Slugs.Expr -> Slugs.Expr
 mkEq a b = Slugs.EOr (Slugs.EAnd a b) (Slugs.EAnd (Slugs.ENeg a) (Slugs.ENeg b))
