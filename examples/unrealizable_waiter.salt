@@ -1,0 +1,20 @@
+controller Example where
+
+-- Inputs ----------------------------------------------------------
+
+input order_rice (ORDRICE) : Bool = False
+
+
+-- Outputs -------------------------------------------------------------------
+
+output deliver (DELIVER) : Bool = False
+
+sys_liveness
+  deliver
+  ! deliver'
+
+env_liveness
+  order_rice'
+
+sys_trans
+  (!order_rice /\ !deliver')

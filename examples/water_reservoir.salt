@@ -1,0 +1,31 @@
+-- ERROR: math operations causing parse errors.
+
+controller Example where
+
+-- Inputs ----------------------------------------------------------
+
+input inflow1 (IN1) : Bool = False
+input inflow2 (IN2) : Bool = False
+
+-- Outputs -------------------------------------------------------------------
+
+output level (LVL) : Int = 10
+output outflow (OUT) : Bool = False
+
+env_trans
+  ! inflow1 \/ ! inflow1'
+  ! inflow2 \/ ! inflow2'
+
+
+sys_trans
+	(inflow1 /\ inflow2 /\ outflow) -> (level' = level+1)
+	(inflow1 /\ inflow2 /\ !outflow) -> (level' = level+4)
+	(inflow1 /\ ! inflow2 /\ outflow) -> (level'+1 = level)
+	(inflow1 /\ ! inflow2 /\ !outflow) -> (level' = level+2)
+	(!inflow1 /\ inflow2 /\ outflow) -> (level'+1 = level)
+	(!inflow1 /\ inflow2 /\ !outflow) -> (level' = level+2)
+	(!inflow1 /\ ! inflow2 /\ outflow) -> (level'+3 = level)
+	(!inflow1 /\ ! inflow2 /\ !outflow) -> (level' = level)
+
+	--(level'<=100)
+	--(level'>=10)  

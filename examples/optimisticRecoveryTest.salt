@@ -1,0 +1,54 @@
+--ERROR: unrealizable in salty, realizable in slugs
+
+-- SLUGS:
+--[INPUT]
+--a
+
+--[OUTPUT]
+--x
+--y
+
+
+--[ENV_INIT]
+--! a
+
+--[SYS_INIT]
+
+--[ENV_TRANS]
+--| ! y ! a'
+
+--[SYS_TRANS]
+--| ! a' ! ^ x x'
+
+--| | y ! a' ! y'
+--| | ! y ! a' ! y'
+
+--[SYS_LIVENESS]
+--! x
+--x
+
+
+controller Example where
+
+-- Inputs ----------------------------------------------------------
+
+input a (A) : Bool = True
+
+
+-- Outputs -------------------------------------------------------------------
+
+output x (X) : Bool
+output y (Y) : Bool
+
+env_trans
+  ! a' \/ ! y
+
+sys_liveness
+  ! x
+  x
+
+sys_trans
+  (!a' \/ ! (!(!(x /\ !(x /\ x')) /\ !(x' /\ !(x /\ x')))) )
+  ((y' \/ !a') \/ ! y')
+  ((!y' \/ !a') \/ ! y')
+

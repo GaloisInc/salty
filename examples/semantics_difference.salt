@@ -1,0 +1,19 @@
+--works fine
+controller Example where
+
+-- Inputs ----------------------------------------------------------
+
+
+input person (P) : Bool
+
+-- Outputs -------------------------------------------------------------------
+
+output bit0 (B) : Bool
+
+sys_trans
+  bit0
+
+
+env_liveness
+  person
+  !person

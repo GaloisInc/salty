@@ -1,0 +1,22 @@
+--works fine
+
+controller Example where
+
+-- Inputs ----------------------------------------------------------
+
+
+input a (A) : Bool = True
+input b (B) : Bool = False
+
+
+-- Outputs -------------------------------------------------------------------
+
+output c (C) : Bool = True
+
+sys_trans
+-- c' XOR a'
+  !(!(c' /\ !(c' /\ a')) /\ !(a' /\ !(c' /\ a')))
+
+env_trans
+  a' \/ b'
+
