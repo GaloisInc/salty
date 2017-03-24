@@ -15,7 +15,7 @@ import Scope.Name (Name,nameText,nameUnique)
 import TypeCheck.AST (Controller(..),StateVar(..),Type(..),EnumDef(..))
 
 import qualified Data.Map.Strict as Map
-import qualified Data.Text.Lazy as T
+import qualified Data.Text as T
 import qualified Language.Slugs as Slugs
 
 

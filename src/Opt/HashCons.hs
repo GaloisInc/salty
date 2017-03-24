@@ -7,6 +7,7 @@
 module Opt.HashCons (hashCons) where
 
 import Scope.Name
+import SrcLoc
 import TypeCheck.AST
 
 import qualified Data.Map.Strict as Map
@@ -101,13 +102,20 @@ scope body = HC $
 class HashCons a where
   hashCons' :: a -> HC a
 
+instance HashCons SrcLoc where
+  hashCons' = pure
+  {-# INLINE hashCons' #-}
+
+instance (HashCons a, HashCons b) => HashCons (a,b) where
+  hashCons' (a,b) =
+    do a' <- hashCons' a
+       b' <- hashCons' b
+       return (a', b')
+
 instance HashCons a => HashCons [a] where
   hashCons' = traverse hashCons'
 
 instance HashCons a => HashCons (Maybe a) where
-  hashCons' = traverse hashCons'
-
-instance HashCons a => HashCons (Loc a) where
   hashCons' = traverse hashCons'
 
 instance HashCons Controller where
@@ -124,14 +132,14 @@ instance HashCons Controller where
 
 instance HashCons Spec where
   hashCons' Spec { .. } =
-    do ets <- scope (hashCons' (eAnd (map thing sEnvTrans)))
-       els <- scope (hashCons' (eAnd (map thing sEnvLiveness)))
-       sts <- scope (hashCons' (eAnd (map thing sSysTrans)))
-       sls <- scope (hashCons' (eAnd (map thing sSysLiveness)))
-       return Spec { sEnvTrans    = [noLoc ets]
-                   , sEnvLiveness = [noLoc els]
-                   , sSysTrans    = [noLoc sts]
-                   , sSysLiveness = [noLoc sls] }
+    do ets <- scope (hashCons' (eAnd (map snd sEnvTrans)))
+       els <- scope (hashCons' (eAnd (map snd sEnvLiveness)))
+       sts <- scope (hashCons' (eAnd (map snd sSysTrans)))
+       sls <- scope (hashCons' (eAnd (map snd sSysLiveness)))
+       return Spec { sEnvTrans    = [(Unknown,ets)]
+                   , sEnvLiveness = [(Unknown,els)]
+                   , sSysTrans    = [(Unknown,sts)]
+                   , sSysLiveness = [(Unknown,sls)] }
 
 instance HashCons StateVar where
   hashCons' StateVar {..} =

@@ -2,44 +2,55 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Scope.Check (scopeCheck) where
+module Scope.Check (Renamed,scopeCheck) where
 
+import SrcLoc (HasSrcLoc(..),SrcLoc())
 import Scope.Name
 import Syntax.AST
 
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (fromMaybe)
-import qualified Data.Text.Lazy as L
+import qualified Data.Text as T
 import           MonadLib
 import           PP
-import           Text.Location (HasLoc(..),Located(..),Range,at,thing)
+
+
+data Renamed
+
+type instance AnnotOf Renamed = SrcLoc
+type instance NameOf  Renamed = Name
 
 
 -- | Resolve names to their binding sites.
-scopeCheck :: Supply -> Controller PName
-           -> Either [Loc ScopeError] (Controller Name,Supply)
+scopeCheck :: Supply -> Controller Parsed
+           -> Either [ScopeError] (Controller Renamed,Supply)
 scopeCheck sup c =
-  let origin    = FromController (getLoc c)
-      (cont,s') = mkName origin (locValue (cName c)) Nothing sup
+  let origin    = FromController (annLoc c)
+      (cont,s') = mkName origin (pnameText (cName c)) Nothing sup
       (ds',rw)  = runM (unSC (checkTopDecls (cDecls c)))
                        RW { rwEnv  = Map.empty
                           , rwErrs = []
                           , rwSup  = s'
-                          , rwLoc  = locRange (cName c)
+                          , rwLoc  = cAnnot c
                           , rwCont = cont }
   in case rwErrs rw of
-       [] -> Right (Controller (cont `at` cName c) ds', rwSup rw)
+       [] -> Right (Controller (cAnnot c) cont ds', rwSup rw)
        es -> Left es
 
 
-data ScopeError = Unknown (Loc PName)
+data ScopeError = Unknown PName
                 | Duplicate PName [Name]
-                | Ambiguous (Loc PName) [Name]
-                  deriving (Eq,Show)
+                | Ambiguous PName [Name]
+                  deriving (Show)
+
+instance HasSrcLoc ScopeError where
+  srcLoc (Unknown pn)     = srcLoc pn
+  srcLoc (Duplicate pn _) = srcLoc pn
+  srcLoc (Ambiguous pn _) = srcLoc pn
 
 instance PP ScopeError where
   ppPrec _ (Unknown pn) =
-    text "Unknown identifier:" <+> pp (thing pn)
+    text "Unknown identifier:" <+> pp pn
 
   ppPrec _ (Duplicate x ns) =
     hang (text "Identifier " <+> ticks (pp x) <+>
@@ -47,7 +58,7 @@ instance PP ScopeError where
        2 (vcat [ char '*' <+> ppOrigin (nameOrigin n) | n <- ns ])
 
   ppPrec _ (Ambiguous pn ns) =
-    hang (text "Ambiguous use of " <+> ticks (pp (thing pn)) <+>
+    hang (text "Ambiguous use of " <+> ticks (pp pn) <+>
           text "could be one of:")
        2 (vcat [ char '*' <+> ppOrigin (nameOrigin n) | n <- ns ])
 
@@ -58,25 +69,25 @@ newtype SC a = SC { unSC :: StateT RW Lift a
                   } deriving (Functor,Applicative,Monad)
 
 data RW = RW { rwEnv  :: !Names
-             , rwErrs :: [Loc ScopeError]
+             , rwErrs :: [ScopeError]
              , rwSup  :: !Supply
-             , rwLoc  :: !(Range FilePath)
+             , rwLoc  :: !SrcLoc
              , rwCont :: !Name
              }
 
-withLoc :: (LocSource range ~ FilePath, HasLoc range) => range -> SC a -> SC a
-withLoc range m = SC $
+withLoc :: HasSrcLoc range => range -> SC a -> SC a
+withLoc r m = SC $
   do rw  <- get
-     set $! rw { rwLoc = getLoc range }
+     set $! rw { rwLoc = srcLoc r }
      a   <- unSC m
      rw' <- get
      set rw' { rwLoc = rwLoc rw }
      return a
 
-withLoc_ :: (a -> SC b) -> Loc a -> SC b
-withLoc_ f loc = withLoc loc (f (thing loc))
+withLoc_ :: HasSrcLoc a => (a -> SC b) -> a -> SC b
+withLoc_ f loc = withLoc (srcLoc loc) (f loc)
 
-askLoc :: SC (Range FilePath)
+askLoc :: SC SrcLoc
 askLoc  = SC $
   do RW { .. } <- get
      return rwLoc
@@ -84,7 +95,7 @@ askLoc  = SC $
 addErrs :: [ScopeError] -> SC ()
 addErrs errs = SC $
   do RW { .. } <- get
-     set $! RW { rwErrs = map (`at` rwLoc) errs ++ rwErrs, .. }
+     set $! RW { rwErrs = errs ++ rwErrs, .. }
 
 withNames :: Names -> SC a -> SC a
 withNames ns m = SC $
@@ -98,32 +109,32 @@ withNames ns m = SC $
 
 -- Name Introduction -----------------------------------------------------------
 
-newName :: Origin -> L.Text -> Maybe L.Text -> SC Name
+newName :: Origin -> PName -> Maybe T.Text -> SC Name
 newName from txt mbOut = SC $
   do RW { .. } <- get
-     let (n,s') = mkName from txt mbOut rwSup
+     let (n,s') = mkName from (pnameText txt) mbOut rwSup
      set RW { rwSup = s', .. }
      return n
 
-newParam :: Name -> L.Text -> SC Name
+newParam :: Name -> PName -> SC Name
 newParam fun name =
   do loc <- askLoc
      newName (FromParam loc fun) name Nothing
 
-newDecl :: Maybe Name -> L.Text -> SC Name
+newDecl :: Maybe Name -> PName -> SC Name
 newDecl mbParent name =
   do RW { .. } <- SC get
      newName (FromDecl rwLoc (fromMaybe rwCont mbParent)) name Nothing
 
-newStateVar :: L.Text -> Maybe L.Text -> SC Name
+newStateVar :: PName -> Maybe T.Text -> SC Name
 newStateVar name mbOutName =
   do RW { .. } <- SC get
      newName (FromDecl rwLoc rwCont) name mbOutName
 
-newConstr :: Name -> (Loc L.Text, Maybe (Loc L.Text)) -> SC Name
-newConstr origin (name,mbOut) = withLoc (name,mbOut) $
+newConstr :: Name -> (PName, Maybe T.Text) -> SC Name
+newConstr origin (name,mbOut) = withLoc name $
   do RW { .. } <- SC get
-     newName (FromDecl rwLoc origin) (thing name) (fmap thing mbOut)
+     newName (FromDecl rwLoc origin) name mbOut
 
 
 -- Name Mappings ---------------------------------------------------------------
@@ -144,64 +155,58 @@ mergeWithErrors envs =
    in (fmap mkSingleton env,errs)
 
 
-type NamesFrom f = f PName -> SC Names
+type NamesFrom f = f Parsed -> SC Names
 
 -- | Names defined by a top-level declaration.
 topDeclNames :: NamesFrom TopDecl
 
-topDeclNames (TDEnum enum) = enumNames enum
-topDeclNames (TDFun fun)   = funNames Nothing fun
-topDeclNames (TDInput sv)  = stateVarNames sv
-topDeclNames (TDOutput sv) = stateVarNames sv
+topDeclNames (TDEnum   _ enum) = enumNames enum
+topDeclNames (TDFun    _ fun)  = funNames Nothing fun
+topDeclNames (TDInput  _ sv)   = stateVarNames sv
+topDeclNames (TDOutput _ sv)   = stateVarNames sv
+
 -- specifications and top-level expressions don't introduce names
 topDeclNames TDSpec{}      = return Map.empty
 topDeclNames TDExpr{}      = return Map.empty
-topDeclNames (TDLoc loc)   = topDeclNames (thing loc)
 
 enumNames :: NamesFrom EnumDef
 enumNames EnumDef { .. } =
   do tyName <- withLoc_ (newDecl Nothing) eName
      cs     <- traverse (newConstr tyName) eCons
      return $ Map.fromList
-            $ (thing eName, [tyName])
-            : zip (map (thing . fst) eCons) (map pure cs)
+            $ (eName, [tyName])
+            : zip (map fst eCons) (map pure cs)
 
 funNames :: Maybe Name -> NamesFrom Fun
 funNames mbParent Fun { .. } =
   do name <- withLoc_ (newDecl mbParent) fName
-     return (Map.singleton (thing fName) [name])
+     return (Map.singleton fName [name])
 
 stateVarNames :: NamesFrom StateVar
 stateVarNames StateVar { .. } =
-  do name <- withLoc_ (`newStateVar` fmap thing svOutName) svName
-     return (Map.singleton (thing svName) [name])
+  do name <- withLoc_ (`newStateVar` svOutName) svName
+     return (Map.singleton svName [name])
 
 
 -- Name Resolution -------------------------------------------------------------
 
 resolve :: PName -> SC Name
-resolve pn =
+resolve pn = withLoc pn $
   do RW { .. } <- SC get
      case Map.lookup pn rwEnv of
        Just [n] -> return n
        Just []  -> error "Invalid naming environment"
-       Just ns  -> do addErrs [Ambiguous (pn `at` rwLoc) ns]
+       Just ns  -> do addErrs [Ambiguous pn ns]
                       return (head ns)
 
        -- name missing from the environment
        Nothing  -> do n <- newDecl Nothing pn
-                      addErrs [Unknown (pn `at` rwLoc)]
+                      addErrs [Unknown pn]
                       return n
 
-checkLoc :: Loc a -> (a -> SC b) -> SC (Loc b)
-checkLoc Located { .. } check = withLoc locRange $
-  do v' <- check locValue
-     return Located { locValue = v', .. }
+type Check f = f Parsed -> SC (f Renamed)
 
-
-type Check f = f PName -> SC (f Name)
-
-checkTopDecls :: [TopDecl PName] -> SC [TopDecl Name]
+checkTopDecls :: [TopDecl Parsed] -> SC [TopDecl Renamed]
 checkTopDecls ds =
   do envs <- traverse topDeclNames ds
      let (env,errs) = mergeWithErrors envs
@@ -209,42 +214,54 @@ checkTopDecls ds =
 
      withNames env (traverse checkTopDecl ds)
 
+checkAnn :: Check Ann
+checkAnn (AnnSym  loc x)    = pure (AnnSym loc x)
+checkAnn (AnnStr  loc x)    = pure (AnnStr loc x)
+checkAnn (AnnCode loc x y)  = pure (AnnCode loc x y)
+checkAnn (AnnApp  loc x xs) = withLoc  loc (AnnApp  loc x `fmap` traverse checkAnn xs)
+checkAnn (AnnArr  loc xs)   = withLoc  loc (AnnArr  loc   `fmap` traverse checkAnn xs)
+checkAnn (AnnObj  loc ps)   = withLoc loc $
+  do ps' <- forM ps $ \ (f,a) ->
+            do a' <- checkAnn a
+               return (f, a')
+     pure (AnnObj loc ps')
 
 checkTopDecl :: Check TopDecl
-checkTopDecl (TDEnum enum)     = TDEnum        `fmap` checkEnum enum
-checkTopDecl (TDFun fun)       = TDFun         `fmap` checkFun  fun
-checkTopDecl (TDInput sv)      = TDInput       `fmap` checkStateVar sv
-checkTopDecl (TDOutput sv)     = TDOutput      `fmap` checkStateVar sv
-checkTopDecl (TDSpec s)        = TDSpec        `fmap` checkSpec s
-checkTopDecl (TDExpr e)        = TDExpr        `fmap` checkExpr e
-checkTopDecl (TDLoc loc)       = TDLoc         `fmap` checkLoc loc checkTopDecl
+checkTopDecl (TDEnum   loc enum) = withLoc loc (TDEnum   loc `fmap` checkEnum enum)
+checkTopDecl (TDFun    loc fun)  = withLoc loc (TDFun    loc `fmap` checkFun  fun)
+checkTopDecl (TDInput  loc sv)   = withLoc loc (TDInput  loc `fmap` checkStateVar sv)
+checkTopDecl (TDOutput loc sv)   = withLoc loc (TDOutput loc `fmap` checkStateVar sv)
+checkTopDecl (TDSpec   loc s)    = withLoc loc (TDSpec   loc `fmap` checkSpec s)
+checkTopDecl (TDExpr   loc e)    = withLoc loc (TDExpr   loc `fmap` checkExpr e)
 
 checkSpec :: Check Spec
-checkSpec (SSysTrans e)    = SSysTrans    `fmap` traverse checkExpr e
-checkSpec (SEnvTrans e)    = SEnvTrans    `fmap` traverse checkExpr e
-checkSpec (SSysLiveness e) = SSysLiveness `fmap` traverse checkExpr e
-checkSpec (SEnvLiveness e) = SEnvLiveness `fmap` traverse checkExpr e
-checkSpec (SLoc loc)       = SLoc         `fmap` checkLoc loc checkSpec
+checkSpec (SSysTrans    loc e) = withLoc loc (SSysTrans    loc `fmap` traverse checkExpr e)
+checkSpec (SEnvTrans    loc e) = withLoc loc (SEnvTrans    loc `fmap` traverse checkExpr e)
+checkSpec (SSysLiveness loc e) = withLoc loc (SSysLiveness loc `fmap` traverse checkExpr e)
+checkSpec (SEnvLiveness loc e) = withLoc loc (SEnvLiveness loc `fmap` traverse checkExpr e)
 
 checkEnum :: Check EnumDef
-checkEnum EnumDef { .. } =
-  do n'  <- checkLoc eName resolve
+checkEnum EnumDef { .. } = withLoc eAnnot $
+  do a'  <- traverse checkAnn eAnn
+     n'  <- resolve eName
      cs' <- traverse checkCon eCons
-     return EnumDef { eName = n', eCons = cs', .. }
+     return EnumDef { eAnn = a', eName = n', eCons = cs', .. }
 
 
-checkCon :: (Loc L.Text, Maybe (Loc L.Text)) -> SC (Loc Name, Maybe (Loc L.Text))
+checkCon :: (PName, Maybe T.Text) -> SC (Name, Maybe T.Text)
 checkCon (lname, mbOut) =
-  do lname' <- checkLoc lname resolve
+  do lname' <- resolve lname
      return (lname', mbOut)
 
 
 checkFun :: Check Fun
 checkFun Fun { .. } =
-  do n' <- checkLoc fName resolve
-     withParams (thing n') fParams $ \ps' ->
+  do a' <- traverse checkAnn fAnn
+     n' <- resolve fName
+     withParams n' fParams $ \ps' ->
        do b' <- checkFunBody fBody
-          return Fun { fName   = n'
+          return Fun { fAnn    = a'
+                     , fName   = n'
                      , fParams = ps'
                      , fBody   = b'
                      , .. }
@@ -252,72 +269,74 @@ checkFun Fun { .. } =
 
 checkStateVar :: Check StateVar
 checkStateVar StateVar { .. } =
-  do n'    <- checkLoc svName resolve
+  do a'    <- traverse checkAnn svAnn
+     n'    <- resolve svName
      ty'   <- checkType svType
      init' <- traverse checkExpr svInit
-     return $! StateVar { svName = n', svType = ty', svInit = init', .. }
+     bs'   <- traverse checkBounds svBounds
+     return $! StateVar { svAnn = a', svName = n', svType = ty', svInit = init'
+                        , svBounds = bs', .. }
 
 
-withParams :: Name -> [Loc PName] -> ([Loc Name] -> SC a) -> SC a
+-- | Rebuild the bounds as renamed.
+checkBounds :: Check Bounds
+checkBounds Bounds { .. } = pure Bounds { .. }
+
+
+withParams :: Name -> [PName] -> ([Name] -> SC a) -> SC a
 withParams fun ps k = go [] ps
   where
   go acc [] =
     let rev = reverse acc
-        env = Map.fromList [ (old,[thing new]) | (old,new) <- rev ]
+        env = Map.fromList [ (old,[new]) | (old,new) <- rev ]
         -- XXX collect shadowing warnings
      in withNames env (k (map snd rev))
 
   go acc (n:ns) =
-    do n' <- checkLoc n (newParam fun)
-       go ((thing n,n'):acc) ns
+    do n' <- newParam fun n
+       go ((n,n'):acc) ns
 
 
 checkFunBody :: Check FunBody
-checkFunBody (FBSpec ps) = FBSpec `fmap` traverse checkSpec ps
-checkFunBody (FBExpr e)  = FBExpr `fmap` checkExpr e
+checkFunBody (FBSpec loc ps) = withLoc loc (FBSpec loc `fmap` traverse checkSpec ps)
+checkFunBody (FBExpr loc e)  = withLoc loc (FBExpr loc `fmap` checkExpr e)
 
 checkExpr :: Check Expr
-checkExpr (EVar n) = EVar `fmap` resolve n
-checkExpr (ECon n) = ECon `fmap` resolve n
-checkExpr (ENum i) = return (ENum i)
-checkExpr ETrue    = return ETrue
-checkExpr EFalse   = return EFalse
+checkExpr (EVar  loc n)     = withLoc loc (EVar  loc `fmap` resolve n)
+checkExpr (ECon  loc n)     = withLoc loc (ECon  loc `fmap` resolve n)
+checkExpr (EAnd  loc l r)   = withLoc loc (EAnd  loc `fmap` checkExpr l <*> checkExpr r)
+checkExpr (EOr   loc l r)   = withLoc loc (EOr   loc `fmap` checkExpr l <*> checkExpr r)
+checkExpr (ENot  loc e)     = withLoc loc (ENot  loc `fmap` checkExpr e)
+checkExpr (EIf   loc p t f) = withLoc loc (EIf   loc `fmap` checkExpr p <*> checkExpr t <*> checkExpr f)
+checkExpr (EApp  loc f x)   = withLoc loc (EApp  loc `fmap` checkExpr f <*> checkExpr x)
+checkExpr (ENext loc e)     = withLoc loc (ENext loc `fmap` checkExpr e)
+checkExpr (EEq   loc a b)   = withLoc loc (EEq   loc `fmap` checkExpr a <*> checkExpr b)
+checkExpr (ENeq  loc a b)   = withLoc loc (ENeq  loc `fmap` checkExpr a <*> checkExpr b)
+checkExpr (EImp  loc a b)   = withLoc loc (EImp  loc `fmap` checkExpr a <*> checkExpr b)
+checkExpr (EIff  loc a b)   = withLoc loc (EIff  loc `fmap` checkExpr a <*> checkExpr b)
+checkExpr (ECase loc e cs)  = withLoc loc (ECase loc `fmap` checkExpr e <*> traverse checkCase cs)
+checkExpr (ESet  loc es)    = withLoc loc (ESet  loc `fmap` traverse checkExpr es)
+checkExpr (EIn   loc a b)   = withLoc loc (EIn   loc `fmap` checkExpr a <*> checkExpr b)
 
+checkExpr (ENum   loc i) = pure (ENum   loc i)
+checkExpr (ETrue  loc)   = pure (ETrue  loc)
+checkExpr (EFalse loc)   = pure (EFalse loc)
+checkExpr (EAny   loc)   = pure (EAny   loc)
+checkExpr (EAll   loc)   = pure (EAll   loc)
+checkExpr (EMutex loc)   = pure (EMutex loc)
 
-checkExpr (EAnd l r)  = EAnd `fmap` checkExpr l <*> checkExpr r
-checkExpr (EOr  l r)  = EOr  `fmap` checkExpr l <*> checkExpr r
-checkExpr (ENot e)    = ENot `fmap` checkExpr e
-checkExpr (EIf p t f) = EIf  `fmap` checkExpr p <*> checkExpr t <*> checkExpr f
-checkExpr (EApp f x)  = EApp `fmap` checkExpr f <*> checkExpr x
-checkExpr (ELoc loc)  = ELoc `fmap` checkLoc loc checkExpr
-checkExpr (ENext e)   = ENext `fmap` checkExpr e
-checkExpr (EEq a b)   = EEq  `fmap` checkExpr a <*> checkExpr b
-checkExpr (ENeq a b)  = ENeq `fmap` checkExpr a <*> checkExpr b
-checkExpr (EImp a b)  = EImp `fmap` checkExpr a <*> checkExpr b
-checkExpr (EIff a b)  = EIff `fmap` checkExpr a <*> checkExpr b
-checkExpr (ECase e cs)= ECase `fmap` checkExpr e <*> traverse checkCase cs
-
-checkExpr EAny        = pure EAny
-checkExpr EAll        = pure EAll
-checkExpr EMutex      = pure EMutex
-
-checkExpr (ESet es)   = ESet  `fmap` traverse checkExpr es
-checkExpr (EIn a b)   = EIn   `fmap` checkExpr a <*> checkExpr b
 
 checkCase :: Check Case
-checkCase (CPat p e)   = CPat     `fmap` checkPat p <*> checkExpr e
-checkCase (CDefault e) = CDefault `fmap` checkExpr e
-checkCase (CLoc loc)   = CLoc     `fmap` checkLoc loc checkCase
+checkCase (CPat     loc p e) = withLoc loc (CPat     loc `fmap` checkPat p <*> checkExpr e)
+checkCase (CDefault loc e)   = withLoc loc (CDefault loc `fmap` checkExpr e)
 
 checkPat :: Check Pat
-checkPat (PCon n)   = PCon `fmap` resolve n
-checkPat (PNum n)   = pure (PNum n)
-checkPat (PLoc loc) = PLoc `fmap` checkLoc loc checkPat
+checkPat (PCon loc n) = withLoc loc (PCon loc `fmap` resolve n)
+checkPat (PNum loc n) = pure (PNum loc n)
 
 
 checkType :: Check Type
-checkType TBool      = return TBool
-checkType TInt       = return TInt
-checkType (TEnum n)  = TEnum `fmap` resolve n
-checkType (TFun a b) = TFun  `fmap` checkType a <*> checkType b
-checkType (TLoc loc) = TLoc  `fmap` checkLoc loc checkType
+checkType (TBool loc)     = pure (TBool loc)
+checkType (TInt  loc)     = pure (TInt loc)
+checkType (TEnum loc n)   = withLoc loc (TEnum loc `fmap` resolve n)
+checkType (TFun  loc a b) = withLoc loc (TFun  loc `fmap` checkType a <*> checkType b)

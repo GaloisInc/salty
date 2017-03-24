@@ -1,9 +1,8 @@
 module Message where
 
 import PP
-import Syntax.AST (Loc)
+import SrcLoc
 
-import Text.Location (thing,getLoc)
 
 
 ppMessage :: String -> Doc -> Doc
@@ -12,5 +11,5 @@ ppMessage msg body =
        , nest 2 body
        , text " " ]
 
-ppError :: PP a => Loc a -> Doc
-ppError loc = ppMessage ("[error] " ++ render (getLoc loc)) (pp (thing loc))
+ppError :: (HasSrcLoc a, PP a) => a -> Doc
+ppError loc = ppMessage ("[error] " ++ render (srcLoc loc)) (pp loc)

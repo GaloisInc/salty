@@ -36,8 +36,9 @@ module TypeCheck.Monad (
   ) where
 
 import           PP
+import           Scope.Check (Renamed)
 import           Scope.Name (Name,Supply,nextUnique)
-import           Syntax.AST (Loc)
+import           SrcLoc
 import qualified Syntax.AST as AST
 import           TypeCheck.AST (Type(..),TVar(..),Schema(..))
 import qualified TypeCheck.Unify as Unify
@@ -47,16 +48,15 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified MonadLib
 import           MonadLib hiding (try)
-import           Text.Location (HasLoc(..),Range,thing,at)
 
-newtype TC a = TC { unTC :: StateT RW (ExceptionT [Loc TCError] Lift) a
+newtype TC a = TC { unTC :: StateT RW (ExceptionT [TCError] Lift) a
                   } deriving (Functor,Applicative,Monad)
 
 data RW = RW { rwSubst :: !Unify.Env
-             , rwLoc   :: !(Range FilePath)
+             , rwLoc   :: !SrcLoc
              , rwEnv   :: Map.Map Name TCType
              , rwSupply:: !Supply
-             , rwErrs  :: ![Loc TCError]
+             , rwErrs  :: ![TCError]
              }
 
 emptyRW :: Supply -> RW
@@ -69,44 +69,50 @@ emptyRW rwSupply = RW { rwSubst = Unify.emptyEnv
 data TCType = HasType !Schema -- ^ A variable with known type.
               deriving (Show)
 
-data TCError = UnifyError Unify.UnifyError
-             | InvalidRecursiveGroup [AST.TopDecl Name]
-             | TooManyDefaultCases [AST.Case Name]
-             | MissingBounds (AST.Loc Name)
+data TCError = UnifyError SrcLoc Unify.UnifyError
+             | InvalidRecursiveGroup [AST.TopDecl Renamed]
+             | TooManyDefaultCases [AST.Case Renamed]
+             | MissingBounds Name
                deriving (Show)
 
+instance HasSrcLoc TCError where
+  srcLoc (UnifyError loc _)         = loc
+  srcLoc (InvalidRecursiveGroup gs) = srcLoc gs
+  srcLoc (TooManyDefaultCases cs)   = srcLoc cs
+  srcLoc (MissingBounds n)          = srcLoc n
+
 instance PP TCError where
-  ppPrec _ (UnifyError ue) = pp ue
+  ppPrec _ (UnifyError _ ue) = pp ue
   ppPrec _ (InvalidRecursiveGroup _) =
       text "Recursive functions are not supported"
   ppPrec _ (TooManyDefaultCases _) =
       text "Too many default cases in case expression"
   ppPrec _ (MissingBounds n) =
       text "Numeric state variable"
-      <+> ticks (pp (thing n)) <+> text "is missing bounds"
+      <+> ticks (pp n) <+> text "is missing bounds"
 
 
 -- | Run a TC action.
-runTC :: Supply -> TC a -> Either [Loc TCError] (a,Supply)
+runTC :: Supply -> TC a -> Either [TCError] (a,Supply)
 runTC sup m =
   case runM (unTC (failErrors m)) (emptyRW sup) of
     Right (a,rw) -> Right (a,rwSupply rw)
     Left errs    -> Left errs
 
 -- | Decorate errors generated in the action with location information provided.
-addLoc :: (LocSource loc ~ FilePath, HasLoc loc) => loc -> TC a -> TC a
+addLoc :: HasSrcLoc loc => loc -> TC a -> TC a
 addLoc loc m = TC $
   do rw  <- get
-     set $! rw { rwLoc = getLoc loc }
+     set $! rw { rwLoc = srcLoc loc }
      a   <- unTC m
      rw' <- get
      set $! rw' { rwLoc = rwLoc rw }
      return a
 
-withLoc :: Loc a -> (a -> TC b) -> TC b
-withLoc loc f = addLoc loc (f (thing loc))
+withLoc :: HasSrcLoc a => a -> (a -> TC b) -> TC b
+withLoc loc f = addLoc loc (f loc)
 
-askLoc :: TC (Range FilePath)
+askLoc :: TC SrcLoc
 askLoc  = TC $
   do RW { .. } <- get
      return rwLoc
@@ -120,7 +126,7 @@ unify a b =
   do RW { .. } <- TC get
      case Unify.unify a b rwSubst of
        Right rwSubst' -> TC (set $! RW { rwSubst = rwSubst', .. })
-       Left err       -> record (UnifyError err)
+       Left err       -> record (UnifyError rwLoc err)
 
 -- | Remove type variables from a type.
 zonk :: Unify.Zonk ty => ty -> TC ty
@@ -128,7 +134,7 @@ zonk ty =
   do RW { .. } <- TC get
      case Unify.zonk ty rwSubst of
        Right ty' -> return ty'
-       Left  err -> failWith (UnifyError err)
+       Left  err -> failWith (UnifyError rwLoc err)
 
 -- | Compute free variables.
 ftvs :: Unify.Zonk ty => ty -> TC (Set.Set TVar)
@@ -136,7 +142,7 @@ ftvs ty =
   do RW { .. } <- TC get
      case Unify.ftvs ty rwSubst of
        Right fvs -> return fvs
-       Left err  -> failWith (UnifyError err)
+       Left err  -> failWith (UnifyError rwLoc err)
 
 
 -- Type Environment ------------------------------------------------------------
@@ -177,17 +183,15 @@ addTypes tys =
 -- Errors ----------------------------------------------------------------------
 
 record :: TCError -> TC ()
-record err =
-  do loc <- askLoc
-     addErrs [err `at` loc]
+record err = addErrs [err]
 
-addErrs :: [Loc TCError] -> TC ()
+addErrs :: [TCError] -> TC ()
 addErrs errs = TC (sets_ (\rw -> rw { rwErrs = errs ++ rwErrs rw }))
 
-getErrs :: TC [Loc TCError]
+getErrs :: TC [TCError]
 getErrs  = TC (sets (\rw -> (rwErrs rw, rw { rwErrs = [] })))
 
-setErrs :: [Loc TCError] -> TC ()
+setErrs :: [TCError] -> TC ()
 setErrs errs = TC (sets_ (\rw -> rw { rwErrs = errs }))
 
 -- | Fails when the given action has added errors to the environment.
@@ -202,9 +206,9 @@ failErrors m =
 failWith :: TCError -> TC a
 failWith err = TC $
   do rw <- get
-     raise ((err `at` rwLoc rw) : rwErrs rw)
+     raise (err : rwErrs rw)
 
-try :: TC a -> TC (Either [Loc TCError] a)
+try :: TC a -> TC (Either [TCError] a)
 try m = TC (MonadLib.try (unTC m))
 
 tryAll :: [TC a] -> TC [a]
@@ -217,7 +221,7 @@ tryAll ms = TC $
 
 -- | Collect any errors that get recorded when running the given action.
 -- Failures will still propagate through.
-collectErrors :: TC a -> TC (a,[Loc TCError])
+collectErrors :: TC a -> TC (a,[TCError])
 collectErrors m =
   do errs  <- getErrs
      a     <- m
@@ -226,9 +230,9 @@ collectErrors m =
      return (a,errs')
 
 -- | A recursive group that does not consist of just functions.
-invalidRecursiveGroup :: [AST.TopDecl Name] -> TCError
+invalidRecursiveGroup :: [AST.TopDecl Renamed] -> TCError
 invalidRecursiveGroup g = InvalidRecursiveGroup g
 
 -- | Too many default cases in a case expression.
-tooManyDefaultCases :: [AST.Case Name] -> TCError
+tooManyDefaultCases :: [AST.Case Renamed] -> TCError
 tooManyDefaultCases arms = TooManyDefaultCases arms

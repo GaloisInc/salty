@@ -8,20 +8,21 @@ module Scope.Name (
     mkName,
   ) where
 
+import SrcLoc
+
 import           Data.Function (on)
-import qualified Data.Text.Lazy as L
-import           Text.Location (HasLoc(..),Range)
+import qualified Data.Text as T
 
 
 -- Names -----------------------------------------------------------------------
 
-data Origin = FromController !(Range FilePath)
+data Origin = FromController !SrcLoc
               -- ^ Top-level controller, and its region
 
-            | FromDecl !(Range FilePath) !Name
+            | FromDecl !SrcLoc !Name
               -- ^ Top-level definition region and parent controller
 
-            | FromParam !(Range FilePath) !Name
+            | FromParam !SrcLoc !Name
               -- ^ Parameter definition region and parent function
 
             | Generated String
@@ -29,23 +30,21 @@ data Origin = FromController !(Range FilePath)
 
               deriving (Show)
 
-instance HasLoc Origin where
-  type LocSource Origin = String
-  getLoc (FromController r) = r
-  getLoc (FromDecl r _)     = r
-  getLoc (FromParam r _)    = r
-  getLoc Generated{}        = mempty
+instance HasSrcLoc Origin where
+  srcLoc (FromController r) = r
+  srcLoc (FromDecl r _)     = r
+  srcLoc (FromParam r _)    = r
+  srcLoc Generated{}        = mempty
 
 
-data Name = Name { nText   :: !L.Text
+data Name = Name { nText   :: !T.Text
                  , nUnique :: !Int
                  , nOrigin :: !Origin
-                 , nOutName:: !(Maybe L.Text)
+                 , nOutName:: !(Maybe T.Text)
                  } deriving (Show)
 
-instance HasLoc Name where
-  type LocSource Name = String
-  getLoc n = getLoc (nameOrigin n)
+instance HasSrcLoc Name where
+  srcLoc n = srcLoc (nameOrigin n)
 
 instance Eq Name where
   (==) = (==) `on` nUnique
@@ -60,13 +59,13 @@ instance Ord Name where
 nameOrigin :: Name -> Origin
 nameOrigin  = nOrigin
 
-nameText :: Name -> L.Text
+nameText :: Name -> T.Text
 nameText  = nText
 
 nameUnique :: Name -> Int
 nameUnique  = nUnique
 
-nameOutText :: Name -> Maybe L.Text
+nameOutText :: Name -> Maybe T.Text
 nameOutText  = nOutName
 
 
@@ -85,7 +84,7 @@ nextUnique (Supply n) =
 
 -- Name Construction -----------------------------------------------------------
 
-mkName :: Origin -> L.Text -> Maybe L.Text -> Supply -> (Name,Supply)
+mkName :: Origin -> T.Text -> Maybe T.Text -> Supply -> (Name,Supply)
 mkName nOrigin nText nOutName s =
   let (nUnique,s') = nextUnique s
    in (Name { .. }, s')

@@ -26,8 +26,8 @@ import qualified Data.ByteString.Lazy.Char8 as LB
 import qualified Data.Foldable as F
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (mapMaybe)
-import qualified Data.Text.Lazy as L
-import qualified Data.Text.Lazy.IO as L
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
 import           System.FilePath (takeDirectory,(</>))
@@ -58,7 +58,7 @@ main  =
 genFSM :: Options -> Input -> IO FSM
 
 genFSM opts (InpSpec path) =
-  do bytes <- L.readFile path
+  do bytes <- T.readFile path
 
      pCont <-
        case parseController path bytes of
@@ -194,31 +194,28 @@ dumpAnnotations TC.Controller { .. } =
 
 
 
-jsonAnnotation :: Ann -> JSON.Value
+jsonAnnotation :: Ann Renamed -> JSON.Value
 jsonAnnotation  = go
   where
-  go (AnnApp f xs) =
+  go (AnnApp _ f xs) =
     JSON.object [ "name" JSON..= f
                 , "args" JSON..= map go xs ]
 
-  go (AnnArr xs) =
+  go (AnnArr _ xs) =
     JSON.toJSON (map go xs)
 
-  go (AnnObj xs) =
-    JSON.object [ L.toStrict l JSON..= go x | (l,x) <- xs ]
+  go (AnnObj _ xs) =
+    JSON.object [ l JSON..= go x | (l,x) <- xs ]
 
-  go (AnnSym sym) =
+  go (AnnSym _ sym) =
     JSON.toJSON sym
 
-  go (AnnStr str) =
+  go (AnnStr _ str) =
     JSON.toJSON str
 
-  go (AnnCode ty str) =
+  go (AnnCode _ ty str) =
     JSON.object [ "language" JSON..= ty
                 , "code"     JSON..= str ]
-
-  go (AnnLoc loc) =
-    go (thing loc)
 
 
 jsonName :: Name -> JSON.Value

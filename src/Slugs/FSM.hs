@@ -11,16 +11,16 @@ module Slugs.FSM (
 
 import           Panic (panic,HasCallStack)
 import           Scope.Name (Name,mkName,emptySupply,Origin(..))
+import           SrcLoc
 import           Slugs.Env
 import           TypeCheck.AST (Controller(..),EnumDef(..),StateVar(..),Type(..))
 
 import           Control.Monad (guard)
 import           Data.Either (partitionEithers)
 import           Data.List (mapAccumL,find,break,group)
-import qualified Data.Text.Lazy as L
+import qualified Data.Text as T
 import qualified Data.Map.Strict as Map
 import qualified Language.Slugs as Slugs
-import           Text.Location (Range(..))
 import           Text.ParserCombinators.ReadP
 import           System.FilePath (dropExtension)
 
@@ -187,9 +187,9 @@ fromSlugs' file numInputs Slugs.FSM { .. } =
 
   nodes     = Map.mapMaybe (mkNode True nodes emptyEnv inps outs) fsmNodes
 
-  origin    = FromController mempty { rangeSource = Just file }
+  origin    = FromController Unknown
 
-  (cName,s1) = mkName origin (L.pack (dropExtension file)) Nothing emptySupply
+  (cName,s1) = mkName origin (T.pack (dropExtension file)) Nothing emptySupply
 
   (inps,outs) = splitAt numInputs (concat vars)
 
@@ -209,7 +209,7 @@ fromSlugs' file numInputs Slugs.FSM { .. } =
 
     (namePart,bitSpec) = break (== '@') var
 
-    (name,s') = mkName origin (L.pack namePart) Nothing s
+    (name,s') = mkName origin (T.pack namePart) Nothing s
 
     state = (name,lo,hi)
 

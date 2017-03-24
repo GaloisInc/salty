@@ -9,7 +9,6 @@ import TypeCheck.AST
 
 import           Data.List (foldl1')
 import qualified Language.Slugs as Slugs
-import           Text.Location (thing)
 
 
 -- Translation -----------------------------------------------------------------
@@ -19,10 +18,10 @@ mkSpec cont = (Slugs.addLimits slugs,env)
   where
   Spec { .. } = cSpec cont
 
-  envTrans    = map thing sEnvTrans
-  envLiveness = map thing sEnvLiveness
-  sysTrans    = map thing sSysTrans
-  sysLiveness = map thing sSysLiveness
+  envTrans    = map snd sEnvTrans
+  envLiveness = map snd sEnvLiveness
+  sysTrans    = map snd sSysTrans
+  sysLiveness = map snd sSysLiveness
 
   slugs =
     Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envTrans envLiveness
@@ -111,12 +110,12 @@ mkAssign :: HasCallStack => Env -> Expr -> Expr -> Slugs.Expr
 -- constant enum values
 mkAssign env (slugsUse env -> Just use) (ECon _ c) =
   case use of
-    Left ref  -> panic "Reference in assign"
+    Left _ref -> panic "Reference in assign"
     Right var -> Slugs.assignConst var (lookupConstr c env)
 
 mkAssign env (ECon _ c) (slugsUse env -> Just use) =
   case use of
-    Left ref  -> panic "Reference in assign"
+    Left _ref -> panic "Reference in assign"
     Right var -> Slugs.assignConst var (lookupConstr c env)
 
 -- constant booleans

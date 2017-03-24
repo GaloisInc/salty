@@ -12,6 +12,7 @@ module TypeCheck.Unify (
   ) where
 
 import PP
+import SrcLoc
 import TypeCheck.AST
 
 import           Control.Monad (zipWithM_)
@@ -110,6 +111,13 @@ class Zonk ty where
   -- | Free type variables.
   ftvs' :: ty -> Unify (Set.Set TVar)
 
+instance Zonk SrcLoc where
+  zonk' = pure
+  {-# INLINE zonk' #-}
+
+  ftvs' = \_ -> pure Set.empty
+  {-# INLINE ftvs' #-}
+
 instance (Zonk a, Zonk b) => Zonk (a,b) where
   zonk' (a,b) = (,)       <$> zonk' a <*> zonk' b
   ftvs' (a,b) = Set.union <$> ftvs' a <*> ftvs' b
@@ -121,10 +129,6 @@ instance Zonk a => Zonk (Maybe a) where
   ftvs' (Just a) = ftvs' a
 
 instance Zonk a => Zonk [a] where
-  zonk' = traverse zonk'
-  ftvs' = F.foldrM (\a b -> Set.union b <$> ftvs' a) Set.empty
-
-instance Zonk a => Zonk (Loc a) where
   zonk' = traverse zonk'
   ftvs' = F.foldrM (\a b -> Set.union b <$> ftvs' a) Set.empty
 

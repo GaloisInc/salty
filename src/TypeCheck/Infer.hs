@@ -3,7 +3,9 @@
 
 module TypeCheck.Infer where
 
+import           Scope.Check (Renamed)
 import           Scope.Name (Name)
+import           SrcLoc
 import qualified Syntax.AST as AST
 import           TypeCheck.AST
 import           TypeCheck.Groups
@@ -13,16 +15,15 @@ import           Control.Monad (when,unless,zipWithM_)
 import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import qualified Data.Set as Set
-import           Text.Location (thing,getLoc,at)
 
 
-inferController :: AST.Controller Name -> TC Controller
+inferController :: AST.Controller Renamed -> TC Controller
 inferController AST.Controller { AST.cName, AST.cDecls } =
   do updates <- traverse inferTopGroup (sccTopDecls cDecls)
-     return $! foldr (id) (emptyController (thing cName)) updates
+     return $! foldr (id) (emptyController cName) updates
 
 
-inferTopGroup :: Group (AST.TopDecl Name) -> TC (Controller -> Controller)
+inferTopGroup :: Group (AST.TopDecl Renamed) -> TC (Controller -> Controller)
 
 inferTopGroup (NonRecursive td) = simpleTopDecl td
 
@@ -32,95 +33,83 @@ inferTopGroup (NonRecursive td) = simpleTopDecl td
 inferTopGroup (Recursive tds) = failWith (invalidRecursiveGroup tds)
 
 
-mkLocFun :: AST.TopDecl Name -> Maybe (AST.Loc (AST.Fun Name))
-mkLocFun  = go mempty
-  where
-  go _   (AST.TDLoc loc) = go (getLoc loc) (thing loc)
-  go src (AST.TDFun fun) = Just (fun `at` src)
-  go _   _               = Nothing
-
-
 -- | Check non-recursive declarations.
-simpleTopDecl :: AST.TopDecl Name -> TC (Controller -> Controller)
+simpleTopDecl :: AST.TopDecl Renamed -> TC (Controller -> Controller)
 
-simpleTopDecl (AST.TDEnum enum) = checkEnum enum
+simpleTopDecl (AST.TDEnum _ enum) = checkEnum enum
 
-simpleTopDecl (AST.TDFun fun) =
-  do loc <- askLoc
-     inferFun (fun `at` loc)
+simpleTopDecl (AST.TDFun _ fun) =
+     inferFun fun
 
-simpleTopDecl (AST.TDInput sv) =
+simpleTopDecl (AST.TDInput _ sv) =
   do sv' <- checkStateVar sv
      return $ \ c -> c { cInputs = sv' : cInputs c }
 
-simpleTopDecl (AST.TDOutput sv) =
+simpleTopDecl (AST.TDOutput _ sv) =
   do sv' <- checkStateVar sv
      return $ \ c -> c { cOutputs = sv' : cOutputs c }
 
-simpleTopDecl (AST.TDSpec s) =
+simpleTopDecl (AST.TDSpec _ s) =
   do s' <- zonk =<< checkSpec s
      return $ \ c -> c { cSpec = s' `mappend` cSpec c }
 
-simpleTopDecl (AST.TDExpr e) =
+simpleTopDecl (AST.TDExpr _ e) =
   do e'  <- zonk =<< checkExpr TSpec e
      loc <- askLoc
-     return $ \ c -> c { cTopExprs = (e' `at` loc) : cTopExprs c }
+     return $ \ c -> c { cTopExprs = (loc,e') : cTopExprs c }
 
-simpleTopDecl (AST.TDLoc loc) = withLoc loc simpleTopDecl
 
 -- | Check a specification value.
-checkSpec :: AST.Spec Name -> TC Spec
+checkSpec :: AST.Spec Renamed -> TC Spec
 
-checkSpec (AST.SSysTrans es) =
+checkSpec (AST.SSysTrans _ es) =
   do es' <- checkSpecEntry es
      return $ mempty { sSysTrans = es' }
 
-checkSpec (AST.SSysLiveness es) =
+checkSpec (AST.SSysLiveness _ es) =
   do es' <- checkSpecEntry es
      return $ mempty { sSysLiveness = es' }
 
-checkSpec (AST.SEnvTrans es) =
+checkSpec (AST.SEnvTrans _ es) =
   do es' <- checkSpecEntry es
      return $ mempty { sEnvTrans = es' }
 
-checkSpec (AST.SEnvLiveness es) =
+checkSpec (AST.SEnvLiveness _ es) =
   do es' <- checkSpecEntry es
      return $ mempty { sEnvLiveness = es' }
 
-checkSpec (AST.SLoc loc) = withLoc loc checkSpec
 
-
-checkSpecEntry :: [AST.Expr Name] -> TC [Loc Expr]
+checkSpecEntry :: [AST.Expr Renamed] -> TC [(SrcLoc,Expr)]
 checkSpecEntry  = traverse $ \e ->
   do e' <- checkExpr TBool e
-     return (e' `at` getLoc e)
+     return (srcLoc e, e')
 
 
 -- | Add all of the constructors to the typing environment.
-checkEnum :: AST.EnumDef Name -> TC (Controller -> Controller)
+checkEnum :: AST.EnumDef Renamed -> TC (Controller -> Controller)
 checkEnum AST.EnumDef { eAnn, eName, eCons } =
-  do let ty   = Forall [] (TEnum (thing eName))
-         cons = [ thing con | (con, _) <- eCons ]
+  do let ty   = Forall [] (TEnum eName)
+         cons = [ con | (con, _) <- eCons ]
 
      addTypes (zip cons (repeat ty))
 
      return $ \ c -> c { cEnums = EnumDef { eAnn  = eAnn
-                                          , eName = thing eName
+                                          , eName = eName
                                           , eCons = cons
                                           } : cEnums c }
 
 
-checkStateVar :: AST.StateVar Name -> TC StateVar
+checkStateVar :: AST.StateVar Renamed -> TC StateVar
 checkStateVar AST.StateVar { svAnn, svName, svType, svInit, svBounds } =
   do ty' <- translateType svType
      e'  <- zonk =<< traverse (checkExpr ty') svInit
 
-     bounds <- case svBounds of
-                 Just loc -> withLoc loc (return . Just)
-                 Nothing  -> return Nothing
+     let bounds = case svBounds of
+                    Just AST.Bounds { bLow, bHigh } -> Just (bLow, bHigh)
+                    Nothing                         -> Nothing
 
      -- TODO: add an assertion that the type doesn't contain variables [tc]
-     addTypes [(thing svName, Forall [] ty')]
+     addTypes [(svName, Forall [] ty')]
 
      -- when the type of the state var is Int, make sure that it has bounds
      -- defined.
@@ -128,7 +117,7 @@ checkStateVar AST.StateVar { svAnn, svName, svType, svInit, svBounds } =
           (record (MissingBounds svName))
 
      return StateVar { svAnn    = svAnn
-                     , svName   = thing svName
+                     , svName   = svName
                      , svType   = ty'
                      , svBounds = bounds
                      , svInit   = e' }
@@ -138,12 +127,12 @@ checkStateVar AST.StateVar { svAnn, svName, svType, svInit, svBounds } =
 --
 -- NOTE: we don't currently allow recursive functions, as there's no way to
 -- terminate recursion in the language.
-inferFun :: AST.Loc (AST.Fun Name) -> TC (Controller -> Controller)
+inferFun :: AST.Fun Renamed -> TC (Controller -> Controller)
 inferFun locFun = withLoc locFun $ \ AST.Fun { fName } ->
   do ty  <- guessType locFun
      fb' <- checkFun ty locFun
 
-     addTypes [(thing fName, fSchema fb')]
+     addTypes [(fName, fSchema fb')]
 
      return $ \ c -> c { cFuns = NonRecursive fb' : cFuns c }
 
@@ -152,15 +141,15 @@ inferFun locFun = withLoc locFun $ \ AST.Fun { fName } ->
 -- which just indicates that the variables are unused. It might be good to
 -- propagate this information down, so that the function can ultimately be
 -- re-written to not include that parameter.
-checkFun :: Type -> AST.Loc (AST.Fun Name) -> TC Fun
+checkFun :: Type -> AST.Fun Renamed -> TC Fun
 checkFun ty locFun = withLoc locFun $ \ AST.Fun { fName, fParams, fBody, fAnn } ->
   withParams ty fParams $ \ (ps,rty) ->
     do e       <- checkFunBody rty fBody
        fSchema <- generalize (tFun (ps ++ [rty]))
        fBody'  <- zonk e
-       return Fun { fName   = thing fName
+       return Fun { fName   = fName
                   , fAnn    = fAnn
-                  , fParams = map thing fParams
+                  , fParams = fParams
                   , fBody   = fBody'
                   , .. }
 
@@ -183,75 +172,75 @@ generalize ty =
      return (Forall gs ty'')
 
 
-checkFunBody :: Type -> AST.FunBody Name -> TC FunBody
+checkFunBody :: Type -> AST.FunBody Renamed -> TC FunBody
 
-checkFunBody ty (AST.FBSpec ps) =
+checkFunBody ty (AST.FBSpec loc ps) = addLoc loc $
   do unify ty TSpec
      ps' <- zonk =<< traverse checkSpec ps
      return (FunSpec (mconcat ps'))
 
-checkFunBody ty (AST.FBExpr e) =
+checkFunBody ty (AST.FBExpr loc e) = addLoc loc $
   do e' <- checkExpr ty e
      return (FunExpr e')
 
 
 -- | Type-check an expression, producing a type-checked expression as the
 -- result.
-checkExpr :: Type -> AST.Expr Name -> TC Expr
+checkExpr :: Type -> AST.Expr Renamed -> TC Expr
 
-checkExpr ty (AST.EVar n) =
+checkExpr ty (AST.EVar loc n) = addLoc loc $
   do (ty',tyApp) <- freshInst =<< lookupVar n
      unify ty ty'
      return (tyApp (EVar ty' n))
 
-checkExpr ty (AST.ECon n) =
+checkExpr ty (AST.ECon loc n) = addLoc loc $
   do ty' <- monoInst =<< lookupVar n
      unify ty ty'
      return (ECon ty' n)
 
-checkExpr ty (AST.ENum i) =
+checkExpr ty (AST.ENum loc i) = addLoc loc $
   do unify ty TInt
      return (ENum i)
 
-checkExpr ty AST.ETrue =
+checkExpr ty (AST.ETrue loc)= addLoc loc $
   do unify ty TBool
      return ETrue
 
-checkExpr ty AST.EFalse =
+checkExpr ty (AST.EFalse loc) = addLoc loc $
   do unify ty TBool
      return EFalse
 
-checkExpr ty (AST.EAnd l r) =
+checkExpr ty (AST.EAnd loc l r) = addLoc loc $
   do unify ty TBool
      l' <- checkExpr TBool l
      r' <- checkExpr TBool r
      return (EAnd l' r')
 
-checkExpr ty (AST.EOr  l r) =
+checkExpr ty (AST.EOr loc l r) = addLoc loc $
   do unify ty TBool
      l' <- checkExpr TBool l
      r' <- checkExpr TBool r
      return (EOr l' r')
 
-checkExpr ty (AST.ENot e) =
+checkExpr ty (AST.ENot loc e) = addLoc loc $
   do unify ty TBool
      e' <- checkExpr TBool e
      return (ENot e')
 
-checkExpr ty (AST.EIf p t f) =
+checkExpr ty (AST.EIf loc p t f) = addLoc loc $
   do p' <- checkExpr TBool p
      t' <- checkExpr ty t
      f' <- checkExpr ty f
      return (eIf p' t' f')
 
-checkExpr ty (AST.EApp f x) =
+checkExpr ty (AST.EApp loc f x) = addLoc loc $
   do xtv <- newTVar Nothing
      let xty = TFree xtv
      f'  <- checkExpr (TFun xty ty) f
      x'  <- checkExpr xty x
      return (EApp f' x')
 
-checkExpr ty (AST.EEq a b) =
+checkExpr ty (AST.EEq loc a b) = addLoc loc $
   do atv <- newTVar Nothing
      let aty = TFree atv
      a' <- checkExpr aty a
@@ -259,7 +248,7 @@ checkExpr ty (AST.EEq a b) =
      unify ty TBool
      return (EEq aty a' b')
 
-checkExpr ty (AST.ENeq a b) =
+checkExpr ty (AST.ENeq loc a b) = addLoc loc $
   do atv <- newTVar Nothing
      let aty = TFree atv
      a' <- checkExpr aty a
@@ -267,25 +256,25 @@ checkExpr ty (AST.ENeq a b) =
      unify ty TBool
      return (ENot (EEq aty a' b'))
 
-checkExpr ty (AST.EImp a b) =
+checkExpr ty (AST.EImp loc a b) = addLoc loc $
   do a' <- checkExpr TBool a
      b' <- checkExpr TBool b
      unify ty TBool
      return (eImp a' b')
 
-checkExpr ty (AST.EIff a b) =
+checkExpr ty (AST.EIff loc a b) = addLoc loc $
   do a' <- checkExpr TBool a
      b' <- checkExpr TBool b
      unify ty TBool
      return (eAnd [ eImp a' b', eImp b' a' ])
 
-checkExpr ty (AST.ECase e cs) =
+checkExpr ty (AST.ECase loc e cs) = addLoc loc $
   do etv <- newTVar Nothing
      let ety = TFree etv
      e' <- checkExpr ety e
      checkCases ety e' ty cs
 
-checkExpr ty (AST.ESet es) =
+checkExpr ty (AST.ESet loc es) = addLoc loc $
   do etv <- newTVar Nothing
      let ety = TFree etv
      unify ty (TSet ety)
@@ -294,7 +283,7 @@ checkExpr ty (AST.ESet es) =
 
      return (ESet ety es')
 
-checkExpr ty (AST.EIn e set) =
+checkExpr ty (AST.EIn loc e set) = addLoc loc $
   do etv  <- newTVar Nothing
      let ety = TFree etv
      e'   <- checkExpr ety e
@@ -304,29 +293,27 @@ checkExpr ty (AST.EIn e set) =
 
      return (EIn ety e' set')
 
-checkExpr ty AST.EAny =
+checkExpr ty (AST.EAny loc) = addLoc loc $
   do unify ty (TFun (TSet TBool) TBool)
      return (EPrim PAny)
 
-checkExpr ty AST.EAll =
+checkExpr ty (AST.EAll loc) = addLoc loc $
   do unify ty (TFun (TSet TBool) TBool)
      return (EPrim PAll)
 
-checkExpr ty AST.EMutex =
+checkExpr ty (AST.EMutex loc) = addLoc loc $
   do unify ty (TFun (TSet TBool) TBool)
      return (EPrim PMutex)
 
-checkExpr ty (AST.ENext e) =
+checkExpr ty (AST.ENext loc e) = addLoc loc $
   do e' <- checkExpr ty e
      return (ENext ty e')
-
-checkExpr ty (AST.ELoc loc) = withLoc loc (checkExpr ty)
 
 
 -- | Turn a case expression into one big disjunction of implications.
 --
 -- INVARIANT: this expects that there is at most one default present.
-checkCases :: Type -> Expr -> Type -> [AST.Case Name] -> TC Expr
+checkCases :: Type -> Expr -> Type -> [AST.Case Renamed] -> TC Expr
 checkCases ety e ty cases =
   do pats' <- traverse mkImp pats
      let ps = map fst pats'
@@ -335,7 +322,7 @@ checkCases ety e ty cases =
      defs' <- traverse (mkDefault neg) defs
 
      when (length defs' > 1)
-          (record (tooManyDefaultCases (map fst defs)))
+          (record (tooManyDefaultCases [ c | (_,c,_) <- defs ]))
 
      let imps = [ eImp p c | (p,c) <- pats' ]
      return (eAnd (defs' ++ imps))
@@ -344,51 +331,48 @@ checkCases ety e ty cases =
 
   (defs,pats) = partitionEithers (map isDefault cases)
 
-  isDefault c = go mempty c
+  isDefault c = go c
     where
-    go loc (AST.CPat p rhs)   = Right ((p,rhs) `at` loc)
-    go loc (AST.CDefault rhs) = Left (c, rhs `at` loc)
-    go _   (AST.CLoc loc)     = go (getLoc loc) (thing loc)
+    go (AST.CPat loc p rhs)   = Right (loc,p,rhs)
+    go (AST.CDefault loc rhs) = Left (loc,c,rhs)
 
-  mkImp loc = withLoc loc $ \ (pat,rhs) ->
+  mkImp (loc,pat,rhs) = addLoc loc $
     do pat' <- checkPat ety e pat
        rhs' <- checkExpr ty rhs
        return (pat',rhs')
 
   -- the condition for the default case to fire is when all of the implication
   -- conditions are false
-  mkDefault cond (_,loc) = withLoc loc $ \ body ->
+  mkDefault cond (loc,_,body) = addLoc loc $
     do body' <- checkExpr ty body
        return (eImp cond body')
 
 
 -- | Guard that a pattern matches the type given, and rewrite to a core
 -- representation that implements the match.
-checkPat :: Type -> Expr -> AST.Pat Name -> TC Expr
+checkPat :: Type -> Expr -> AST.Pat Renamed -> TC Expr
 
-checkPat ty e (AST.PCon n) =
+checkPat ty e (AST.PCon loc n) = addLoc loc $
   do nty <- monoInst =<< lookupVar n
      unify ty nty
      return (EEq ty e (ECon nty n))
 
 -- XXX make sure to check that the number fits in the bounds expected
-checkPat ty e (AST.PNum n) =
+checkPat ty e (AST.PNum loc n) = addLoc loc $
   do return (EEq ty e (ENum n))
-
-checkPat ty e (AST.PLoc loc) = withLoc loc (checkPat ty e)
 
 
 -- | Locally introduce types for function parameters, and run the body.
-withParams :: Type -> [AST.Loc Name] -> (([Type],Type) -> TC a) -> TC a
+withParams :: Type -> [Name] -> (([Type],Type) -> TC a) -> TC a
 withParams ty params body =
   -- it should be impossible for the number of function arguments and number
   -- of parameters to be different, as the user never has control over the type
   -- signature
   let tyParts@(args,_) = destTFun ty
-   in withTypes (zip (map thing params) args) (body tyParts)
+   in withTypes (zip params args) (body tyParts)
 
 -- | Produce a type that follows the shape of the function definition.
-guessType :: AST.Loc (AST.Fun Name) -> TC Type
+guessType :: AST.Fun Renamed -> TC Type
 guessType loc = withLoc loc $ \ AST.Fun { fName, fParams } ->
   do vars <- traverse (`withLoc` (newTVar . Just)) fParams
      res  <- withLoc fName (newTVar . Just)
@@ -398,14 +382,14 @@ guessType loc = withLoc loc $ \ AST.Fun { fName, fParams } ->
 
 
 -- | Translate a parsed type into a core type.
-translateType :: AST.Type Name -> TC Type
-translateType AST.TBool        = return TBool
-translateType AST.TInt         = return TInt
-translateType (AST.TEnum name) = return (TEnum name)
-translateType (AST.TFun l r)   = do l' <- translateType l
-                                    r' <- translateType r
-                                    return (TFun l' r')
-translateType (AST.TLoc loc)   = withLoc loc translateType
+translateType :: AST.Type Renamed -> TC Type
+translateType (AST.TBool _)      = return TBool
+translateType (AST.TInt _)       = return TInt
+translateType (AST.TEnum _ name) = return (TEnum name)
+translateType (AST.TFun loc l r) = addLoc loc $
+  do l' <- translateType l
+     r' <- translateType r
+     return (TFun l' r')
 
 
 -- Instantiation ---------------------------------------------------------------

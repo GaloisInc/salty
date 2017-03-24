@@ -22,6 +22,7 @@ import           Message
 import           PP hiding (ppOrigin)
 import           Panic
 import           Scope.Name (Name,nameText,nameUnique)
+import           SrcLoc
 import           TypeCheck.AST
 
 import           Control.Exception (bracket,catch)
@@ -29,7 +30,7 @@ import           Control.Monad (when)
 import           Data.Foldable (forM_)
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (catMaybes)
-import qualified Data.Text.Lazy as L
+import qualified Data.Text as T
 import           Data.Traversable (forM)
 import           MonadLib (StateT, runStateT, runStateT, get, set, inBase)
 import qualified SimpleSMT as SMT
@@ -39,24 +40,24 @@ data SanityMessage = CouldntFindZ3
                      -- ^ Failed to start Z3, indicates that sanity checking was
                      -- not done.
 
-                   | InitConflict [Loc Origin]
+                   | InitConflict [Origin]
                      -- ^ Variable initialization is not consistent
 
-                   | EnvLivenessSafety [Loc Origin]
+                   | EnvLivenessSafety [Origin]
                      -- ^ Environment liveness constraint will eventually cause
                      -- environmental safety constraints to be violated.
 
-                   | SysLivenessSafety Bool [Loc Origin]
+                   | SysLivenessSafety Bool [Origin]
                      -- ^ A system liveness constraint will cause the system to
                      -- eventually violate safety.
 
-                   | UnsatEnv [Loc Origin]
+                   | UnsatEnv [Origin]
                      -- ^ The environment is never satisfiable. This will yield
                      -- a realizable, but useless controller, that will work at
                      -- the first step, and behave randomly for the rest of
                      -- time.
 
-                   | UnsatSys [Loc Origin]
+                   | UnsatSys [Origin]
                      -- ^ The system safety properties are never satisfiable.
                      deriving (Show)
 
@@ -129,29 +130,37 @@ checkController cont@Controller { .. } = withScope $
           err    <- checkEnvLiveness cont safety
           checkSysLiveness err cont safety
 
-data Origin = SysTrans
-            | EnvTrans
+data Origin = SysTrans SrcLoc
+            | EnvTrans SrcLoc
             | InputVar Name
             | OutputVar Name
-            | EnvLiveness
-            | SysLiveness
-              deriving (Eq,Ord,Show)
+            | EnvLiveness SrcLoc
+            | SysLiveness SrcLoc
+              deriving (Eq,Show)
 
-ppOrigin :: Loc Origin -> Doc
-ppOrigin loc =
-  case thing loc of
-    SysTrans    -> text "system safety constraint at"       <+> pp (getLoc loc)
-    EnvTrans    -> text "environment safety constraint at"  <+> pp (getLoc loc)
-    InputVar  n -> fsep [ text "initialization of input variable", ticks (pp (nameText n))
-                        , text "at", pp (getLoc loc) ]
-    OutputVar n -> fsep [ text "initialization output variable", ticks (pp (nameText n))
-                        , text "at", pp (getLoc loc) ]
+instance HasSrcLoc Origin where
+  srcLoc (SysTrans loc)     = loc
+  srcLoc (EnvTrans loc)     = loc
+  srcLoc (InputVar n)       = srcLoc n
+  srcLoc (OutputVar n)      = srcLoc n
+  srcLoc (EnvLiveness loc)  = loc
+  srcLoc (SysLiveness loc)  = loc
 
-    EnvLiveness -> text "environment liveness constraint at" <+> pp (getLoc loc)
-    SysLiveness -> text "system liveness constraint at" <+> pp (getLoc loc)
+ppOrigin :: Origin -> Doc
+ppOrigin origin =
+  case origin of
+    SysTrans l    -> text "system safety constraint at"       <+> pp l
+    EnvTrans l    -> text "environment safety constraint at"  <+> pp l
+    InputVar n    -> fsep [ text "initialization of input variable", ticks (pp (nameText n))
+                          , text "at", pp (srcLoc n) ]
+    OutputVar n   -> fsep [ text "initialization output variable", ticks (pp (nameText n))
+                          , text "at", pp (srcLoc n) ]
+
+    EnvLiveness l -> text "environment liveness constraint at" <+> pp l
+    SysLiveness l -> text "system liveness constraint at" <+> pp l
 
 
-type LocMap = Map.Map String (Loc Origin)
+type LocMap = Map.Map String Origin
 
 
 -- | Check for satisfiability, and generate a message using the unsat core if
@@ -192,7 +201,7 @@ checkEnvSafety Controller { .. } =
 checkSysSafety :: Bool -> Controller -> SMT Bool
 checkSysSafety envSafe Controller { .. } =
   do let cxt = case sEnvTrans cSpec of
-                 es | envSafe && not (null es) -> Just (eAnd (map thing es))
+                 es | envSafe && not (null es) -> Just (eAnd (map snd es))
                  _                             -> Nothing
      sys <- assertExprs SysTrans "sys_trans" cxt (sSysTrans cSpec)
 
@@ -208,15 +217,15 @@ assertSafety Controller { .. } =
 
 
 -- | Assert all safety constraints from the controller.
-assertExprs :: Origin -> String -> Maybe Expr -> [Loc Expr] -> SMT LocMap
+assertExprs :: (SrcLoc -> Origin) -> String -> Maybe Expr -> [(SrcLoc,Expr)] -> SMT LocMap
 assertExprs origin pfx mbCxt locs =
   do mbCxt' <- traverse exprToSMT mbCxt
      let addCxt = case mbCxt' of
                     Just cxt -> SMT.implies cxt
                     Nothing  -> id
-     es     <- traverse (exprToSMT . thing) locs
+     es     <- traverse (exprToSMT . snd) locs
      ens    <- assertNamed pfx [ addCxt e | e <- es ]
-     return $ Map.fromList [ (n, origin <$ loc) | n <- ens | loc <- locs ]
+     return $ Map.fromList [ (n, origin loc) | n <- ens | (loc,_) <- locs ]
 
 
 -- Initial State ---------------------------------------------------------------
@@ -241,18 +250,18 @@ assertInit Controller { .. } =
        ns <- assertNamed pfx es
        return (zip ns locs)
 
-initInput :: StateVar -> SMT (Maybe (SMT.SExpr, Loc Origin))
+initInput :: StateVar -> SMT (Maybe (SMT.SExpr, Origin))
 initInput  = initVar InputVar
 
-initOutput :: StateVar -> SMT (Maybe (SMT.SExpr, Loc Origin))
+initOutput :: StateVar -> SMT (Maybe (SMT.SExpr, Origin))
 initOutput  = initVar OutputVar
 
-initVar :: (Name -> Origin) -> StateVar -> SMT (Maybe (SMT.SExpr, Loc Origin))
+initVar :: (Name -> Origin) -> StateVar -> SMT (Maybe (SMT.SExpr, Origin))
 initVar mkOrigin = \ StateVar { .. } ->
   case svInit of
     Just e ->
       do e' <- exprToSMT (EEq svType (EVar svType svName) e)
-         return (Just (e', mkOrigin svName `at` getLoc svName))
+         return (Just (e', mkOrigin svName))
 
     Nothing ->
          return Nothing
@@ -264,31 +273,31 @@ initVar mkOrigin = \ StateVar { .. } ->
 checkSysLiveness :: Bool -> Controller -> LocMap -> SMT ()
 checkSysLiveness envWarns cont locs =
   do conflicts <- checkLiveness (sSysLiveness (cSpec cont)) locs
-     forM_ conflicts $ \ (loc, safety) ->
-       addMessage (SysLivenessSafety (not envWarns) (SysLiveness `at` loc : safety))
+     forM_ conflicts $ \ (loc, _, safety) ->
+       addMessage (SysLivenessSafety (not envWarns) (SysLiveness loc : safety))
 
 -- | Check for environmental liveness constraints that will eventually violate
 -- environmental safety constraints.
 checkEnvLiveness :: Controller -> LocMap -> SMT Bool
 checkEnvLiveness cont locs =
   do conflicts <- checkLiveness (sEnvLiveness (cSpec cont)) locs
-     forM_ conflicts $ \ (loc, safety) ->
-       addMessage (EnvLivenessSafety (EnvLiveness `at` loc : safety))
+     forM_ conflicts $ \ (loc, _, safety) ->
+       addMessage (EnvLivenessSafety (EnvLiveness loc : safety))
 
      return (not (null conflicts))
 
 -- | Assert liveness constraints one at a time, recording when they violate the
 -- safety constraints of the specification.
-checkLiveness :: [Loc Expr] -> LocMap -> SMT [(Loc SMT.SExpr, [Loc Origin])]
+checkLiveness :: [(SrcLoc,Expr)] -> LocMap -> SMT [(SrcLoc, SMT.SExpr, [Origin])]
 checkLiveness es safety = withScope $
-  do rs <- forM es $ \ loc -> withScope $
-        do e' <- exprToSMT (thing loc)
+  do rs <- forM es $ \ (loc,e) -> withScope $
+        do e' <- exprToSMT e
            assert e'
            res <- checkSat
            if res /= SMT.Sat
               then
                 do ms <- getUnsatCore
-                   return [ (e' `at` loc, [ safety Map.! m | m <- ms ]) ]
+                   return [ (loc, e', [ safety Map.! m | m <- ms ]) ]
               else return []
 
      return (concat rs)
@@ -391,7 +400,7 @@ getUnsatCore  = withSolver $ \ s ->
 
 -- | Translate a name to a unique name in the SMT embedding.
 smtName :: Name -> String
-smtName n = L.unpack (nameText n) ++ "_" ++ show (nameUnique n)
+smtName n = T.unpack (nameText n) ++ "_" ++ show (nameUnique n)
 
 
 -- | Translate a name to a unique name in the SMT embedding.

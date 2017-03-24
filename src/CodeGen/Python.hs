@@ -11,7 +11,7 @@ import TypeCheck.AST
 
 import           Data.Maybe (fromMaybe)
 import qualified Data.Map.Strict as Map
-import qualified Data.Text.Lazy as L
+import qualified Data.Text as T
 
 
 type Package = Map.Map FilePath Doc
@@ -190,7 +190,7 @@ pythonName :: Name -> Doc
 pythonName n = pp (fromMaybe (nameText n) (nameOutText n))
 
 upper :: Name -> Doc
-upper n = pp (L.toUpper (nameText n))
+upper n = pp (T.toUpper (nameText n))
 
 cls :: Doc -> Doc -> Doc
 cls x super = text "class" <+> x <> parens super

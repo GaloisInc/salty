@@ -6,6 +6,7 @@ module TypeCheck.Expand (expand) where
 
 import Panic (panic,HasCallStack)
 import Scope.Name
+import SrcLoc
 import TypeCheck.AST
 
 import qualified Data.Foldable as F
@@ -43,29 +44,34 @@ expandDef env f args =
 
 -- | Translate top-level expressions into specifications, or panic if that's not
 -- possible.
-expandTopExpr :: Env -> Loc Expr -> Spec
-expandTopExpr env loc =
-  case destEApp (expand' env (thing loc)) of
+expandTopExpr :: Env -> (SrcLoc,Expr) -> Spec
+expandTopExpr env (loc,e) =
+  case destEApp (expand' env e) of
     (EVar _ f, args) -> go (expandDef env f args)
     _                -> panic "Non-spec top-level expression"
 
   where
 
-  go (FunExpr e') = expandTopExpr env (e' `at` loc)
+  go (FunExpr e') = expandTopExpr env (loc,e')
   go (FunSpec s)  = setSpecLoc loc (expand' env s)
 
 
 class Expand a where
   expand' :: HasCallStack => Env -> a -> a
 
+instance Expand SrcLoc where
+  expand' _ = id
+  {-# INLINE expand' #-}
+
+instance (Expand a, Expand b) => Expand (a,b) where
+  expand' env = \ (a,b) -> (expand' env a, expand' env b)
+  {-# INLINE expand' #-}
+
 instance Expand a => Expand (Maybe a) where
   expand' env = fmap (expand' env)
 
 instance Expand a => Expand [a] where
   expand' env = map (expand' env)
-
-instance Expand a => Expand (Loc a) where
-  expand' env = fmap (expand' env)
 
 instance Expand StateVar where
   expand' env StateVar { .. } = StateVar { svInit = expand' env svInit, .. }

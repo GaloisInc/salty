@@ -33,6 +33,7 @@ library
                        Slugs.Env
                        Slugs.FSM
                        Slugs.Translate
+                       SrcLoc
                        Syntax.AST
                        Syntax.Lexer
                        Syntax.Parser
@@ -49,7 +50,8 @@ library
                        alex  >= 3.1.7
   build-depends:       base >=4.8 && <5,
                        language-slugs,
-                       located >= 0.1.1.0,
+                       alex-tools >= 0.2.0.0,
+                       layout-rules,
                        array,
                        containers,
                        monadLib,

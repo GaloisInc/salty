@@ -3,6 +3,7 @@
 
 module Opt.Simpl where
 
+import SrcLoc
 import TypeCheck.AST
 
 import Language.Slugs.Lens
@@ -11,8 +12,12 @@ import Language.Slugs.Lens
 class Simp a where
   simp :: a -> a
 
-instance Simp a => Simp (Loc a) where
-  simp = fmap simp
+instance Simp SrcLoc where
+  simp = id
+  {-# INLINE simp #-}
+
+instance (Simp a, Simp b) => Simp (a,b) where
+  simp (x,y) = (simp x, simp y)
 
 instance Simp a => Simp [a] where
   simp = map simp

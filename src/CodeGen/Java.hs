@@ -6,6 +6,7 @@ module CodeGen.Java where
 import Scope.Name
 import PP
 import Slugs.FSM
+import SrcLoc
 import TypeCheck.AST (EnumDef(..))
 
 import           Control.Monad (guard)
@@ -13,7 +14,6 @@ import           Data.List (nub)
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (fromMaybe)
 import           System.FilePath ((<.>),pathSeparator)
-import           Text.Location (HasLoc(..))
 
 
 -- | Package layout for generated classes.
@@ -225,9 +225,9 @@ mkResult enumPkg outs =
 
 -- | Output the @Generated@ attribute for something that provides location
 -- information.
-generated :: (PP (LocSource loc), HasLoc loc) => loc -> Doc
+generated :: HasSrcLoc loc => loc -> Doc
 generated loc = text "@Generated"
-             <> parens (text "value" <> char '=' <> doubleQuotes (pp (getLoc loc)))
+             <> parens (text "value" <> char '=' <> doubleQuotes (pp (srcLoc loc)))
 
 block :: Doc -> Doc -> Doc
 block hdr body =

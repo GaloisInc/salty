@@ -3,10 +3,10 @@
 {
 {-# OPTIONS_GHC -w #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Syntax.Lexer (
     Token(..),
-    TokenType(..),
     Keyword(..),
     Virtual(..),
     lexer, Lexeme,
@@ -15,13 +15,13 @@ module Syntax.Lexer (
 
 import Panic (panic)
 
+import           AlexTools
 import           Data.Char (ord,isAscii,isSpace)
 import           Data.Maybe (fromMaybe)
-import qualified Data.Text.Lazy as L
-import qualified Data.Text.Lazy.Read as L
+import qualified Data.Text as T
+import qualified Data.Text.Read as T
 import           Data.Word (Word8)
-import           Text.Location
-import           Text.Location.Layout
+import           Text.Layout.OffSides
 
 }
 
@@ -43,7 +43,7 @@ $num   = [0-9]
 $white+ ;
 
 -- single-line comments
-"--" .* { emits TLineComment }
+"--" .* { lexeme TLineComment }
 
 "[" @ident "|" { startCode }
 
@@ -52,6 +52,8 @@ $white+ ;
 "input"      { keyword Kinput      }
 "output"     { keyword Koutput     }
 
+"sys_init"     { keyword Ksys_init     }
+"env_init"     { keyword Kenv_init     }
 "sys_trans"    { keyword Ksys_trans    }
 "env_trans"    { keyword Kenv_trans    }
 "sys_liveness" { keyword Ksys_liveness }
@@ -113,9 +115,9 @@ $white+ ;
 "["     { keyword Klbracket }
 "]"     { keyword Krbracket }
 
-@number   { emits mkTNum }
-@ident    { emits TIdent }
-@conident { emits TConIdent }
+@number   { number }
+@ident    { lexeme TIdent }
+@conident { lexeme TConIdent }
 
 }
 
@@ -137,22 +139,16 @@ $white+ { addCode }
 
 -- Tokens ----------------------------------------------------------------------
 
-type Lexeme = Located FilePath Token
-
-data Token = Token { tokText :: !L.Text
-                   , tokType :: !TokenType
-                   } deriving (Eq,Show)
-
-data TokenType = TLineComment !L.Text
-               | TIdent !L.Text
-               | TConIdent !L.Text
-               | TLexicalError
-               | TNum !Integer
-               | TKeyword !Keyword
-               | TVirt !Virtual
-               | TString !L.Text
-               | TCode !L.Text !L.Text
-                 deriving (Eq,Show)
+data Token = TLineComment
+           | TIdent
+           | TConIdent
+           | TLexicalError
+           | TNum !Integer
+           | TKeyword !Keyword
+           | TVirt !Virtual
+           | TString !T.Text
+           | TCode !T.Text !T.Text
+             deriving (Eq,Show)
 
 data Keyword = Kif
              | Kthen
@@ -194,6 +190,8 @@ data Keyword = Kif
              | KTrue
              | KFalse
              | Kdef
+             | Ksys_init
+             | Kenv_init
              | Ksys_trans
              | Kenv_trans
              | Kenv_liveness
@@ -208,162 +206,178 @@ data Virtual = VBegin
                deriving (Eq,Show)
 
 isComment :: Token -> Bool
-isComment Token { tokType = TLineComment{} } = True
-isComment _                                  = False
+isComment TLineComment{} = True
+isComment _              = False
 
-mkTNum :: L.Text -> TokenType
-mkTNum txt = TNum $! case L.decimal txt of
-                       Right (n,_) -> n
-                       Left err    -> error ("mkTNum: " ++ err)
-
-ignoreComments :: [Lexeme] -> [Lexeme]
-ignoreComments  = filter (not . isComment . thing)
+ignoreComments :: [Lexeme Token] -> [Lexeme Token]
+ignoreComments  = filter (not . isComment . lexemeToken)
 
 
 -- Lexer -----------------------------------------------------------------------
 
-lexWithLayout :: FilePath -> L.Text -> [Lexeme]
+lexWithLayout :: FilePath -> T.Text -> [Lexeme Token]
 lexWithLayout src bytes =
   layout Layout { .. } (ignoreComments (lexer src Nothing bytes))
   where
-  beginsLayout Token { tokType = TKeyword Kwhere        } = True
-  beginsLayout Token { tokType = TKeyword Kof           } = True
-  beginsLayout Token { tokType = TKeyword Ksys_trans    } = True
-  beginsLayout Token { tokType = TKeyword Ksys_liveness } = True
-  beginsLayout Token { tokType = TKeyword Kenv_trans    } = True
-  beginsLayout Token { tokType = TKeyword Kenv_liveness } = True
-  beginsLayout _                                          = False
+  beginsLayout (TKeyword Kwhere        ) = True
+  beginsLayout (TKeyword Kof           ) = True
+  beginsLayout (TKeyword Ksys_init     ) = True
+  beginsLayout (TKeyword Ksys_trans    ) = True
+  beginsLayout (TKeyword Ksys_liveness ) = True
+  beginsLayout (TKeyword Kenv_init     ) = True
+  beginsLayout (TKeyword Kenv_trans    ) = True
+  beginsLayout (TKeyword Kenv_liveness ) = True
+  beginsLayout _                         = False
 
-  endsLayout Token { tokType = TKeyword Ksys_trans    } = True
-  endsLayout Token { tokType = TKeyword Ksys_liveness } = True
-  endsLayout Token { tokType = TKeyword Kenv_trans    } = True
-  endsLayout Token { tokType = TKeyword Kenv_liveness } = True
-  endsLayout _                                          = False
+  endsLayout (TKeyword Ksys_init     ) = True
+  endsLayout (TKeyword Ksys_trans    ) = True
+  endsLayout (TKeyword Ksys_liveness ) = True
+  endsLayout (TKeyword Kenv_init     ) = True
+  endsLayout (TKeyword Kenv_trans    ) = True
+  endsLayout (TKeyword Kenv_liveness ) = True
+  endsLayout _                         = False
 
-  start = Token { tokText = L.empty, tokType = TVirt VBegin }
-  sep   = Token { tokText = L.empty, tokType = TVirt VSep   }
-  end   = Token { tokText = L.empty, tokType = TVirt VEnd   }
+  start = wrapToken (TVirt VBegin)
+  sep   = wrapToken (TVirt VSep)
+  end   = wrapToken (TVirt VEnd)
 
-lexer :: FilePath -> Maybe Position -> L.Text -> [Lexeme]
-lexer src mbPos bytes = go AlexInput { aiPos = start, aiText = bytes } Normal
+data LexerState = LexerState { lsMode   :: !Mode
+                             , lsSource :: !T.Text
+                             }
+
+mkConfig :: FilePath -> LexerConfig LexerState Token
+mkConfig src =
+  LexerConfig { lexerInitialState = LexerState { lsMode = Normal
+                                               , lsSource = T.pack src
+                                               }
+              , lexerStateMode    = modeToInt
+              , lexerEOF          = \_ -> [] }
+
+lexer :: FilePath -> Maybe SourcePos -> T.Text -> [Lexeme Token]
+lexer src mbPos bytes = $makeLexer (mkConfig src) input
   where
-  start = fromMaybe (Position 1 1) mbPos
+  input = case mbPos of
+            Just start -> (initialInput bytes) { inputPos = start }
+            Nothing    ->  initialInput bytes
 
-  rangeSource = Just src
-
-  go ai st =
-    case alexScan ai (modeToInt st) of
-      AlexEOF -> []
-
-      AlexError ai' ->
-        let (as,bs) = L.break isSpace (aiText ai')
-            pos'    = L.foldl' (flip move) (aiPos ai') as
-            ai2     = AlexInput { aiPos = pos', aiText = bs }
-            loc     = Range { rangeStart = aiPos ai', rangeEnd = pos', .. }
-         in (Token { tokText = as, tokType = TLexicalError } `at` loc) : go ai2 Normal
-
-      AlexSkip ai' _ ->
-        go ai' st
-
-      AlexToken ai' len act ->
-        case act rangeSource len ai st of
-          (st',xs) -> xs ++ go ai' st'
-
-data AlexInput = AlexInput { aiPos   :: !Position
-                           , aiText  :: !L.Text
-                           }
-
-alexGetByte :: AlexInput -> Maybe (Word8,AlexInput)
-alexGetByte AlexInput { .. } =
-  do (c,rest) <- L.uncons aiText
-     return (byteForChar c, AlexInput { aiText = rest, aiPos = move c aiPos, .. })
+alexGetByte = makeAlexGetByte $ \ c ->
+  if isAscii c
+     then toEnum (fromEnum c)
+     else 0x1
 
 
 data Mode = Normal
-          | InString Position [L.Text]
-          | InCode Position L.Text [L.Text]
+          | InString !SourcePos [T.Text] [T.Text]
+          | InCode !SourcePos T.Text [T.Text] [T.Text]
             deriving (Show)
 
-modeToInt :: Mode -> Int
-modeToInt Normal     = 0
-modeToInt InString{} = string
-modeToInt InCode{}   = code
+modeToInt :: LexerState -> Int
+modeToInt LexerState { lsMode = Normal     } = 0
+modeToInt LexerState { lsMode = InString{} } = string
+modeToInt LexerState { lsMode = InCode{}   } = code
 
 
 -- Actions ---------------------------------------------------------------------
 
-type AlexAction = Maybe FilePath -> Int -> AlexInput -> Mode -> (Mode,[Lexeme])
+getMode :: Action LexerState Mode
+getMode  = lsMode <$> getLexerState
 
-move :: Char -> Position -> Position
-move  = movePos 8
+setMode :: Mode -> Action LexerState ()
+setMode mode =
+  do LexerState { .. } <- getLexerState
+     setLexerState $! LexerState { lsMode = mode, .. }
 
-withInput :: (L.Text -> TokenType) -> Maybe FilePath -> Int -> AlexInput
-          -> Lexeme
-withInput mk rangeSource len AlexInput { .. } =
-  Token { .. } `at` Range { rangeStart = aiPos
-                          , rangeEnd   = L.foldl' (flip move) aiPos tokText
-                          , .. }
-  where
-  tokText = L.take (fromIntegral len) aiText
-  tokType = mk tokText
+getSource :: Action LexerState T.Text
+getSource  = lsSource <$> getLexerState
 
-emits :: (L.Text -> TokenType) -> AlexAction
-emits mk src len ai st = (st, [withInput mk src len ai])
+matchRange' :: Action LexerState SourceRange
+matchRange'  =
+  do sourceFile <- getSource
+     start      <- startInput
+     end        <- endInput
+     return $! SourceRange { sourceFrom = inputPos start
+                           , sourceTo   = inputPos end
+                           , .. }
 
-keyword :: Keyword -> AlexAction
-keyword kw src len ai st = (st, [withInput (const (TKeyword kw)) src len ai])
+keyword :: Keyword -> Action LexerState [Lexeme Token]
+keyword kw =
+  do lexemeText  <- matchText
+     lexemeRange <- matchRange'
+     return [ Lexeme { lexemeToken = TKeyword kw, .. } ]
 
-startString :: AlexAction
-startString _ _ ai Normal = (InString (aiPos ai) [], [])
-startString _ _ _ _ =
-  panic "startString: invalid state"
-
-
-addString :: AlexAction
-addString _ len ai (InString start chunks) = (InString start (chunk:chunks), [])
-  where
-  chunk = L.take (fromIntegral len) (aiText ai)
-addString _ _ _ _ =
-  panic "addString: invalid state"
-
-endString :: AlexAction
-endString rangeSource _ ai (InString rangeStart chunks) =
-  (Normal, [Token str (TString str) `at` Range { rangeEnd = aiPos ai, .. }])
-  where
-  str = L.concat (reverse chunks)
-endString _ _ _ _ =
-  panic "endString: invalid state"
+number :: Action LexerState [Lexeme Token]
+number  =
+  do txt <- matchText
+     case T.decimal txt of
+       Right (n,_) -> lexeme (TNum n)
+       Left err    -> error ("number: " ++ err)
 
 
-startCode, addCode, endCode :: AlexAction
+startString, addString, endString :: Action LexerState [Lexeme Token]
 
-startCode _ len ai Normal = (InCode (aiPos ai) ty [], [])
-  where
-  ty = L.take (fromIntegral len - 2) (L.drop 1 (aiText ai))
+startString  =
+  do Normal <- getMode
+     txt    <- matchText
+     r      <- matchRange'
+     setMode (InString (sourceFrom r) [txt] [])
+     return []
 
-startCode _ _ _ _ = panic "startCode: invalid state"
+addString  =
+  do InString pos txts acc <- getMode
+     chunk                 <- matchText
+     setMode (InString pos (chunk:txts) (chunk:acc))
+     return []
 
-addCode _ len ai (InCode n s chunks) = (InCode n s (chunk:chunks), [])
-  where
-  chunk = L.take (fromIntegral len) (aiText ai)
-
-addCode _ _ _ _ = panic "addCode: invalid state"
-
-endCode rangeSource len ai (InCode rangeStart n chunks) =
-  (Normal, [Token txt (TCode n txt) `at` Range { rangeEnd = aiPos ai, .. }])
-  where
-  -- remove common leading whitespace from lines
-  txt = L.unlines (map (L.drop leadingSpace) ls)
-
-  ls = filter (not . empty) (L.lines (L.concat (reverse chunks)))
-
-  empty str    = L.null str || L.all isSpace str
-  leadingSpace = minimum [ L.length (L.takeWhile isSpace line) | line <- ls
-                                                               , not (empty line) ]
+endString  =
+  do InString sourceFrom txts acc <- getMode
+     txt                          <- matchText
+     r                            <- matchRange'
+     sourceFile                   <- getSource
+     setMode Normal
+     return [ Lexeme { lexemeText  = T.concat (reverse (txt:txts))
+                     , lexemeToken = TString (T.concat (reverse acc))
+                     , lexemeRange = SourceRange { sourceTo = sourceTo r, .. }
+                     } ]
 
 
-endCode _ _ _ _ = panic "endCode: invalid state"
+startCode, addCode, endCode :: Action LexerState [Lexeme Token]
 
+startCode =
+  do Normal <- getMode
+     len    <- matchLength
+     txt    <- matchText
+     r      <- matchRange'
+
+     let ty = T.take (fromIntegral len - 2) (T.drop 1 txt)
+     setMode (InCode (sourceFrom r) ty [txt] [])
+
+     return []
+
+addCode =
+  do InCode pos n txts acc <- getMode
+     chunk                 <- matchText
+     setMode (InCode pos n (chunk:txts) (chunk:acc))
+     return []
+
+endCode =
+  do InCode sourceFrom n txts acc <- getMode
+     chunk                        <- matchText
+     r                            <- matchRange'
+     sourceFile                   <- getSource
+     setMode Normal
+
+     -- remove common leading whitespace from lines
+     let txt = T.unlines (map (T.drop leadingSpace) ls)
+         ls  = filter (not . empty) (T.lines (T.concat (reverse acc)))
+
+         empty str    = T.null str || T.all isSpace str
+         leadingSpace = minimum [ T.length (T.takeWhile isSpace line) | line <- ls
+                                                                      , not (empty line) ]
+
+     return [ Lexeme { lexemeText  = T.concat (reverse (chunk:txts))
+                     , lexemeToken = TCode n txt
+                     , lexemeRange = SourceRange { sourceTo = sourceTo r, .. }
+                     } ]
 
 
 -- Utility ---------------------------------------------------------------------

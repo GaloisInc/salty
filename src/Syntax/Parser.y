@@ -10,17 +10,17 @@ module Syntax.Parser (
     parseController
   ) where
 
+import SrcLoc
 import Syntax.AST
 import Syntax.Lexer
 import PP
 
-import qualified Data.Text.Lazy as L
-import           Text.Location
-import           Text.Location.Layout
+import           AlexTools (SourceRange,Lexeme(..),(<->),range)
+import qualified Data.Text as T
 
 }
 
-%tokentype { Lexeme }
+%tokentype { Lexeme Token }
 
 %token
   IDENT    { (matchIdent    -> Just $$) }
@@ -107,183 +107,187 @@ import           Text.Location.Layout
 
 %%
 
-controller :: { Controller PName }
+controller :: { Controller Parsed }
   : 'controller' CONIDENT 'where' layout(top_decl)
-    { Controller $2 $4 }
+    { Controller (srcLoc ($1,$3,$4)) $2 $4 }
 
-top_decl :: { TopDecl PName }
+top_decl :: { TopDecl Parsed }
 
   : opt(ann) 'enum' CONIDENT '=' sep1('|', con_def)
-    { TDLoc (TDEnum (EnumDef $1 $3 $5) `at` getLoc ($1,$2,$5)) }
+    { let { loc = srcLoc ($1,$2,$3) } in TDEnum loc (EnumDef loc $1 $3 $5) }
 
   | fun_decl
-    { TDLoc (fmap TDFun $1) }
+    { TDFun (srcLoc $1) $1 }
 
   | opt(ann) 'input' state_var_decl
-    { TDLoc (fmap TDInput ($3 $1)) }
+    { let { i = $3 $1 } in TDInput (srcLoc i) i }
 
   | opt(ann) 'output' state_var_decl
-    { TDLoc (fmap TDOutput ($3 $1)) }
+    { let { o = $3 $1 } in TDOutput (srcLoc o) o }
 
   | spec
-    { TDLoc (TDSpec $1 `at` $1) }
+    { TDSpec (srcLoc $1) $1 }
 
   | expr
-    { TDLoc (TDExpr $1 `at` $1) }
+    { TDExpr (srcLoc $1) $1 }
 
-con_def :: { (Loc L.Text, Maybe (Loc L.Text)) }
-  : CONIDENT opt(out_name) { ($1,$2) }
+con_def :: { (PName, Maybe T.Text) }
+  : CONIDENT opt(out_name)
+    { ($1,$2) }
 
 
 -- Specification ---------------------------------------------------------------
 
-spec :: { Spec PName }
+spec :: { Spec Parsed }
   : 'sys_trans' layout(expr)
-    { SLoc (SSysTrans $2 `at` getLoc $2) }
+    { SSysTrans (srcLoc $2) $2 }
 
   | 'sys_liveness' layout(expr)
-    { SLoc (SSysLiveness $2 `at` getLoc $2) }
+    { SSysLiveness (srcLoc $2) $2 }
 
   | 'env_trans' layout(expr)
-    { SLoc (SEnvTrans $2 `at` getLoc $2) }
+    { SEnvTrans (srcLoc $2) $2 }
 
   | 'env_liveness' layout(expr)
-    { SLoc (SEnvLiveness $2 `at` getLoc $2) }
+    { SEnvLiveness (srcLoc $2) $2 }
 
 
 -- Functions -------------------------------------------------------------------
 
-fun_decl :: { Loc (Fun PName) }
+fun_decl :: { Fun Parsed }
   : opt(ann) 'def' IDENT parens(sep(',', IDENT)) '=' fun_body
-    { Fun $1 $3 $4 $6 `at` mconcat [getLoc $1, getLoc $3, getLoc $4, getLoc $6] }
+    { Fun (srcLoc ($1,$2,$3,$4,$6)) $1 $3 $4 $6 }
 
   | opt(ann) 'def' IDENT '=' fun_body
-    { Fun $1 $3 [] $5 `at` mconcat [getLoc $1, getLoc $3, getLoc $5] }
+    { Fun (srcLoc ($1,$2,$3,$5)) $1 $3 [] $5 }
 
-fun_body :: { FunBody PName }
-  : list1(spec) { FBSpec $1 }
-  | expr        { FBExpr $1 }
+fun_body :: { FunBody Parsed }
+  : list1(spec) { FBSpec (srcLoc $1) $1 }
+  | expr        { FBExpr (srcLoc $1) $1 }
 
 
 -- State Var Declarations ------------------------------------------------------
 
-state_var_decl :: { Maybe Ann -> Loc (StateVar PName) }
+state_var_decl :: { Maybe (Ann Parsed) -> StateVar Parsed }
   : IDENT opt(out_name) ':' type opt(bounds) opt(state_var_init)
     { \ svAnn ->
-      StateVar { svName = $1
+      StateVar { svAnnot = srcLoc ($1,$4,$5,$6)
+               , svName = $1
                , svType = $4
                , svBounds = $5
                , svInit = $6
                , svOutName = $2
-               , .. } `at` mconcat [getLoc $1, getLoc $4, getLoc $5, getLoc $6] }
+               , .. } }
 
-state_var_init :: { Expr PName }
+state_var_init :: { Expr Parsed }
   : '=' expr { $2 }
 
 -- optional literal name to use during code generation
-out_name :: { Loc L.Text }
-  : '(' IDENT    ')' { $2 }
-  | '(' CONIDENT ')' { $2 }
+out_name :: { T.Text }
+  : '(' IDENT    ')' { pnameText $2 }
+  | '(' CONIDENT ')' { pnameText $2 }
 
 
 -- Types -----------------------------------------------------------------------
 
-type :: { Type PName }
-  : type '->' type   { TLoc (TFun $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
-  | 'Bool'           { TLoc (TBool `at` $1) }
-  | 'Int'            { TLoc (TInt  `at` $1) }
-  | CONIDENT         { TLoc (fmap TEnum $1) }
+type :: { Type Parsed }
+  : type '->' type   { TFun  (srcLoc ($1,$3)) $1 $3 }
+  | 'Bool'           { TBool (srcLoc $1) }
+  | 'Int'            { TInt  (srcLoc $1) }
+  | CONIDENT         { TEnum (srcLoc $1) $1 }
 
-bounds :: { Loc (Int,Int) }
-  : NUM '...' NUM { (fromInteger (thing $1), fromInteger (thing $3))
-                    `at` mappend (getLoc $1) (getLoc $3) }
+bounds :: { Bounds Parsed }
+  : NUM '...' NUM
+    { Bounds { bAnnot = srcLoc (fst $1, fst $3)
+             , bLow   = fromIntegral (snd $1)
+             , bHigh  = fromIntegral (snd $3)
+             } }
 
 
 -- Expressions -----------------------------------------------------------------
 
-expr :: { Expr PName }
+expr :: { Expr Parsed }
   : 'if' bexpr 'then' expr 'else' expr
-    { ELoc (EIf $2 $4 $6 `at` mappend $1 (getLoc $6)) }
+    { EIf (srcLoc ($1,$6)) $2 $4 $6 }
 
   | 'case' bexpr 'of' layout(case_arm)
-    { ELoc (ECase $2 $4 `at` mappend $1 (getLoc $4)) }
+    { ECase (srcLoc ($1,$4)) $2 $4 }
 
   | bexpr
     { $1 }
 
--- XXX: this should be a pattern, not an `aexpr`
-case_arm :: { Case PName }
+case_arm :: { Case Parsed }
   : pat '->' expr
-    { CLoc (CPat $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { CPat (srcLoc ($1,$3)) $1 $3 }
 
   | 'otherwise' '->' expr
-    { CLoc (CDefault $3 `at` mappend $1 (getLoc $3)) }
+    { CDefault (srcLoc ($1,$3)) $3 }
 
-pat :: { Pat PName }
-  : CONIDENT    { PLoc (PCon `fmap` $1) }
-  | NUM         { PLoc (PNum `fmap` $1) }
+pat :: { Pat Parsed }
+  : CONIDENT    { PCon (srcLoc $1) $1 }
+  | NUM         { PNum (fst $1) (snd $1) }
 
-bexpr :: { Expr PName }
+bexpr :: { Expr Parsed }
   : bexpr '||' bexpr
-    { ELoc (EOr $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { EOr (srcLoc ($1,$3)) $1 $3 }
 
   | bexpr '&&' bexpr
-    { ELoc (EAnd $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { EAnd (srcLoc ($1,$3)) $1 $3 }
 
   | '!' bexpr %prec NOT
-    { ELoc (ENot $2 `at` mappend $1 (getLoc $2)) }
+    { ENot (srcLoc ($1,$2)) $2 }
 
   | bexpr '->' bexpr
-    { ELoc (EImp $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { EImp (srcLoc ($1,$3)) $1 $3 }
 
   | bexpr '!=' bexpr
-    { ELoc (ENeq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { ENeq (srcLoc ($1,$3)) $1 $3 }
 
   | bexpr '==' bexpr
-    { ELoc (EEq $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { EEq (srcLoc ($1,$3)) $1 $3 }
 
   | bexpr '<->' bexpr
-    { ELoc (EIff $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { EIff (srcLoc ($1,$3)) $1 $3 }
 
   | bexpr '<-' bexpr
-    { ELoc (EIn $1 $3 `at` mappend (getLoc $1) (getLoc $3)) }
+    { EIn (srcLoc ($1,$3)) $1 $3 }
 
   | 'any' bexpr
-    { mkEApp (ELoc (EAny `at` $1)) [$2] }
+    { mkEApp (EAny (srcLoc $1)) [$2] }
 
   | 'all' bexpr
-    { mkEApp (ELoc (EAll `at` $1)) [$2] }
+    { mkEApp (EAll (srcLoc $1)) [$2] }
 
   | 'mutex' bexpr
-    { mkEApp (ELoc (EMutex `at` $1)) [$2] }
+    { mkEApp (EMutex (srcLoc $1)) [$2] }
 
   | aexpr
     { $1 }
 
-aexpr :: { Expr PName }
+aexpr :: { Expr Parsed }
   : IDENT parens(sep(',', expr))
-    { mkEApp (ELoc (EVar (thing $1) `at` $1)) $2 }
+    { mkEApp (EVar (srcLoc $1) $1) $2 }
 
   | IDENT opt('prime')
-    { let var = ELoc (fmap EVar $1)
+    { let var = EVar (srcLoc $1) $1
        in case $2 of
-            Just p  -> ELoc (ENext var `at` mappend (getLoc var) p)
+            Just p  -> ENext (srcLoc (p :: SourceRange,var)) var
             Nothing -> var }
 
   | CONIDENT
-    { ELoc (fmap ECon $1) }
+    { ECon (srcLoc $1) $1 }
 
   | NUM
-    { ELoc (fmap ENum $1) }
+    { ENum (fst $1) (snd $1) }
 
   | 'True'
-    { ELoc (ETrue `at` $1) }
+    { ETrue (srcLoc $1) }
 
   | 'False'
-    { ELoc (EFalse `at` $1) }
+    { EFalse (srcLoc $1) }
 
   | '{' sep(',', expr) '}'
-    { ELoc (ESet $2 `at` mappend $1 $3) }
+    { ESet (srcLoc ($1,$3)) $2 }
 
   | '(' expr ')'
     { $2 }
@@ -291,99 +295,104 @@ aexpr :: { Expr PName }
 
 -- Annotations -----------------------------------------------------------------
 
-ann :: { Ann }
+ann :: { Ann Parsed }
   : '@' ann_expr opt('v;')
     { $2 }
 
-ann_app :: { Ann }
+ann_app :: { Ann Parsed }
   : CONIDENT parens(sep(',', ann_expr))
-    { AnnLoc (AnnApp (thing $1) $2 `at` mappend (getLoc $1) (getLoc $2)) }
+    { AnnApp (srcLoc ($1,$2)) (pnameText $1) $2 }
 
-ann_expr :: { Ann }
+ann_expr :: { Ann Parsed }
   : ann_app
     { $1 }
 
   | CONIDENT
-    { AnnLoc (AnnSym `fmap` $1) }
+    { AnnSym (srcLoc $1) (pnameText $1) }
 
   | IDENT
-    { AnnLoc (AnnSym `fmap` $1) }
+    { AnnSym (srcLoc $1) (pnameText $1) }
 
   | STRING
-    { AnnLoc (AnnStr `fmap` $1) }
+    { AnnStr (fst $1) (snd $1) }
 
   | '{' sep(',', ann_obj_entry) '}'
-    { AnnLoc (AnnObj $2 `at` map snd $2) }
+    { AnnObj (srcLoc ($1,$3)) $2 }
 
   | '[' sep(',', ann_expr) ']'
-    { AnnLoc (AnnArr $2 `at` $2) }
+    { AnnArr (srcLoc ($1,$3)) $2 }
 
   | CODE
-    { let { (a,b) = thing $1 } in AnnLoc (AnnCode a b `at` $1) }
+    { let { (a,b,c) = $1 } in AnnCode a b c }
 
-ann_obj_entry :: { (L.Text, Ann) }
+ann_obj_entry :: { (T.Text, Ann Parsed) }
   : CONIDENT '=' ann_expr
-    { (thing $1, $3) }
+    { (pnameText $1, $3) }
 
   | IDENT '=' ann_expr
-    { (thing $1, $3) }
+    { (pnameText $1, $3) }
 
 
 -- Utilities -------------------------------------------------------------------
 
-parens(p)
+parens(p) :: { p }
   : '(' p ')' { $2 }
 
-layout(p)
+layout(p) :: { [p] }
   : 'v{' sep('v;', p) 'v}'  { $2 }
 
-sep(p,q)
+sep(p,q) :: { [q] }
   : {- empty -}    { []         }
   | sep1_body(p,q) { reverse $1 }
 
-sep1(p,q)
+sep1(p,q) :: { [q] }
   : sep1_body(p,q) { reverse $1 }
 
-sep1_body(p,q)
+sep1_body(p,q) :: { [q] }
   : q                  { [$1]  }
   | sep1_body(p,q) p q { $3:$1 }
 
-list(p)
+list(p) :: { [p] }
   : {- empty -}  { []         }
   | list_body(p) { reverse $1 }
 
-list1(p)
+list1(p) :: { [p] }
   : list_body(p) { reverse $1 }
 
-list_body(p)
+list_body(p) :: { [p] }
   : p              { [$1]    }
   | list_body(p) p { $2 : $1 }
 
-opt(p)
+opt(p) :: { Maybe p }
   : {- empty -}        { Nothing }
   | p                  { Just $1 }
 
 {
 
-data Error = LexicalError !(Range FilePath)
-           | ParseError !Lexeme
+data Error = LexicalError !SourceRange
+           | ParseError !(Lexeme Token)
            | UnexpectedEOF
              deriving (Show)
+
+instance HasSrcLoc Error where
+  srcLoc (LexicalError loc) = srcLoc loc
+  srcLoc (ParseError   loc) = srcLoc (lexemeRange loc)
+  srcLoc UnexpectedEOF      = mempty
 
 instance PP Error where
   ppPrec _ (LexicalError _) = text "Lexical error"
   ppPrec _ (ParseError _)   = text "Parse error"
   ppPrec _ UnexpectedEOF    = text "Unexpected end of file"
 
-parseController :: FilePath -> L.Text -> Either (Loc Error) (Controller PName)
+parseController :: FilePath -> T.Text -> Either Error (Controller Parsed)
 parseController src bytes =
   case controller (lexWithLayout src bytes) of
     Right a -> Right a
-    Left (LexicalError loc) -> Left (LexicalError loc `at` loc)
-    Left (ParseError loc)   -> Left (ParseError   loc `at` loc)
-    Left UnexpectedEOF      -> Left (UnexpectedEOF    `at` (mempty :: Range FilePath))
+    Left (LexicalError loc) -> Left (LexicalError loc)
+    Left (ParseError loc)   -> Left (ParseError   loc)
+    Left UnexpectedEOF      -> Left UnexpectedEOF
 
-parseError :: [Lexeme] -> Either Error a
+parseError :: [Lexeme Token] -> Either Error a
 parseError toks =
   case toks of
     LexError from : _ -> Left (LexicalError from)
@@ -393,38 +402,35 @@ parseError toks =
 
 -- Utilities -------------------------------------------------------------------
 
-matchConIdent :: Lexeme -> Maybe (Loc L.Text)
-matchConIdent Located { locValue = Token { tokType = TConIdent str }, .. } = Just (str `at` locRange)
-matchConIdent _                                                            = Nothing
+matchConIdent :: Lexeme Token -> Maybe PName
+matchConIdent Lexeme { lexemeToken = TConIdent, .. } = Just (PName (srcLoc lexemeRange) lexemeText)
+matchConIdent _                                      = Nothing
 
 
-matchIdent :: Lexeme -> Maybe (Loc L.Text)
-matchIdent Located { locValue = Token { tokType = TIdent str }, .. } = Just (str `at` locRange)
-matchIdent _                                                         = Nothing
+matchIdent :: Lexeme Token -> Maybe PName
+matchIdent Lexeme { lexemeToken = TIdent, .. } = Just (PName (srcLoc lexemeRange) lexemeText)
+matchIdent _                                   = Nothing
 
 
-matchNum :: Lexeme -> Maybe (Loc Integer)
-matchNum Located { locValue = Token { tokType = TNum i }, .. } = Just (i `at` locRange)
-matchNum _                                                     = Nothing
+matchNum :: Lexeme Token -> Maybe (SrcLoc,Integer)
+matchNum Lexeme { lexemeToken = TNum i, .. } = Just (srcLoc lexemeRange, i)
+matchNum _                                   = Nothing
 
-matchString :: Lexeme -> Maybe (Loc L.Text)
-matchString Located { locValue = Token { tokType = TString str}, .. } = Just (str `at` locRange)
-matchString _                                                         = Nothing
+matchString :: Lexeme Token -> Maybe (SrcLoc,T.Text)
+matchString Lexeme { lexemeToken = TString str, .. } = Just (srcLoc lexemeRange, str)
+matchString _                                        = Nothing
 
-matchCode :: Lexeme -> Maybe (Loc (L.Text,L.Text))
-matchCode Located { locValue = Token { tokType = TCode n str }, .. } =
-  Just ((n,str) `at` locRange)
-matchCode _ = Nothing
+matchCode :: Lexeme Token -> Maybe (SrcLoc,T.Text,T.Text)
+matchCode Lexeme { lexemeToken = TCode n str, .. } = Just (srcLoc lexemeRange,n,str)
+matchCode _                                        = Nothing
 
 
-pattern LexError range <- Located { locValue = Token { tokType = TLexicalError }, locRange = range }
+pattern LexError range <- Lexeme { lexemeToken = TLexicalError, lexemeRange = range }
 
-pattern Keyword kw range <- Located { locValue = Token { tokType = TKeyword kw }
-                                    , locRange = range }
+pattern Keyword kw range <- Lexeme { lexemeToken = TKeyword kw, lexemeRange = range }
 
-pattern Virt v range <- Located { locValue = Token { tokType = TVirt v }
-                                , locRange = range }
+pattern Virt v range <- Lexeme { lexemeToken = TVirt v, lexemeRange = range }
 
-mkEApp :: Expr PName -> [Expr PName] -> Expr PName
-mkEApp f es = ELoc (foldl EApp f es `at` mconcat (getLoc f : map getLoc es))
+mkEApp :: Expr Parsed -> [Expr Parsed] -> Expr Parsed
+mkEApp  = foldl (\acc e -> EApp (srcLoc (acc,e)) acc e)
 }

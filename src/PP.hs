@@ -16,11 +16,12 @@ module PP (
   ) where
 
 import           Scope.Name (Origin(..),Name,nameOrigin,nameText,nameUnique)
+import           SrcLoc
 
+import           AlexTools (SourceRange(..),SourcePos(..))
 import           Data.Int (Int64)
-import qualified Data.Text.Lazy as L
+import qualified Data.Text as T
 import           Text.PrettyPrint.HughesPJ hiding (render)
-import           Text.Location
 
 render :: PP a => a -> String
 render a = show (pp a)
@@ -66,8 +67,8 @@ instance PP Char where
   ppPrec _ = char
   ppList   = text
 
-instance PP L.Text where
-  ppPrec _ = text . L.unpack
+instance PP T.Text where
+  ppPrec _ = text . T.unpack
 
 instance PP Name where
   ppPrec _ n = pp (nameText n) <> char '_' <> pp (nameUnique n)
@@ -86,11 +87,14 @@ ppOrigin (Generated p)      = text "fresh name from pass" <+> text p
 instance PP Integer where
   ppPrec _ = integer
 
-instance PP Position where
-  ppPrec _ Position { .. } =
-    pp posRow <> char ',' <> pp posCol
+instance PP SourcePos where
+  ppPrec _ SourcePos { .. } =
+    pp sourceLine <> char ',' <> pp sourceColumn
 
-instance PP src => PP (Range src) where
-  ppPrec _ Range { .. } =
-    maybe (text "<no location>") pp rangeSource <> char ':'
-    <> pp rangeStart <> char '-' <> pp rangeEnd
+instance PP SourceRange where
+  ppPrec _ SourceRange { .. } =
+    pp sourceFile <> char ':' <> pp sourceFrom <> char '-' <> pp sourceTo
+
+instance PP SrcLoc where
+  ppPrec p (Known r) = ppPrec p r
+  ppPrec _ Unknown   = text "<unknown location>"
