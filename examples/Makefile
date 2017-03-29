@@ -35,6 +35,8 @@ sources := $(wildcard *.salt)
 jars    := $(addprefix build/,$(sources:.salt=.jar))
 built   := $(addprefix build/,$(sources:.salt=/.token))
 
+test_sources := $(patsubst %.salt.test,%.salt,$(wildcard *.salt.test))
+
 .PHONY: all gen clean
 
 all: $(jars)
@@ -50,6 +52,8 @@ gen: $(built)
 
 gen-%.salt: %.salt
 	$(Q) $(MAKE) build/$*/.token
+
+gen-test: $(addprefix gen-,$(test_sources))
 
 svg: $(built)
 	$(Q) cd build && \

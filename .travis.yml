@@ -50,7 +50,7 @@ install:
 script:
  - cabal check
  - cabal new-build
- - cd examples && make gen
+ - cd examples && make gen-test
 
 # EOF
 
