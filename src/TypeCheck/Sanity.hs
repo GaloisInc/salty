@@ -446,6 +446,11 @@ exprToSMT (EOr x y) =
      y' <- exprToSMT y
      return (SMT.or x' y')
 
+exprToSMT (EXor x y) =
+  do x' <- exprToSMT x
+     y' <- exprToSMT y
+     return (SMT.xor x' y')
+
 exprToSMT (EEq _ x y) =
   do x' <- exprToSMT x
      y' <- exprToSMT y
