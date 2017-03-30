@@ -18,20 +18,22 @@ mkSpec cont = (Slugs.addLimits slugs,env)
   where
   Spec { .. } = cSpec cont
 
+  envInit     = map snd sEnvInit
   envTrans    = map snd sEnvTrans
   envLiveness = map snd sEnvLiveness
+  sysInit     = map snd sSysInit
   sysTrans    = map snd sSysTrans
   sysLiveness = map snd sSysLiveness
 
   slugs =
-    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envTrans envLiveness
-               , Slugs.specSys = mkState env (cOutputs cont) sysTrans sysLiveness
+    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envInit envTrans envLiveness
+               , Slugs.specSys = mkState env (cOutputs cont) sysInit sysTrans sysLiveness
                , .. }
   (env,specInput,specOutput) = mkEnv cont
 
-mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> Slugs.State
-mkState env vars trans liveness =
-  Slugs.State { Slugs.stInit     = conj inits
+mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> [Expr] -> Slugs.State
+mkState env vars is trans liveness =
+  Slugs.State { Slugs.stInit     = conj (inits ++ varInits)
               , Slugs.stTrans    = mkExpr env (eAnd trans)
               , Slugs.stLiveness = mkExpr env (eAnd liveness) }
 
@@ -41,7 +43,10 @@ mkState env vars trans liveness =
   conj [e] = e
   conj es  = foldl1 Slugs.EAnd es
 
-  inits = [ mkInit env sv e | sv@StateVar { svInit = Just e, .. } <- vars ]
+  varInits = [ mkInit env sv e | sv@StateVar { svInit = Just e, .. } <- vars ]
+  inits    = map (mkExpr env) is
+
+
 
 mkInit :: Env -> StateVar -> Expr -> Slugs.Expr
 mkInit env StateVar { .. } e = mkExpr env (EEq svType (EVar svType svName) e)

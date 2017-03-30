@@ -48,8 +48,10 @@ instance Simp FunBody where
   simp (FunExpr e) = FunExpr (simp e)
 
 instance Simp Spec where
-  simp Spec { .. } = Spec { sSysTrans    = simp sSysTrans
+  simp Spec { .. } = Spec { sSysInit     = simp sSysInit
+                          , sSysTrans    = simp sSysTrans
                           , sSysLiveness = simp sSysLiveness
+                          , sEnvInit     = simp sEnvInit
                           , sEnvTrans    = simp sEnvTrans
                           , sEnvLiveness = simp sEnvLiveness }
 

@@ -359,6 +359,7 @@ addCode =
      setMode (InCode pos n (chunk:txts) (chunk:acc))
      return []
 
+
 endCode =
   do InCode sourceFrom n txts acc <- getMode
      chunk                        <- matchText

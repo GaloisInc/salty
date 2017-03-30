@@ -63,8 +63,10 @@ data Controller = Controller { cName        :: !Name
 
 data Spec = Spec { sEnvTrans    :: [(SrcLoc,Expr)]
                  , sEnvLiveness :: [(SrcLoc,Expr)]
+                 , sEnvInit     :: [(SrcLoc,Expr)]
                  , sSysTrans    :: [(SrcLoc,Expr)]
                  , sSysLiveness :: [(SrcLoc,Expr)]
+                 , sSysInit     :: [(SrcLoc,Expr)]
                  } deriving (Show)
 
 -- | Overwrite all location information in the spec with the location
@@ -73,8 +75,10 @@ setSpecLoc :: HasSrcLoc loc => loc -> Spec -> Spec
 setSpecLoc loc spec =
   Spec { sEnvTrans    = upd sEnvTrans
        , sEnvLiveness = upd sEnvLiveness
+       , sEnvInit     = upd sEnvInit
        , sSysTrans    = upd sSysTrans
        , sSysLiveness = upd sSysLiveness
+       , sSysInit     = upd sSysInit
        }
   where
   range = srcLoc loc
@@ -84,14 +88,18 @@ setSpecLoc loc spec =
 instance Monoid Spec where
   mempty = Spec { sEnvTrans    = []
                 , sEnvLiveness = []
+                , sEnvInit     = []
                 , sSysTrans    = []
                 , sSysLiveness = []
+                , sSysInit     = []
                 }
 
   mappend a b = Spec { sEnvTrans    = merge sEnvTrans
                      , sEnvLiveness = merge sEnvLiveness
+                     , sEnvInit     = merge sEnvInit
                      , sSysTrans    = merge sSysTrans
                      , sSysLiveness = merge sSysLiveness
+                     , sSysInit     = merge sSysInit
                      }
     where
     merge p = p a ++ p b
@@ -359,8 +367,11 @@ instance Subst Spec where
   subst env Spec { .. } =
     Spec { sEnvTrans    = subst' sEnvTrans
          , sEnvLiveness = subst' sEnvLiveness
+         , sEnvInit     = subst' sEnvInit
          , sSysTrans    = subst' sSysTrans
-         , sSysLiveness = subst' sSysLiveness }
+         , sSysLiveness = subst' sSysLiveness
+         , sSysInit     = subst' sSysInit
+         }
     where
     subst' xs = [ (loc, subst env x) | (loc, x) <- xs ]
 
@@ -384,10 +395,13 @@ instance PP Controller where
 
 instance PP Spec where
   ppPrec p Spec { .. } = optParens (p >= 10) $ vcat
-    [ hang (text "env_trans")    2 (ppList (map snd sEnvTrans))
+    [ hang (text "env_init")     2 (ppList (map snd sEnvInit))
+    , hang (text "env_trans")    2 (ppList (map snd sEnvTrans))
     , hang (text "env_liveness") 2 (ppList (map snd sEnvLiveness))
+    , hang (text "sys_init")     2 (ppList (map snd sSysInit))
     , hang (text "sys_trans")    2 (ppList (map snd sSysTrans))
-    , hang (text "sys_liveness") 2 (ppList (map snd sSysLiveness)) ]
+    , hang (text "sys_liveness") 2 (ppList (map snd sSysLiveness))
+    ]
 
 instance PP EnumDef where
   ppPrec _ EnumDef { .. } =

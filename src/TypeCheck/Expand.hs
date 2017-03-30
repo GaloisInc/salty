@@ -78,8 +78,10 @@ instance Expand StateVar where
 
 instance Expand Spec where
   expand' env Spec { .. } =
-    Spec { sEnvTrans    = expand' env sEnvTrans
+    Spec { sEnvInit     = expand' env sEnvInit
+         , sEnvTrans    = expand' env sEnvTrans
          , sEnvLiveness = expand' env sEnvLiveness
+         , sSysInit     = expand' env sSysInit
          , sSysTrans    = expand' env sSysTrans
          , sSysLiveness = expand' env sSysLiveness }
 

@@ -68,8 +68,10 @@ data TopDecl a = TDEnum   (AnnotOf a) (EnumDef a)
 
 data Spec a = SEnvTrans    (AnnotOf a) [Expr a]
             | SEnvLiveness (AnnotOf a) [Expr a]
+            | SEnvInit     (AnnotOf a) [Expr a]
             | SSysTrans    (AnnotOf a) [Expr a]
             | SSysLiveness (AnnotOf a) [Expr a]
+            | SSysInit     (AnnotOf a) [Expr a]
 
 
 isFun :: TopDecl a -> Bool
@@ -214,8 +216,10 @@ instance HasAnnot TopDecl where
   ann (TDExpr   a _) = a
 
 instance HasAnnot Spec where
+  ann (SEnvInit     a _) = a
   ann (SEnvTrans    a _) = a
   ann (SEnvLiveness a _) = a
+  ann (SSysInit     a _) = a
   ann (SSysTrans    a _) = a
   ann (SSysLiveness a _) = a
 
@@ -307,8 +311,10 @@ topDeclFvs (TDExpr   _ s)   = exprFvs s
 
 -- | Free variables used in this specification.
 specFvs :: Ord (NameOf a) => Spec a -> Set.Set (NameOf a)
+specFvs (SSysInit     _ es) = foldMap exprFvs es
 specFvs (SSysTrans    _ es) = foldMap exprFvs es
 specFvs (SSysLiveness _ es) = foldMap exprFvs es
+specFvs (SEnvInit     _ es) = foldMap exprFvs es
 specFvs (SEnvTrans    _ es) = foldMap exprFvs es
 specFvs (SEnvLiveness _ es) = foldMap exprFvs es
 

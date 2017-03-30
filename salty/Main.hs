@@ -26,13 +26,11 @@ import qualified Data.ByteString.Lazy.Char8 as LB
 import qualified Data.Foldable as F
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (mapMaybe)
-import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import           System.Directory (createDirectoryIfMissing)
 import           System.Exit (exitFailure)
 import           System.FilePath (takeDirectory,(</>))
 import           System.IO (hPrint,stderr)
-import           Text.Location (thing)
 import           Text.Show.Pretty (ppShow)
 
 main :: IO ()
@@ -172,25 +170,25 @@ dumpAnnotations TC.Controller { .. } =
   funs = mapMaybe dumpFun (concatMap F.toList cFuns)
 
   dumpFun TC.Fun { .. } =
-    do ann <- fAnn
+    do annot <- fAnn
        return $ JSON.object [ "macro"      JSON..= jsonName fName
-                            , "annotation" JSON..= jsonAnnotation ann ]
+                            , "annotation" JSON..= jsonAnnotation annot ]
 
   enums = mapMaybe dumpEnum cEnums
 
   dumpEnum TC.EnumDef { .. } = 
-    do ann <- eAnn
+    do annot <- eAnn
        return $ JSON.object [ "enum"       JSON..= jsonName eName
-                            , "annotation" JSON..= jsonAnnotation ann
+                            , "annotation" JSON..= jsonAnnotation annot
                             , "values"     JSON..= map jsonName eCons ]
  
   stateVars = mapMaybe (dumpStateVar "input")  cInputs
            ++ mapMaybe (dumpStateVar "output") cOutputs
 
   dumpStateVar ty = \ TC.StateVar { .. } ->
-    do ann <- svAnn
+    do annot <- svAnn
        return $ JSON.object [ ty           JSON..= jsonName svName
-                            , "annotation" JSON..= jsonAnnotation ann ]
+                            , "annotation" JSON..= jsonAnnotation annot ]
 
 
 

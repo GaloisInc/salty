@@ -75,6 +75,8 @@ import qualified Data.Text as T
 
   'prime'      { Keyword Kprime      $$ }
 
+  'sys_init'     { Keyword Ksys_init     $$ }
+  'env_init'     { Keyword Kenv_init     $$ }
   'sys_liveness' { Keyword Ksys_liveness $$ }
   'env_liveness' { Keyword Kenv_liveness $$ }
   'sys_trans'    { Keyword Ksys_trans    $$ }
@@ -150,6 +152,12 @@ spec :: { Spec Parsed }
 
   | 'env_liveness' layout(expr)
     { SEnvLiveness (srcLoc $2) $2 }
+
+  | 'sys_init' layout(expr)
+    { SSysInit (srcLoc $2) $2 }
+
+  | 'env_init' layout(expr)
+    { SEnvInit (srcLoc $2) $2 }
 
 
 -- Functions -------------------------------------------------------------------

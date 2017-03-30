@@ -132,12 +132,16 @@ instance HashCons Controller where
 
 instance HashCons Spec where
   hashCons' Spec { .. } =
-    do ets <- scope (hashCons' (eAnd (map snd sEnvTrans)))
+    do eis <- scope (hashCons' (eAnd (map snd sEnvInit)))
+       ets <- scope (hashCons' (eAnd (map snd sEnvTrans)))
        els <- scope (hashCons' (eAnd (map snd sEnvLiveness)))
+       sis <- scope (hashCons' (eAnd (map snd sSysInit)))
        sts <- scope (hashCons' (eAnd (map snd sSysTrans)))
        sls <- scope (hashCons' (eAnd (map snd sSysLiveness)))
-       return Spec { sEnvTrans    = [(Unknown,ets)]
+       return Spec { sEnvInit     = [(Unknown,eis)]
+                   , sEnvTrans    = [(Unknown,ets)]
                    , sEnvLiveness = [(Unknown,els)]
+                   , sSysInit     = [(Unknown,sis)]
                    , sSysTrans    = [(Unknown,sts)]
                    , sSysLiveness = [(Unknown,sls)] }
 

@@ -239,6 +239,8 @@ checkSpec (SSysTrans    loc e) = withLoc loc (SSysTrans    loc `fmap` traverse c
 checkSpec (SEnvTrans    loc e) = withLoc loc (SEnvTrans    loc `fmap` traverse checkExpr e)
 checkSpec (SSysLiveness loc e) = withLoc loc (SSysLiveness loc `fmap` traverse checkExpr e)
 checkSpec (SEnvLiveness loc e) = withLoc loc (SEnvLiveness loc `fmap` traverse checkExpr e)
+checkSpec (SSysInit     loc e) = withLoc loc (SSysInit     loc `fmap` traverse checkExpr e)
+checkSpec (SEnvInit     loc e) = withLoc loc (SEnvInit     loc `fmap` traverse checkExpr e)
 
 checkEnum :: Check EnumDef
 checkEnum EnumDef { .. } = withLoc eAnnot $

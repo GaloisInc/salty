@@ -175,12 +175,16 @@ instance Zonk FunBody where
 
 instance Zonk Spec where
   zonk' Spec { .. } =
-    do st <- traverse (traverse zonk') sSysTrans
+    do si <- traverse (traverse zonk') sSysInit
+       st <- traverse (traverse zonk') sSysTrans
        sl <- traverse (traverse zonk') sSysLiveness
+       ei <- traverse (traverse zonk') sEnvInit
        et <- traverse (traverse zonk') sEnvTrans
        el <- traverse (traverse zonk') sEnvLiveness
-       return Spec { sSysTrans    = st
+       return Spec { sSysInit     = si
+                   , sSysTrans    = st
                    , sSysLiveness = sl
+                   , sEnvInit     = ei
                    , sEnvTrans    = et
                    , sEnvLiveness = el }
 
