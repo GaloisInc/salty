@@ -129,6 +129,7 @@ data Expr a = EVar   (AnnotOf a) (NameOf a)
             | EFalse (AnnotOf a)
             | EAnd   (AnnotOf a) (Expr a) (Expr a)
             | EOr    (AnnotOf a) (Expr a) (Expr a)
+            | EXor   (AnnotOf a) (Expr a) (Expr a)
             | ENot   (AnnotOf a) (Expr a)
             | EIf    (AnnotOf a) (Expr a) (Expr a) (Expr a)
             | ECase  (AnnotOf a) (Expr a) [Case a]
@@ -249,6 +250,7 @@ instance HasAnnot Expr where
   ann (EFalse a)       = a
   ann (EAnd   a _ _)   = a
   ann (EOr    a _ _)   = a
+  ann (EXor   a _ _)   = a
   ann (ENot   a _)     = a
   ann (EIf    a _ _ _) = a
   ann (ECase  a _ _)   = a
@@ -344,6 +346,7 @@ exprFvs ETrue{}        = Set.empty
 exprFvs EFalse{}       = Set.empty
 exprFvs (EAnd _ l r)   = Set.union (exprFvs l) (exprFvs r)
 exprFvs (EOr  _ l r)   = Set.union (exprFvs l) (exprFvs r)
+exprFvs (EXor _ l r)   = Set.union (exprFvs l) (exprFvs r)
 exprFvs (ENot _ e)     = exprFvs e
 exprFvs (EIf _ a b c)  = Set.unions [ exprFvs a, exprFvs b, exprFvs c ]
 exprFvs (EApp _ f x)   = Set.union (exprFvs f) (exprFvs x)

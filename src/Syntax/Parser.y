@@ -84,6 +84,7 @@ import qualified Data.Text as T
 
   '&&'         { Keyword Kand        $$ }
   '||'         { Keyword Kor         $$ }
+  '^'          { Keyword Kxor        $$ }
   '!'          { Keyword Knot        $$ }
   '<->'        { Keyword Kiff        $$ }
 
@@ -97,6 +98,7 @@ import qualified Data.Text as T
 %right '->'
 %right '||'
 %right '&&'
+%right '^'
 %right NOT
 %nonassoc '==' '!=' '<-'
 %right 'any' 'all' 'mutex'
@@ -241,6 +243,9 @@ bexpr :: { Expr Parsed }
 
   | bexpr '&&' bexpr
     { EAnd (srcLoc ($1,$3)) $1 $3 }
+
+  | bexpr '^' bexpr
+    { EXor (srcLoc ($1,$3)) $1 $3 }
 
   | '!' bexpr %prec NOT
     { ENot (srcLoc ($1,$2)) $2 }

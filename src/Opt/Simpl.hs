@@ -69,12 +69,15 @@ simpExpr1 (ENot (ENot e)) = Just e
 
 simpExpr1 (ENot (EAnd a b)) = Just (EOr  (ENot a) (ENot b))
 simpExpr1 (ENot (EOr  a b)) = Just (EAnd (ENot a) (ENot b))
+simpExpr1 (ENot (EXor a b)) = Just (EEq TBool a b)
 
 simpExpr1 (EOr  (EOr  a b) c) = Just (EOr  a (EOr  b c))
 simpExpr1 (EAnd (EAnd a b) c) = Just (EAnd a (EAnd b c))
+simpExpr1 (EXor (EXor a b) c) = Just (EXor a (EXor b c))
 
 simpExpr1 (EOr  a b) | a == b = Just a
 simpExpr1 (EAnd a b) | a == b = Just a
+simpExpr1 (EXor a b) | a == b = Just EFalse
 
 simpExpr1 (EAnd ETrue e) = Just e
 simpExpr1 (EAnd e ETrue) = Just e
@@ -84,6 +87,12 @@ simpExpr1 (EAnd _ EFalse) = Just EFalse
 
 simpExpr1 (EAnd (ENot a) b) | a == b = Just EFalse
 simpExpr1 (EAnd a (ENot b)) | a == b = Just EFalse
+
+simpExpr1 (EXor EFalse e) = Just e
+simpExpr1 (EXor e EFalse) = Just e
+
+simpExpr1 (EXor ETrue e) = Just (ENot e)
+simpExpr1 (EXor e ETrue) = Just (ENot e)
 
 simpExpr1 (EOr  EFalse e) = Just e
 simpExpr1 (EOr  e EFalse) = Just e

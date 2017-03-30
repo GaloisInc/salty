@@ -59,6 +59,7 @@ mkExpr env (EEq _ l r)      = mkAssign env l r
 mkExpr env (ENot a)         = Slugs.ENeg (mkExpr env a)
 mkExpr env (EAnd a b)       = Slugs.EAnd (mkExpr env a) (mkExpr env b)
 mkExpr env (EOr  a b)       = Slugs.EOr  (mkExpr env a) (mkExpr env b)
+mkExpr env (EXor a b)       = Slugs.EXor (mkExpr env a) (mkExpr env b)
 
 mkExpr env (EVar _ v)           = mkVar Slugs.UVar  (lookupVarExpr v env)
 mkExpr env (ENext _ (EVar _ v)) = mkVar Slugs.UNext (lookupVarExpr v env)

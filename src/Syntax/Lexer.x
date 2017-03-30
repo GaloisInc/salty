@@ -94,6 +94,7 @@ $white+ ;
 "||"    { keyword Kor }
 "/\"    { keyword Kand }
 "&&"    { keyword Kand }
+"^"     { keyword Kxor }
 "!"     { keyword Knot }
 
 "otherwise" { keyword Kotherwise }
@@ -174,6 +175,7 @@ data Keyword = Kif
              | Kotherwise
              | Kiff
              | Kor
+             | Kxor
              | Kand
              | Knot
              | Kany

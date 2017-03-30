@@ -148,6 +148,7 @@ data FunBody = FunSpec Spec
 
 data Prim = PAnd
           | POr
+          | PXor
           | PNot
           | PNext Type
           | PEq   Type
@@ -208,6 +209,7 @@ instance TypeInst Prim where
   typeInst gs (PIn   ty) = PIn   (typeInst gs ty)
   typeInst _  t@PAnd     = t
   typeInst _  t@POr      = t
+  typeInst _  t@PXor     = t
   typeInst _  t@PNot     = t
   typeInst _  t@PAny     = t
   typeInst _  t@PAll     = t
@@ -237,6 +239,7 @@ typeOf'  = go
 
   primTypeOf _  PAnd       = tFun [TBool,TBool,TBool]
   primTypeOf _  POr        = tFun [TBool,TBool,TBool]
+  primTypeOf _  PXor       = tFun [TBool,TBool,TBool]
   primTypeOf _  PNot       = tFun [TBool,TBool]
   primTypeOf gs (PNext ty) = tFun [typeInst gs ty,typeInst gs ty]
   primTypeOf gs (PEq ty)   = tFun [typeInst gs ty,typeInst gs ty,TBool]
@@ -252,6 +255,9 @@ pattern EAnd a b = EApp (EApp (EPrim PAnd) a) b
 
 pattern EOr :: Expr -> Expr -> Expr
 pattern EOr a b = EApp (EApp (EPrim POr) a) b
+
+pattern EXor :: Expr -> Expr -> Expr
+pattern EXor a b = EApp (EApp (EPrim PXor) a) b
 
 pattern ENot :: Expr -> Expr
 pattern ENot a = EApp (EPrim PNot) a
@@ -429,6 +435,7 @@ instance PP FunBody where
 instance PP Prim where
   ppPrec _ PAnd      = text "&&"
   ppPrec _ POr       = text "||"
+  ppPrec _ PXor      = text "^"
   ppPrec _ PNot      = text "!"
   ppPrec _ (PNext _) = text "X"
   ppPrec _ (PEq _)   = text "=="

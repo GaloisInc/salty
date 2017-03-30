@@ -230,6 +230,12 @@ checkExpr ty (AST.EOr loc l r) = addLoc loc $
      r' <- checkExpr TBool r
      return (EOr l' r')
 
+checkExpr ty (AST.EXor loc l r) = addLoc loc $
+  do unify ty TBool
+     l' <- checkExpr TBool l
+     r' <- checkExpr TBool r
+     return (EXor l' r')
+
 checkExpr ty (AST.ENot loc e) = addLoc loc $
   do unify ty TBool
      e' <- checkExpr TBool e
