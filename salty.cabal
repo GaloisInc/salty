@@ -72,7 +72,6 @@ executable salty
                        aeson,
                        aeson-pretty,
                        language-slugs,
-                       located,
                        text,
                        bytestring,
                        directory,
