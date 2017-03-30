@@ -134,6 +134,16 @@ mkAssign env EFalse (slugsVar env -> Just var) = Slugs.ENeg var
 mkAssign env (EVar _ n) (ENum a) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
 mkAssign env (ENum a) (EVar _ n) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
 
+-- negation of variables, just fall back on equality
+mkAssign env (ENot (slugsVar env -> Just a)) (slugsVar env -> Just b) =
+  mkEq (Slugs.ENeg a) b
+
+mkAssign env (slugsVar env -> Just a) (ENot (slugsVar env -> Just b)) =
+  mkEq a (Slugs.ENeg b)
+
+mkAssign env (ENot (slugsVar env -> Just a)) (ENot (slugsVar env -> Just b)) =
+  mkEq a b
+
 -- variable assignment
 mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
   case (sa,sb) of
@@ -152,8 +162,10 @@ mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
   toExpr (Left ref) = Slugs.ERef ref
   toExpr (Right u)  = Slugs.EVar u
 
-
-mkAssign _ a b = panic ("Invalid arguments to assign: " ++ show (a,b))
+mkAssign _ a b = panic $ unlines [ "Invalid arguments to assign: "
+                                 , " * " ++ show a
+                                 , " * " ++ show b
+                                 ]
 
 mkEq :: Slugs.Expr -> Slugs.Expr -> Slugs.Expr
 mkEq a b = Slugs.EOr (Slugs.EAnd a b) (Slugs.EAnd (Slugs.ENeg a) (Slugs.ENeg b))
