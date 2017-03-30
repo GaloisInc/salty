@@ -452,6 +452,7 @@ instance PP Expr where
   ppPrec _ (ENum i)     = pp i
   ppPrec p (EAnd l r)   = ppBinop p l (text "&&") r
   ppPrec p (EOr  l r)   = ppBinop p l (text "||") r
+  ppPrec p (EXor l r)   = ppBinop p l (text "^") r
   ppPrec p (EEq _ l r)  = ppBinop p l (text "==")  r
   ppPrec _ (ENot a)     = text "!" <> ppPrec 10 a
   ppPrec _ (EIn ty e s) = text "in@" <> pp ty <+> ppPrec 10 e <+> ppPrec 10 s
