@@ -32,7 +32,7 @@ controller Example where
 
 -- Inputs ----------------------------------------------------------
 
-input a (A) : Bool = True
+input a (A) : Bool = False
 
 
 -- Outputs -------------------------------------------------------------------
@@ -41,14 +41,14 @@ output x (X) : Bool
 output y (Y) : Bool
 
 env_trans
-  ! a' \/ ! y
+  ! y \/ ! a'
+
+sys_trans
+  ! a' \/ ! (x ^ x')
+  y    \/ ! a' \/ ! y'
+  ! y  \/ ! a' \/ ! y'
 
 sys_liveness
   ! x
   x
-
-sys_trans
-  (!a' \/ ! (!(!(x /\ !(x /\ x')) /\ !(x' /\ !(x /\ x')))) )
-  ((y' \/ !a') \/ ! y')
-  ((!y' \/ !a') \/ ! y')
 

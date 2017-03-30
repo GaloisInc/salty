@@ -163,13 +163,8 @@ instance HashCons Expr where
   hashCons' (ENext ty p) = do p' <- hashCons' p 
                               return (ENext ty p')
 
-  hashCons' e@EAnd{}     = do let xs = destEAnd e
-                              xs' <- traverse hashCons' xs
-                              cache TBool (eAnd xs')
-
-  hashCons' e@EOr{}      = do let xs = destEOr e
-                              xs' <- traverse hashCons' xs
-                              cache TBool (eOr xs')
+  hashCons' (ENot a)     = do a' <- hashCons' a
+                              return (ENot a')
 
   hashCons' e@EApp{}     = do let (f, xs) = destEApp e
                               f'  <- hashCons' f
