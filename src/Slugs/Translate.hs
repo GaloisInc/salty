@@ -131,8 +131,8 @@ mkAssign env ETrue  (slugsVar env -> Just var) =            var
 mkAssign env EFalse (slugsVar env -> Just var) = Slugs.ENeg var
 
 -- constant numbers
-mkAssign env (EVar _ n) (ENum a) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
-mkAssign env (ENum a) (EVar _ n) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
+mkAssign env (slugsUse env -> Just sa) (ENum a) = mkConstAssign sa a
+mkAssign env (ENum a) (slugsUse env -> Just sa) = mkConstAssign sa a
 
 -- negation of variables, just fall back on equality
 mkAssign env (ENot (slugsVar env -> Just a)) (slugsVar env -> Just b) =
@@ -166,6 +166,11 @@ mkAssign _ a b = panic $ unlines [ "Invalid arguments to assign: "
                                  , " * " ++ show a
                                  , " * " ++ show b
                                  ]
+
+
+mkConstAssign :: HasCallStack => Either Int Slugs.Use -> Integer -> Slugs.Expr
+mkConstAssign (Right u) n = Slugs.assignConst u n
+mkConstAssign Left{}    _ = panic "Unexpected reference in numeric assignment"
 
 mkEq :: Slugs.Expr -> Slugs.Expr -> Slugs.Expr
 mkEq a b = Slugs.EOr (Slugs.EAnd a b) (Slugs.EAnd (Slugs.ENeg a) (Slugs.ENeg b))
