@@ -1,4 +1,3 @@
-
 controller Numeric where
 
 input a : Int 0 ... 5 = 0

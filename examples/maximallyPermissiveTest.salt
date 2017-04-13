@@ -1,3 +1,7 @@
+--salty: internal error in lexer (AlexTools.hs)
+--CallStack (from HasCallStack):
+--error, called at src/Syntax/Lexer.x:259:25 in salty-0.1.0.0-8QpY0XTVruwIg8zmeiDxCe:Syntax.Lexer
+
 controller Example where
 
 -- Outputs -------------------------------------------------------------------
