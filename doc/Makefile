@@ -15,4 +15,7 @@ build/%.tex: %.md | build
 	pandoc --from markdown --to latex --standalone --toc --output $@ $<
 
 %.pdf: %.tex
-	cd $(dir $<) && pdflatex $(notdir $<)
+	cd $(dir $<) && \
+		pdflatex $(notdir $<) && \
+		pdflatex $(notdir $<) && \
+		pdflatex $(notdir $<)
