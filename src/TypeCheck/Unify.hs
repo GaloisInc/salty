@@ -132,6 +132,10 @@ instance Zonk a => Zonk [a] where
   zonk' = traverse zonk'
   ftvs' = F.foldrM (\a b -> Set.union b <$> ftvs' a) Set.empty
 
+instance Zonk Liveness where
+  zonk' (Liveness xs) = Liveness <$> zonk' xs
+  ftvs' (Liveness xs) = ftvs' xs
+
 instance Zonk Expr where
   zonk' ETrue           = pure ETrue
   zonk' EFalse          = pure EFalse
@@ -177,10 +181,10 @@ instance Zonk Spec where
   zonk' Spec { .. } =
     do si <- traverse (traverse zonk') sSysInit
        st <- traverse (traverse zonk') sSysTrans
-       sl <- traverse (traverse zonk') sSysLiveness
+       sl <- traverse           zonk'  sSysLiveness
        ei <- traverse (traverse zonk') sEnvInit
        et <- traverse (traverse zonk') sEnvTrans
-       el <- traverse (traverse zonk') sEnvLiveness
+       el <- traverse           zonk'  sEnvLiveness
        return Spec { sSysInit     = si
                    , sSysTrans    = st
                    , sSysLiveness = sl

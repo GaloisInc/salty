@@ -61,29 +61,32 @@ data Controller = Controller { cName        :: !Name
                              , cEnums       :: [EnumDef]
                              } deriving (Show)
 
+newtype Liveness = Liveness [(SrcLoc,Expr)]
+                   deriving (Show)
+
 data Spec = Spec { sEnvTrans    :: [(SrcLoc,Expr)]
-                 , sEnvLiveness :: [(SrcLoc,Expr)]
+                 , sEnvLiveness :: [Liveness]
                  , sEnvInit     :: [(SrcLoc,Expr)]
                  , sSysTrans    :: [(SrcLoc,Expr)]
-                 , sSysLiveness :: [(SrcLoc,Expr)]
+                 , sSysLiveness :: [Liveness]
                  , sSysInit     :: [(SrcLoc,Expr)]
                  } deriving (Show)
 
 -- | Overwrite all location information in the spec with the location
 -- information passed in.
 setSpecLoc :: HasSrcLoc loc => loc -> Spec -> Spec
-setSpecLoc loc spec =
+setSpecLoc loc Spec { .. } =
   Spec { sEnvTrans    = upd sEnvTrans
-       , sEnvLiveness = upd sEnvLiveness
+       , sEnvLiveness = [ Liveness (upd xs) | Liveness xs <- sEnvLiveness ]
        , sEnvInit     = upd sEnvInit
        , sSysTrans    = upd sSysTrans
-       , sSysLiveness = upd sSysLiveness
+       , sSysLiveness = [ Liveness (upd xs) | Liveness xs <- sSysLiveness ]
        , sSysInit     = upd sSysInit
        }
   where
   range = srcLoc loc
 
-  upd p = [ (range,l) | (_,l) <- p spec ]
+  upd xs = [ (range,l) | (_,l) <- xs ]
 
 instance Monoid Spec where
   mempty = Spec { sEnvTrans    = []
@@ -102,6 +105,7 @@ instance Monoid Spec where
                      , sSysInit     = merge sSysInit
                      }
     where
+    merge :: (Spec -> [a]) -> [a]
     merge p = p a ++ p b
 
 emptyController :: Name -> Controller
@@ -372,10 +376,10 @@ instance Subst FunBody where
 instance Subst Spec where
   subst env Spec { .. } =
     Spec { sEnvTrans    = subst' sEnvTrans
-         , sEnvLiveness = subst' sEnvLiveness
+         , sEnvLiveness = [ Liveness (subst' xs) | Liveness xs <- sEnvLiveness ]
          , sEnvInit     = subst' sEnvInit
          , sSysTrans    = subst' sSysTrans
-         , sSysLiveness = subst' sSysLiveness
+         , sSysLiveness = [ Liveness (subst' xs) | Liveness xs <- sSysLiveness ]
          , sSysInit     = subst' sSysInit
          }
     where
@@ -399,14 +403,17 @@ instance PP Controller where
         ++ map (ppStateVar "output") cOutputs
         ++ [pp cSpec]
 
+instance PP Liveness where
+  ppPrec p (Liveness xs) = ppList (map snd xs)
+
 instance PP Spec where
   ppPrec p Spec { .. } = optParens (p >= 10) $ vcat
     [ hang (text "env_init")     2 (ppList (map snd sEnvInit))
     , hang (text "env_trans")    2 (ppList (map snd sEnvTrans))
-    , hang (text "env_liveness") 2 (ppList (map snd sEnvLiveness))
+    , hang (text "env_liveness") 2 (ppList sEnvLiveness)
     , hang (text "sys_init")     2 (ppList (map snd sSysInit))
     , hang (text "sys_trans")    2 (ppList (map snd sSysTrans))
-    , hang (text "sys_liveness") 2 (ppList (map snd sSysLiveness))
+    , hang (text "sys_liveness") 2 (ppList sSysLiveness)
     ]
 
 instance PP EnumDef where

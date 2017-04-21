@@ -134,10 +134,10 @@ instance HashCons Spec where
   hashCons' Spec { .. } =
     do eis <- scope (hashCons' (eAnd (map snd sEnvInit)))
        ets <- scope (hashCons' (eAnd (map snd sEnvTrans)))
-       els <- mapM liveness sEnvLiveness
+       els <- mapM hashCons' sEnvLiveness
        sis <- scope (hashCons' (eAnd (map snd sSysInit)))
        sts <- scope (hashCons' (eAnd (map snd sSysTrans)))
-       sls <- mapM liveness sSysLiveness
+       sls <- mapM hashCons' sSysLiveness
        return Spec { sEnvInit     = [(Unknown,eis)]
                    , sEnvTrans    = [(Unknown,ets)]
                    , sEnvLiveness = els
@@ -145,18 +145,18 @@ instance HashCons Spec where
                    , sSysTrans    = [(Unknown,sts)]
                    , sSysLiveness = sls }
 
-    where
-    -- NOTE: We don't join liveness constraints together, as that changes the
-    -- meaning of the specification from many distinct liveness properties to
-    -- one big liveness property that is a conjunction of all the others
-    liveness (loc,e) =
-      do e' <- scope (hashCons' e)
-         return (loc,e')
-
 instance HashCons StateVar where
   hashCons' StateVar {..} =
     do mb <- traverse (scope . hashCons') svInit
        return StateVar { svInit = mb, ..}
+
+-- NOTE: We don't join liveness constraints together, as that changes the
+-- meaning of the specification from many distinct liveness properties to one
+-- big liveness property that is a conjunction of all the others
+instance HashCons Liveness where
+  hashCons' (Liveness xs) =
+    do xs' <- scope (hashCons' (eAnd (map snd xs)))
+       return (Liveness [(Unknown,xs')])
 
 instance HashCons Expr where
   hashCons' ETrue        = pure ETrue

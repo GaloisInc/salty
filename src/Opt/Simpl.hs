@@ -55,6 +55,8 @@ instance Simp Spec where
                           , sEnvTrans    = simp sEnvTrans
                           , sEnvLiveness = simp sEnvLiveness }
 
+instance Simp Liveness where
+  simp (Liveness xs) = Liveness (simp xs)
 
 instance Simp Expr where
   simp = rewriteOf traverseExpr simpExpr1

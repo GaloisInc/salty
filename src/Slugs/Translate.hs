@@ -20,24 +20,24 @@ mkSpec cont = (Slugs.addLimits slugs,env)
 
   envInit     = map snd sEnvInit
   envTrans    = map snd sEnvTrans
-  envLiveness = map snd sEnvLiveness
   sysInit     = map snd sSysInit
   sysTrans    = map snd sSysTrans
-  sysLiveness = map snd sSysLiveness
 
   slugs =
-    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envInit envTrans envLiveness
-               , Slugs.specSys = mkState env (cOutputs cont) sysInit sysTrans sysLiveness
+    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envInit envTrans sEnvLiveness
+               , Slugs.specSys = mkState env (cOutputs cont) sysInit sysTrans sSysLiveness
                , .. }
   (env,specInput,specOutput) = mkEnv cont
 
-mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> [Expr] -> Slugs.State
+mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> [Liveness] -> Slugs.State
 mkState env vars is trans liveness =
   Slugs.State { Slugs.stInit     = conj (inits ++ varInits)
               , Slugs.stTrans    = mkExpr env (eAnd trans)
-              , Slugs.stLiveness = mkExpr env (eAnd liveness) }
+              , Slugs.stLiveness = map mkLiveness liveness }
 
   where
+
+  mkLiveness (Liveness xs) = mkExpr env (eAnd (map snd xs))
 
   conj []  = Slugs.ETrue
   conj [e] = e
