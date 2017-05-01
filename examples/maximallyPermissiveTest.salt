@@ -6,8 +6,8 @@ output x (X) : Int 0 ... 3
 output c (C) : Int 0 ... 3
 
 sys_trans
-  x==3 \/ x'<=x+1
-  x'==3 \/ c'>=c
+  x == 3
+--  x' == 3 \/ c'>=c
 
-sys_liveness
-  x'==3 \/ c'>c
+--sys_liveness
+--  x' == 3 \/ c'>c
