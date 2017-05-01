@@ -11,7 +11,7 @@ import           TypeCheck.AST
 import           TypeCheck.Groups
 import           TypeCheck.Monad
 
-import           Control.Monad (when,unless,zipWithM_)
+import           Control.Monad (when,unless,zipWithM_,forM)
 import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import qualified Data.Set as Set
@@ -67,16 +67,16 @@ checkSpec (AST.SSysTrans loc es) = addLoc loc $
      return $ mempty { sSysTrans = es' }
 
 checkSpec (AST.SSysLiveness loc es) = addLoc loc $
-  do es' <- checkSpecEntry es
-     return $ mempty { sSysLiveness = es' }
+  do l <- checkLiveness es
+     return $ mempty { sSysLiveness = [l] }
 
 checkSpec (AST.SEnvTrans loc es) = addLoc loc $
   do es' <- checkSpecEntry es
      return $ mempty { sEnvTrans = es' }
 
 checkSpec (AST.SEnvLiveness loc es) = addLoc loc $
-  do es' <- checkSpecEntry es
-     return $ mempty { sEnvLiveness = es' }
+  do l <- checkLiveness es
+     return $ mempty { sEnvLiveness = [l] }
 
 checkSpec (AST.SSysInit loc es) = addLoc loc $
   do es' <- checkSpecEntry es
@@ -91,6 +91,14 @@ checkSpecEntry :: [AST.Expr Renamed] -> TC [(SrcLoc,Expr)]
 checkSpecEntry  = traverse $ \e ->
   do e' <- checkExpr TBool e
      return (srcLoc e, e')
+
+checkLiveness :: [AST.Expr Renamed] -> TC Liveness
+checkLiveness es =
+  do es' <- forM es $ \e ->
+              do e' <- checkExpr TBool e
+                 return (srcLoc e, e')
+
+     return (Liveness es')
 
 
 -- | Add all of the constructors to the typing environment.

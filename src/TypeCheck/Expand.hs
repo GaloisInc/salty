@@ -85,6 +85,9 @@ instance Expand Spec where
          , sSysTrans    = expand' env sSysTrans
          , sSysLiveness = expand' env sSysLiveness }
 
+instance Expand Liveness where
+  expand' env (Liveness es) = Liveness (expand' env es)
+
 instance Expand Expr where
   expand' env e
     | (e',ts) <- destETApp e, not (null ts) =

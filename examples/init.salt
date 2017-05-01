@@ -1,4 +1,3 @@
-
 controller Init where
 
 input x : Bool

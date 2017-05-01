@@ -1,0 +1,9 @@
+controller Numeric where
+
+input a : Int 0 ... 5 = 0
+
+output b : Int 0 ... 5
+
+
+sys_trans
+  b' == 1

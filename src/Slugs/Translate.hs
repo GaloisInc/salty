@@ -20,24 +20,24 @@ mkSpec cont = (Slugs.addLimits slugs,env)
 
   envInit     = map snd sEnvInit
   envTrans    = map snd sEnvTrans
-  envLiveness = map snd sEnvLiveness
   sysInit     = map snd sSysInit
   sysTrans    = map snd sSysTrans
-  sysLiveness = map snd sSysLiveness
 
   slugs =
-    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envInit envTrans envLiveness
-               , Slugs.specSys = mkState env (cOutputs cont) sysInit sysTrans sysLiveness
+    Slugs.Spec { Slugs.specEnv = mkState env (cInputs  cont) envInit envTrans sEnvLiveness
+               , Slugs.specSys = mkState env (cOutputs cont) sysInit sysTrans sSysLiveness
                , .. }
   (env,specInput,specOutput) = mkEnv cont
 
-mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> [Expr] -> Slugs.State
+mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> [Liveness] -> Slugs.State
 mkState env vars is trans liveness =
   Slugs.State { Slugs.stInit     = conj (inits ++ varInits)
               , Slugs.stTrans    = mkExpr env (eAnd trans)
-              , Slugs.stLiveness = mkExpr env (eAnd liveness) }
+              , Slugs.stLiveness = map mkLiveness liveness }
 
   where
+
+  mkLiveness (Liveness xs) = mkExpr env (eAnd (map snd xs))
 
   conj []  = Slugs.ETrue
   conj [e] = e
@@ -131,8 +131,18 @@ mkAssign env ETrue  (slugsVar env -> Just var) =            var
 mkAssign env EFalse (slugsVar env -> Just var) = Slugs.ENeg var
 
 -- constant numbers
-mkAssign env (EVar _ n) (ENum a) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
-mkAssign env (ENum a) (EVar _ n) = Slugs.assignConst (lookupVar n env) (a - lowerBound n env)
+mkAssign env (slugsUse env -> Just sa) (ENum a) = mkConstAssign sa a
+mkAssign env (ENum a) (slugsUse env -> Just sa) = mkConstAssign sa a
+
+-- negation of variables, just fall back on equality
+mkAssign env (ENot (slugsVar env -> Just a)) (slugsVar env -> Just b) =
+  mkEq (Slugs.ENeg a) b
+
+mkAssign env (slugsVar env -> Just a) (ENot (slugsVar env -> Just b)) =
+  mkEq a (Slugs.ENeg b)
+
+mkAssign env (ENot (slugsVar env -> Just a)) (ENot (slugsVar env -> Just b)) =
+  mkEq a b
 
 -- variable assignment
 mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
@@ -152,8 +162,15 @@ mkAssign env (slugsUse env -> Just sa) (slugsUse env -> Just sb) =
   toExpr (Left ref) = Slugs.ERef ref
   toExpr (Right u)  = Slugs.EVar u
 
+mkAssign _ a b = panic $ unlines [ "Invalid arguments to assign: "
+                                 , " * " ++ show a
+                                 , " * " ++ show b
+                                 ]
 
-mkAssign _ a b = panic ("Invalid arguments to assign: " ++ show (a,b))
+
+mkConstAssign :: HasCallStack => Either Int Slugs.Use -> Integer -> Slugs.Expr
+mkConstAssign (Right u) n = Slugs.assignConst u n
+mkConstAssign Left{}    _ = panic "Unexpected reference in numeric assignment"
 
 mkEq :: Slugs.Expr -> Slugs.Expr -> Slugs.Expr
 mkEq a b = Slugs.EOr (Slugs.EAnd a b) (Slugs.EAnd (Slugs.ENeg a) (Slugs.ENeg b))

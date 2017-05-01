@@ -272,24 +272,24 @@ initVar mkOrigin = \ StateVar { .. } ->
 -- | Check for system liveness constraints that will eventually violate safety.
 checkSysLiveness :: Bool -> Controller -> LocMap -> SMT ()
 checkSysLiveness envWarns cont locs =
-  do conflicts <- checkLiveness (sSysLiveness (cSpec cont)) locs
-     forM_ conflicts $ \ (loc, _, safety) ->
+  do conflicts <- mapM (checkLiveness locs) (sSysLiveness (cSpec cont))
+     forM_ (concat conflicts) $ \ (loc, _, safety) ->
        addMessage (SysLivenessSafety (not envWarns) (SysLiveness loc : safety))
 
 -- | Check for environmental liveness constraints that will eventually violate
 -- environmental safety constraints.
 checkEnvLiveness :: Controller -> LocMap -> SMT Bool
 checkEnvLiveness cont locs =
-  do conflicts <- checkLiveness (sEnvLiveness (cSpec cont)) locs
-     forM_ conflicts $ \ (loc, _, safety) ->
+  do conflicts <- mapM (checkLiveness locs) (sEnvLiveness (cSpec cont))
+     forM_ (concat conflicts) $ \ (loc, _, safety) ->
        addMessage (EnvLivenessSafety (EnvLiveness loc : safety))
 
      return (not (null conflicts))
 
 -- | Assert liveness constraints one at a time, recording when they violate the
 -- safety constraints of the specification.
-checkLiveness :: [(SrcLoc,Expr)] -> LocMap -> SMT [(SrcLoc, SMT.SExpr, [Origin])]
-checkLiveness es safety = withScope $
+checkLiveness :: LocMap -> Liveness -> SMT [(SrcLoc, SMT.SExpr, [Origin])]
+checkLiveness safety (Liveness es) = withScope $
   do rs <- forM es $ \ (loc,e) -> withScope $
         do e' <- exprToSMT e
            assert e'
