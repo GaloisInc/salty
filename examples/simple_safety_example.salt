@@ -12,7 +12,7 @@ input b (B) : Bool = False
 output c (C) : Bool = True
 
 sys_trans
--- c' XOR a'
+  c' ^ a'
   !(!(c' /\ !(c' /\ a')) /\ !(a' /\ !(c' /\ a')))
 
 env_trans

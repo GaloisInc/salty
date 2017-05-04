@@ -1,7 +1,3 @@
--- ONGOING
---#======================================
---# Fast/slow example from LTLMoP
---#======================================
 controller Example where
 
 input person : Bool
@@ -89,13 +85,13 @@ sys_trans
 -- response to person with camera
   ! person' \/ !(!r3 /\ camera')
   ! r3 \/ ! camera'
---\/ ! camera \/ r3' camera'
+  (!camera \/ (r3' \/ camera'))
 
 --# waving
   ! r6 \/ wave'
 
---[SYS_LIVENESS]
---\/ \/ \/ \/ \/ \/ /\ stop_r1 ! stop_r1' /\ stop_r2 ! stop_r2' /\ stop_r4 ! stop_r4' /\ stop_r5 ! stop_r5' /\ stop_r7 ! stop_r7' /\ stop_r8 ! stop_r8' goal'
+sys_liveness
+  (((((((stop_r1 /\ !stop_r1') \/ (stop_r2 /\ !stop_r2')) \/ stop_r4) \/ !stop_r4') \/ (stop_r5 /\ !stop_r5')) \/ (stop_r7 /\ !stop_r7')) \/ (stop_r8 /\ !stop_r8'))
 
 sys_init
   start /\ ! r1 /\ ! r2 /\ ! r3 /\ ! r4 /\ ! r5 /\ ! r6 /\ ! r7 /\ ! r8 /\ ! goal
