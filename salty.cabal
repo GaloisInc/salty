@@ -43,6 +43,7 @@ library
                        TypeCheck.Groups
                        TypeCheck.Infer
                        TypeCheck.Monad
+                       TypeCheck.SMT
                        TypeCheck.Sanity
                        TypeCheck.Unify
   other-modules:       Panic
