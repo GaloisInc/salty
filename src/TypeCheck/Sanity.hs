@@ -60,7 +60,7 @@ data SanityMessage = CouldntFindZ3
                      deriving (Show)
 
 ppSanityMessage :: SanityMessage -> Doc
-ppSanityMessage CouldntFindZ3 = ppMessage "[warning]" $
+ppSanityMessage CouldntFindZ3 = ppMessage "[error]" $
   text "Unable to find z3 (try passing the location with --z3)"
 
 ppSanityMessage (InitConflict ms) = ppMessage "[error]" $
@@ -89,6 +89,7 @@ ppSanityMessage (UnsatSys ms) = ppMessage "[error]" $
 
 
 isSanityError :: SanityMessage -> Bool
+isSanityError CouldntFindZ3             = True
 isSanityError InitConflict{}            = True
 isSanityError (SysLivenessSafety err _) = err
 isSanityError UnsatEnv{}                = True
