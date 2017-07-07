@@ -300,6 +300,3 @@ checkLiveness safety (Liveness es) = withScope $
               else return []
 
      return (concat rs)
-
-
--- Translation -----------------------------------------------------------------
