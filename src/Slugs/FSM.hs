@@ -323,10 +323,8 @@ valueToSMT (VNum i)  = SMT.int i
 -- | Assert the translated initial state
 assertInitState :: Spec -> Init ()
 assertInitState Spec { .. } =
-  do io (putStrLn "Init State")
-     traverse_ assertInitExpr sSysInit
+  do traverse_ assertInitExpr sSysInit
      traverse_ assertInitExpr sEnvInit
-     io (putStrLn "Done")
 
 
 assertInitExpr :: (SrcLoc,Expr) -> Init ()
