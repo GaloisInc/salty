@@ -20,7 +20,6 @@ module TypeCheck.Sanity (
 
 import           Message
 import           PP hiding (ppOrigin)
-import           Scope.Name (Name,nameText)
 import           SrcLoc
 import           TypeCheck.AST
 import           TypeCheck.SMT
@@ -28,7 +27,6 @@ import           TypeCheck.SMT
 import           Control.Monad (when)
 import           Data.Foldable (forM_)
 import qualified Data.Map.Strict as Map
-import           Data.Maybe (catMaybes)
 import           Data.Traversable (forM)
 
 
@@ -131,8 +129,8 @@ checkController cont@Controller { .. } = withScope $
 
 data Origin = SysTrans SrcLoc
             | EnvTrans SrcLoc
-            | InputVar Name
-            | OutputVar Name
+            | InputVar SrcLoc
+            | OutputVar SrcLoc
             | EnvLiveness SrcLoc
             | SysLiveness SrcLoc
               deriving (Eq,Show)
@@ -140,23 +138,20 @@ data Origin = SysTrans SrcLoc
 instance HasSrcLoc Origin where
   srcLoc (SysTrans loc)     = loc
   srcLoc (EnvTrans loc)     = loc
-  srcLoc (InputVar n)       = srcLoc n
-  srcLoc (OutputVar n)      = srcLoc n
+  srcLoc (InputVar loc)     = loc
+  srcLoc (OutputVar loc)    = loc
   srcLoc (EnvLiveness loc)  = loc
   srcLoc (SysLiveness loc)  = loc
 
 ppOrigin :: Origin -> Doc
 ppOrigin origin =
   case origin of
-    SysTrans l    -> text "system safety constraint at"       <+> pp l
-    EnvTrans l    -> text "environment safety constraint at"  <+> pp l
-    InputVar n    -> fsep [ text "initialization of input variable", ticks (pp (nameText n))
-                          , text "at", pp (srcLoc n) ]
-    OutputVar n   -> fsep [ text "initialization output variable", ticks (pp (nameText n))
-                          , text "at", pp (srcLoc n) ]
-
-    EnvLiveness l -> text "environment liveness constraint at" <+> pp l
-    SysLiveness l -> text "system liveness constraint at" <+> pp l
+    SysTrans l    -> text "system safety constraint at"              <+> pp l
+    EnvTrans l    -> text "environment safety constraint at"         <+> pp l
+    InputVar l    -> text "environment initialization constraint at" <+> pp l
+    OutputVar l   -> text "system initialization constraint at"      <+> pp l
+    EnvLiveness l -> text "environment liveness constraint at"       <+> pp l
+    SysLiveness l -> text "system liveness constraint at"            <+> pp l
 
 
 type LocMap = Map.Map String Origin
@@ -239,31 +234,17 @@ checkInit cont locs = withScope $
 
 -- | Assert all variable initialization formulas.
 assertInit :: Controller -> Sanity LocMap
-assertInit Controller { .. } =
-  do ins  <- nameVars "input"  =<< traverse initInput  cInputs
-     outs <- nameVars "output" =<< traverse initOutput cOutputs
-     return (Map.fromList (ins ++ outs))
-  where
-  nameVars pfx mbs =
-    do let (es,locs) = unzip (catMaybes mbs)
-       ns <- assertNamed pfx es
-       return (zip ns locs)
+assertInit Controller { cSpec = Spec { .. } } =
+  do si <- assertInitExpr InputVar  "env_init" sSysInit
+     ti <- assertInitExpr OutputVar "sys_init" sEnvInit
+     return (Map.union si ti)
 
-initInput :: StateVar -> Sanity (Maybe (SExpr, Origin))
-initInput  = initVar InputVar
 
-initOutput :: StateVar -> Sanity (Maybe (SExpr, Origin))
-initOutput  = initVar OutputVar
-
-initVar :: (Name -> Origin) -> StateVar -> Sanity (Maybe (SExpr, Origin))
-initVar mkOrigin = \ StateVar { .. } ->
-  case svInit of
-    Just e ->
-      do e' <- exprToSMT (EEq svType (EVar svType svName) e)
-         return (Just (e', mkOrigin svName))
-
-    Nothing ->
-         return Nothing
+assertInitExpr :: (SrcLoc -> Origin) -> String -> [(SrcLoc,Expr)] -> Sanity LocMap
+assertInitExpr origin pfx inits =
+  do let (locs,es) = unzip inits
+     ns  <- assertNamed pfx =<< traverse exprToSMT es
+     return (Map.fromList (zip ns (map origin locs)))
 
 
 -- Liveness --------------------------------------------------------------------

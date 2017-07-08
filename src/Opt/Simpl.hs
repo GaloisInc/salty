@@ -30,15 +30,10 @@ instance Simp a => Simp (Group a) where
 
 instance Simp Controller where
   simp Controller { .. } =
-    Controller { cInputs      = simp cInputs
-               , cOutputs     = simp cOutputs
-               , cSpec        = simp cSpec
+    Controller { cSpec        = simp cSpec
                , cTopExprs    = map simp cTopExprs
                , cFuns        = simp cFuns
                , .. }
-
-instance Simp StateVar where
-  simp StateVar { .. } = StateVar { svInit = simp svInit, .. }
 
 instance Simp Fun where
   simp Fun { .. } = Fun { fBody = simp fBody, .. }

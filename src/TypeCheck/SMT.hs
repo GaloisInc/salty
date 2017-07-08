@@ -16,7 +16,7 @@ module TypeCheck.SMT (
     assertNamed,
 
     -- * Translation
-    smtName,
+    smtName, nameToVar,
     typeToSMT,
     exprToSMT,
     letE,

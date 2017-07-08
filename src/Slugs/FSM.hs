@@ -13,16 +13,21 @@ import           Panic (panic,HasCallStack)
 import           Scope.Name (Name,mkName,emptySupply,Origin(..))
 import           SrcLoc
 import           Slugs.Env
-import           TypeCheck.AST (Controller(..),EnumDef(..),StateVar(..),Type(..))
+import           TypeCheck.AST
+                     (Controller(..),Spec(..),EnumDef(..),StateVar(..),Type(..),
+                      Expr)
+import           TypeCheck.SMT
 
-import           Control.Monad (guard)
+import           Control.Monad (guard,filterM)
 import           Data.Either (partitionEithers)
+import           Data.Foldable (traverse_)
 import           Data.List (mapAccumL,find,break,group)
-import qualified Data.Text as T
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import qualified Language.Slugs as Slugs
-import           Text.ParserCombinators.ReadP
+import qualified SimpleSMT as SMT
 import           System.FilePath (dropExtension)
+import           Text.ParserCombinators.ReadP
 
 
 type StateVars = Map.Map Name VarInfo
@@ -36,6 +41,7 @@ data FSM = FSM { fsmName    :: Name
                , fsmOutputs :: StateVars
                , fsmEnums   :: [EnumDef]
                , fsmNodes   :: Map.Map Int Node
+               , fsmInitial :: Int
                } deriving (Show)
 
 data Node = Node { nodeInputs  :: Map.Map Name Value
@@ -58,14 +64,16 @@ data Value = VBool Bool
 
 -- | Translate from the slugs state machine to one that is easier to generate
 -- code for.
-fromSlugs :: Env -> Controller -> Slugs.FSM -> FSM
-fromSlugs env cont Slugs.FSM { .. } =
-  FSM { fsmName    = cName cont
-      , fsmInputs  = Map.fromList inpVars
-      , fsmOutputs = Map.fromList outVars
-      , fsmEnums   = cEnums cont
-      , fsmNodes   = nodes
-      }
+fromSlugs :: Bool -> FilePath -> Env -> Controller -> Slugs.FSM -> IO (Maybe FSM)
+fromSlugs dbg z3Prog env cont Slugs.FSM { .. } =
+  determineInitialState dbg z3Prog cont
+    FSM { fsmName    = cName cont
+        , fsmInputs  = Map.fromList inpVars
+        , fsmOutputs = Map.fromList outVars
+        , fsmEnums   = cEnums cont
+        , fsmNodes   = nodes
+        , fsmInitial = 0
+        }
 
   where
 
@@ -181,13 +189,14 @@ fromSlugs' file numInputs Slugs.FSM { .. } =
       , fsmOutputs = Map.fromList outs
       , fsmEnums   = []
       , fsmNodes   = nodes
+      , fsmInitial = 0
       }
 
   where
 
   nodes     = Map.mapMaybe (mkNode True nodes emptyEnv inps outs) fsmNodes
 
-  origin    = FromController Unknown
+  origin    = FromController SrcLoc.Unknown
 
   (cName,s1) = mkName origin (T.pack (dropExtension file)) Nothing emptySupply
 
@@ -243,3 +252,82 @@ parseState  =
      _  <- string "..."
      hi <- readS_to_P read
      return (lo,hi)
+
+
+-- Initial State ---------------------------------------------------------------
+
+type Init = SMT ()
+
+determineInitialState :: Bool -> FilePath -> Controller -> FSM -> IO (Maybe FSM)
+determineInitialState dbg z3Prog cont fsm =
+  do res <- runSMT dbg z3Prog (addInitialState cont fsm)
+     case res of
+       Just (mb,_) -> return mb
+       Nothing     -> return Nothing
+
+
+-- | Find all states that can be transitioned to from the initial state. If
+-- there are none, this returns Nothing.
+addInitialState :: Controller -> FSM -> Init (Maybe FSM)
+addInitialState cont fsm =
+  do declareEnv cont
+     assertInitState (cSpec cont)
+     states <- filterM isInitState (Map.toList (fsmNodes fsm))
+     if null states
+        then return Nothing
+        else do let node = makeInitialState states
+                    ix   = Map.size (fsmNodes fsm)
+                return $ Just fsm { fsmNodes   = Map.insert ix node (fsmNodes fsm)
+                                  , fsmInitial = ix
+                                  }
+
+
+-- | Construct a synthetic initial state that transitions to all of the valid
+-- initial states.
+makeInitialState :: [(Int,Node)] -> Node
+makeInitialState exits =
+  Node { nodeInputs  = Map.empty
+       , nodeOutputs = Map.empty
+       , nodeTrans   = map fst exits
+       }
+
+
+-- | Returns true when the inputs of this node satisfy the initial state.
+isInitState :: (Int,Node) -> Init Bool
+isInitState (_,Node { .. }) = withScope $
+  do traverse_ assertEq (Map.toList nodeInputs)
+     res <- checkSat
+     return (res == Sat)
+
+  where
+
+  assertEq (name, val) =
+    assert (SMT.eq (nameToVar name) (valueToSMT val))
+
+
+-- | Declare state variables, and enumerations
+declareEnv :: Controller -> Init ()
+declareEnv Controller { .. } =
+  do mapM_ declareEnum     cEnums
+     mapM_ declareStateVar cInputs
+     mapM_ declareStateVar cOutputs
+
+
+-- | Translate a value to an SMT-lib expression
+valueToSMT :: Value -> SExpr
+valueToSMT (VBool b) = SMT.bool b
+valueToSMT (VCon n)  = nameToVar n
+valueToSMT (VNum i)  = SMT.int i
+
+
+-- | Assert the translated initial state
+assertInitState :: Spec -> Init ()
+assertInitState Spec { .. } =
+  do io (putStrLn "Init State")
+     traverse_ assertInitExpr sSysInit
+     traverse_ assertInitExpr sEnvInit
+     io (putStrLn "Done")
+
+
+assertInitExpr :: (SrcLoc,Expr) -> Init ()
+assertInitExpr (_, e) = assert =<< exprToSMT e

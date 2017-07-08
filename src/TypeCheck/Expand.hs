@@ -19,8 +19,6 @@ import           Language.Slugs.Lens (transformOf)
 expand :: Controller -> Controller
 expand Controller { .. } =
   Controller { cFuns     = []
-             , cInputs   = expand' env cInputs
-             , cOutputs  = expand' env cOutputs
              , cSpec     = mconcat (expand' env cSpec : map (expandTopExpr env) cTopExprs)
              , cTopExprs = []
              , .. }
@@ -72,9 +70,6 @@ instance Expand a => Expand (Maybe a) where
 
 instance Expand a => Expand [a] where
   expand' env = map (expand' env)
-
-instance Expand StateVar where
-  expand' env StateVar { .. } = StateVar { svInit = expand' env svInit, .. }
 
 instance Expand Spec where
   expand' env Spec { .. } =

@@ -101,7 +101,7 @@ genFSM opts (InpSpec path) =
 
           else return (exCont,tcSup)
 
-     mb <- runSlugs (optDumpSpec opts) (optSlugs opts) oCont `catch` \ e ->
+     mb <- runSlugs (optDumpSpec opts) (optZ3 opts) (optSlugs opts) oCont `catch` \ e ->
        do let _ = e :: IOException
           putStrLn "Failed to run slugs. Is SLUGS set?"
           exitFailure

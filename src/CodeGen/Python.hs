@@ -9,6 +9,8 @@ import Scope.Name
 import Slugs.FSM
 import TypeCheck.AST
 
+import           Data.Function (on)
+import           Data.List (sortBy)
 import           Data.Maybe (fromMaybe)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
@@ -34,7 +36,7 @@ pythonFSM FSM { .. } =
 
         , text ""
         , block (def "__init__" [text "self"]) $ vcat
-            [ assign (self "_state") (int 0)
+            [ assign (self "_state") (int fsmInitial)
             ]
 
         ] ++ concat
@@ -57,11 +59,11 @@ pythonFSM FSM { .. } =
 mkTable :: Map.Map Int Node -> Doc
 mkTable nodes =
   hang (text "_table" <+> char '=' <+> char '[')
-     4 (vcat (map mkNode (Map.elems nodes)) $$ text "]")
+     4 (vcat (map mkNode (Map.toList nodes)) $$ text "]")
 
   where
 
-  mkNode node =
+  mkNode (ix,node) =
     char '{'
     $$ nest 4 (vcat (map mkTrans (nodeTrans node)))
     $$ text "},"
@@ -78,7 +80,7 @@ mkTable nodes =
     | Map.size vals > 1 =
       parens $ hcat
              $ punctuate comma
-               [ pythonValue val | val <- Map.elems vals ]
+               [ pythonValue val | (_,val) <- Map.toList vals ]
 
     | Map.null vals =
       undefined

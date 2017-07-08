@@ -15,14 +15,14 @@ import qualified Data.ByteString.Lazy as L
 import qualified Language.Slugs as S
 
 
-runSlugs :: Bool -> FilePath -> Controller -> IO (Maybe FSM)
-runSlugs dbg slugsProg cont =
+runSlugs :: Bool -> FilePath -> FilePath -> Controller -> IO (Maybe FSM)
+runSlugs dbg z3Prog slugsProg cont =
   do let (spec,env) = mkSpec cont
      when dbg (print (S.ppSpec spec))
      res <- S.runSlugs dbg slugsProg spec
      case res of
        S.Unrealizable{}  -> return Nothing
-       S.StateMachine sm -> return (Just (fromSlugs env cont sm))
+       S.StateMachine sm -> fromSlugs dbg z3Prog env cont sm
 
 
 parseSlugsJSON :: FilePath -> Int -> L.ByteString -> Maybe FSM

@@ -120,14 +120,10 @@ instance HashCons a => HashCons (Maybe a) where
 
 instance HashCons Controller where
   hashCons' Controller { .. } =
-    do is  <- hashCons' cInputs
-       os  <- hashCons' cOutputs
-       s   <- hashCons' cSpec
+    do s   <- hashCons' cSpec
        es  <- hashCons' cTopExprs
-       return Controller { cInputs      = is
-                         , cOutputs     = os
-                         , cSpec        = s
-                         , cTopExprs    = es
+       return Controller { cSpec     = s
+                         , cTopExprs = es
                          , .. }
 
 instance HashCons Spec where
@@ -144,11 +140,6 @@ instance HashCons Spec where
                    , sSysInit     = [(Unknown,sis)]
                    , sSysTrans    = [(Unknown,sts)]
                    , sSysLiveness = sls }
-
-instance HashCons StateVar where
-  hashCons' StateVar {..} =
-    do mb <- traverse (scope . hashCons') svInit
-       return StateVar { svInit = mb, ..}
 
 -- NOTE: We don't join liveness constraints together, as that changes the
 -- meaning of the specification from many distinct liveness properties to one

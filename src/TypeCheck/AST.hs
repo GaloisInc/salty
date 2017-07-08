@@ -133,7 +133,6 @@ data StateVar = StateVar { svAnn    :: !(Maybe (Ann Renamed))
                          , svBounds :: !(Maybe (Int,Int))
                            -- ^ When the state var is of type TInt, the bounds
                            -- are the min and max values that can appear.
-                         , svInit   :: !(Maybe Expr)
                          } deriving (Show)
 
 data Schema = Forall [TVar] Type
@@ -404,7 +403,7 @@ instance PP Controller where
         ++ [pp cSpec]
 
 instance PP Liveness where
-  ppPrec p (Liveness xs) = ppList (map snd xs)
+  ppPrec _ (Liveness xs) = ppList (map snd xs)
 
 instance PP Spec where
   ppPrec p Spec { .. } = optParens (p >= 10) $ vcat
@@ -423,8 +422,7 @@ instance PP EnumDef where
 
 ppStateVar :: String -> StateVar -> Doc
 ppStateVar lab StateVar { .. } =
-  hang (text lab <+> pp svName <+> char ':' <+> pp svType)
-     2 (maybe empty (\i -> char '=' <+> pp i) svInit)
+  text lab <+> pp svName <+> char ':' <+> pp svType
 
 instance PP Fun where
   ppPrec _ Fun { .. } =

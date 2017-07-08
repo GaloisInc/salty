@@ -31,7 +31,7 @@ mkSpec cont = (Slugs.addLimits slugs,env)
 
 mkState :: Env -> [StateVar] -> [Expr] -> [Expr] -> [Liveness] -> Slugs.State
 mkState env vars is trans liveness =
-  Slugs.State { Slugs.stInit     = conj (inits ++ varInits)
+  Slugs.State { Slugs.stInit     = conj inits
               , Slugs.stTrans    = mkExpr env (eAnd trans)
               , Slugs.stLiveness = map mkLiveness liveness }
 
@@ -43,7 +43,6 @@ mkState env vars is trans liveness =
   conj [e] = e
   conj es  = foldl1 Slugs.EAnd es
 
-  varInits = [ mkInit env sv e | sv@StateVar { svInit = Just e, .. } <- vars ]
   inits    = map (mkExpr env) is
 
 

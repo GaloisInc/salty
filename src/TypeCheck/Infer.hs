@@ -42,12 +42,20 @@ simpleTopDecl (AST.TDFun _ fun) =
      inferFun fun
 
 simpleTopDecl (AST.TDInput _ sv) =
-  do sv' <- checkStateVar sv
-     return $ \ c -> c { cInputs = sv' : cInputs c }
+  do (sv', mbInit) <- checkStateVar sv
+     let s' = case mbInit of
+                Nothing -> mempty
+                Just e' -> mempty { sEnvInit = [e'] }
+     return $ \ c -> c { cInputs = sv' : cInputs c
+                       , cSpec    = s' `mappend` cSpec c }
 
 simpleTopDecl (AST.TDOutput _ sv) =
-  do sv' <- checkStateVar sv
-     return $ \ c -> c { cOutputs = sv' : cOutputs c }
+  do (sv', mbInit) <- checkStateVar sv
+     let s' = case mbInit of
+                Nothing -> mempty
+                Just e' -> mempty { sSysInit = [e'] }
+     return $ \ c -> c { cOutputs = sv' : cOutputs c
+                       , cSpec    = s' `mappend` cSpec c }
 
 simpleTopDecl (AST.TDSpec _ s) =
   do s' <- zonk =<< checkSpec s
@@ -115,7 +123,7 @@ checkEnum AST.EnumDef { eAnn, eName, eCons } =
                                           } : cEnums c }
 
 
-checkStateVar :: AST.StateVar Renamed -> TC StateVar
+checkStateVar :: AST.StateVar Renamed -> TC (StateVar, Maybe (SrcLoc,Expr))
 checkStateVar AST.StateVar { svAnn, svName, svType, svInit, svBounds } =
   do ty' <- translateType svType
      e'  <- zonk =<< traverse (checkExpr ty') svInit
@@ -132,11 +140,15 @@ checkStateVar AST.StateVar { svAnn, svName, svType, svInit, svBounds } =
      when (ty' == TInt && bounds == Nothing)
           (record (MissingBounds svName))
 
-     return StateVar { svAnn    = svAnn
-                     , svName   = svName
-                     , svType   = ty'
-                     , svBounds = bounds
-                     , svInit   = e' }
+     let var = StateVar { svAnn    = svAnn
+                        , svName   = svName
+                        , svType   = ty'
+                        , svBounds = bounds }
+
+         mbInit = do val <- e'
+                     return (srcLoc svInit, EEq ty' (EVar ty' svName) val)
+
+     return (var, mbInit)
 
 
 -- | Check a single function.
