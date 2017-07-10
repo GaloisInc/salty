@@ -11,6 +11,7 @@ import System.FilePath (takeExtension)
 
 data Options = Options { optHelp         :: !Bool
                        , optOptLevel     :: !Int
+                       , optSanity       :: !Bool
                        , optAnnotations  :: !Bool
                        , optJava         :: !(Maybe String)
                        , optPython       :: !Bool
@@ -43,6 +44,7 @@ defaultOptions :: Options
 defaultOptions  =
   Options { optHelp         = False
           , optOptLevel     = 1
+          , optSanity       = True
           , optAnnotations  = False
           , optJava         = Nothing
           , optPython       = False
@@ -106,6 +108,9 @@ options  =
   , Option "O" [] (ReqArg setOptLevel "NUMBER")
     "Enable/disable optimizations by passing 0/1"
 
+  , Option "" ["disable-sanity"] (NoArg disableSanity)
+    "Disable the sanity checker"
+
   , Option "" ["ddump-parse"] (NoArg setDumpParsed)
     "Dump the parse tree for the controller"
 
@@ -165,6 +170,9 @@ setOptLevel str =
   case reads str of
     [(x,"")] -> OK (\opts -> opts { optOptLevel = x })
     _        -> Error ["Failed to parse a number for optimization level"]
+
+disableSanity :: Parser
+disableSanity  = OK (\opts -> opts { optSanity = False })
 
 setDumpParsed :: Parser
 setDumpParsed  = OK (\opts -> opts { optDumpParsed = True })

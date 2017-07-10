@@ -87,9 +87,10 @@ genFSM opts (InpSpec path) =
 
      -- sanity check the expanded module
      -- NORE: sanity checking requires that expand has been called.
-     sMsgs <- sanityCheck (optDumpSanity opts) (optZ3 opts) exCont
-     mapM_ (output . ppSanityMessage) sMsgs
-     when (not (null (sanityErrors sMsgs))) exitFailure
+     when (optSanity opts) $
+       do sMsgs <- sanityCheck (optDumpSanity opts) (optZ3 opts) exCont
+          mapM_ (output . ppSanityMessage) sMsgs
+          when (not (null (sanityErrors sMsgs))) exitFailure
 
      when (optDumpSimp opts) (output (pp (simp exCont)))
 
