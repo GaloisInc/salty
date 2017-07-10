@@ -296,6 +296,7 @@ makeInitialState exits =
 isInitState :: (Int,Node) -> Init Bool
 isInitState (_,Node { .. }) = withScope $
   do traverse_ assertEq (Map.toList nodeInputs)
+     traverse_ assertEq (Map.toList nodeOutputs)
      res <- checkSat
      return (res == Sat)
 
