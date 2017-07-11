@@ -23,6 +23,7 @@ import qualified Data.Text.Read as T
 import           Data.Word (Word8)
 import           Text.Layout.OffSides
 
+
 }
 
 $lower = [a-z]
@@ -43,7 +44,7 @@ $num   = [0-9]
 $white+ ;
 
 -- single-line comments
-"--" .* { lexeme TLineComment }
+"--" .* { token TLineComment }
 
 "[" @ident "|" { startCode }
 
@@ -117,8 +118,8 @@ $white+ ;
 "]"     { keyword Krbracket }
 
 @number   { number }
-@ident    { lexeme TIdent }
-@conident { lexeme TConIdent }
+@ident    { token TIdent }
+@conident { token TConIdent }
 
 }
 
@@ -302,17 +303,20 @@ matchRange'  =
                            , .. }
 
 keyword :: Keyword -> Action LexerState [Lexeme Token]
-keyword kw =
-  do lexemeText  <- matchText
-     lexemeRange <- matchRange'
-     return [ Lexeme { lexemeToken = TKeyword kw, .. } ]
+keyword kw = token (TKeyword kw)
 
 number :: Action LexerState [Lexeme Token]
 number  =
   do txt <- matchText
      case T.decimal txt of
-       Right (n,_) -> lexeme (TNum n)
+       Right (n,_) -> token (TNum n)
        Left err    -> error ("number: " ++ err)
+
+token :: Token -> Action LexerState [Lexeme Token]
+token lexemeToken =
+  do lexemeText  <- matchText
+     lexemeRange <- matchRange'
+     return [ Lexeme { .. } ]
 
 
 startString, addString, endString :: Action LexerState [Lexeme Token]
