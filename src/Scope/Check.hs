@@ -7,6 +7,7 @@ module Scope.Check (Renamed,scopeCheck) where
 import SrcLoc (HasSrcLoc(..),SrcLoc())
 import Scope.Name
 import Syntax.AST
+import Message
 
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (fromMaybe)
@@ -23,44 +24,60 @@ type instance NameOf  Renamed = Name
 
 -- | Resolve names to their binding sites.
 scopeCheck :: Supply -> Controller Parsed
-           -> Either [ScopeError] (Controller Renamed,Supply)
+           -> ([ScopeMessage], Maybe (Controller Renamed,Supply))
 scopeCheck sup c =
   let origin    = FromController (annLoc c)
       (cont,s') = mkName origin (pnameText (cName c)) Nothing sup
       (ds',rw)  = runM (unSC (checkTopDecls (cDecls c)))
                        RW { rwEnv  = Map.empty
-                          , rwErrs = []
+                          , rwMsgs = []
                           , rwSup  = s'
                           , rwLoc  = cAnnot c
                           , rwCont = cont }
-  in case rwErrs rw of
-       [] -> Right (Controller (cAnnot c) cont ds', rwSup rw)
-       es -> Left es
+
+      res = case filter isScopeError (rwMsgs rw) of
+              [] -> Just (Controller (cAnnot c) cont ds', rwSup rw)
+              _  -> Nothing
+
+   in (rwMsgs rw, res)
 
 
-data ScopeError = Unknown PName
-                | Duplicate PName [Name]
-                | Ambiguous PName [Name]
-                  deriving (Show)
+data ScopeMessage = Unknown PName
+                  | Duplicate PName [Name]
+                  | Ambiguous PName [Name]
+                  | Shadowing PName Name
+                    deriving (Show)
 
-instance HasSrcLoc ScopeError where
+isScopeError :: ScopeMessage -> Bool
+isScopeError Unknown{}   = True
+isScopeError Duplicate{} = True
+isScopeError Ambiguous{} = True
+isScopeError _           = False
+
+instance HasSrcLoc ScopeMessage where
   srcLoc (Unknown pn)     = srcLoc pn
   srcLoc (Duplicate pn _) = srcLoc pn
   srcLoc (Ambiguous pn _) = srcLoc pn
+  srcLoc (Shadowing pn _) = srcLoc pn
 
-instance PP ScopeError where
-  ppPrec _ (Unknown pn) =
+instance PP ScopeMessage where
+  ppPrec _ (Unknown pn) = ppError (srcLoc pn) $
     text "Unknown identifier:" <+> pp pn
 
-  ppPrec _ (Duplicate x ns) =
-    hang (text "Identifier " <+> ticks (pp x) <+>
+  ppPrec _ (Duplicate pn ns) = ppError (srcLoc pn) $
+    hang (text "Identifier " <+> ticks (pp pn) <+>
           text "defined in multiple places:")
        2 (vcat [ char '*' <+> ppOrigin (nameOrigin n) | n <- ns ])
 
-  ppPrec _ (Ambiguous pn ns) =
+  ppPrec _ (Ambiguous pn ns) = ppError (srcLoc pn) $
     hang (text "Ambiguous use of " <+> ticks (pp pn) <+>
           text "could be one of:")
        2 (vcat [ char '*' <+> ppOrigin (nameOrigin n) | n <- ns ])
+
+  ppPrec _ (Shadowing pn other) = ppWarning (srcLoc pn) $
+    hang (text "The binding for" <+> ticks (pp pn) <+> text "shadows the existing")
+       2 (text "binding at" <+> pp (srcLoc (nameOrigin other)))
+
 
 
 -- Monad -----------------------------------------------------------------------
@@ -69,7 +86,7 @@ newtype SC a = SC { unSC :: StateT RW Lift a
                   } deriving (Functor,Applicative,Monad)
 
 data RW = RW { rwEnv  :: !Names
-             , rwErrs :: [ScopeError]
+             , rwMsgs :: [ScopeMessage]
              , rwSup  :: !Supply
              , rwLoc  :: !SrcLoc
              , rwCont :: !Name
@@ -92,10 +109,24 @@ askLoc  = SC $
   do RW { .. } <- get
      return rwLoc
 
-addErrs :: [ScopeError] -> SC ()
-addErrs errs = SC $
+addMsgs :: [ScopeMessage] -> SC ()
+addMsgs msgs = SC $
   do RW { .. } <- get
-     set $! RW { rwErrs = errs ++ rwErrs, .. }
+     set $! RW { rwMsgs = msgs ++ rwMsgs, .. }
+
+shadowNames :: Names -> SC a -> SC a
+shadowNames ns m = SC $
+  do rw  <- get
+
+     -- add warnings about shadowing
+     let (env',msgs) = mergeWithShadowing (rwEnv rw) ns
+
+     set $! rw { rwEnv  = env'
+               , rwMsgs = msgs ++ rwMsgs rw }
+     a   <- unSC m
+     rw' <- get
+     set $! rw' { rwEnv = rwEnv rw }
+     return a
 
 withNames :: Names -> SC a -> SC a
 withNames ns m = SC $
@@ -141,9 +172,21 @@ newConstr origin (name,mbOut) = withLoc name $
 
 type Names = Map.Map PName [Name]
 
+-- | Merge the two environments, reporting warnings when names bound in the
+-- right environment conflict with existing names on the left.
+mergeWithShadowing :: Names -> Names -> (Names,[ScopeMessage])
+mergeWithShadowing env ns =
+  (Map.unionWith const ns env, Map.foldrWithKey shadowWarning [] ns)
+  where
+  shadowWarning pn _ msgs =
+    case Map.lookup pn env of
+      Just (other : _) -> Shadowing pn other : msgs
+      _                -> msgs
+
+
 -- | Merge naming environments, producing errors on overlap. As the errors are
 -- eagerly produced, the environment is updated to lack overlap.
-mergeWithErrors :: [Names] -> (Names,[ScopeError])
+mergeWithErrors :: [Names] -> (Names,[ScopeMessage])
 mergeWithErrors envs =
   let env  = Map.unionsWith (++) envs
       dups = Map.filter (\ns -> length ns > 1) env
@@ -196,12 +239,12 @@ resolve pn = withLoc pn $
      case Map.lookup pn rwEnv of
        Just [n] -> return n
        Just []  -> error "Invalid naming environment"
-       Just ns  -> do addErrs [Ambiguous pn ns]
+       Just ns  -> do addMsgs [Ambiguous pn ns]
                       return (head ns)
 
        -- name missing from the environment
        Nothing  -> do n <- newDecl Nothing pn
-                      addErrs [Unknown pn]
+                      addMsgs [Unknown pn]
                       return n
 
 type Check f = f Parsed -> SC (f Renamed)
@@ -210,7 +253,7 @@ checkTopDecls :: [TopDecl Parsed] -> SC [TopDecl Renamed]
 checkTopDecls ds =
   do envs <- traverse topDeclNames ds
      let (env,errs) = mergeWithErrors envs
-     addErrs errs
+     addMsgs errs
 
      withNames env (traverse checkTopDecl ds)
 
@@ -290,9 +333,8 @@ withParams fun ps k = go [] ps
   where
   go acc [] =
     let rev = reverse acc
-        env = Map.fromList [ (old,[new]) | (old,new) <- rev ]
-        -- XXX collect shadowing warnings
-     in withNames env (k (map snd rev))
+        env = Map.fromListWith (++) [ (old,[new]) | (old,new) <- rev ]
+     in shadowNames env (k (map snd rev))
 
   go acc (n:ns) =
     do n' <- newParam fun n

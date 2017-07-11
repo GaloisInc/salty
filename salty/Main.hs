@@ -13,6 +13,7 @@ import           PP (Doc,pp,text)
 import           Scope.Check
 import           Scope.Name (Name,emptySupply,nameText)
 import           Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
+import           SrcLoc (srcLoc)
 import           Syntax.AST
 import           Syntax.Parser
 import           TypeCheck
@@ -61,21 +62,23 @@ genFSM opts (InpSpec path) =
      pCont <-
        case parseController path bytes of
          Right p  -> return p
-         Left err -> do output (ppError err)
+         Left err -> do output (ppError (srcLoc err) err)
                         exitFailure
 
      when (optDumpParsed opts) (output (text (ppShow pCont)))
 
+     let (msgs, scopeRes) = scopeCheck emptySupply pCont
+     mapM_ (output . pp) msgs
+
      (scCont,scSup) <-
-       case scopeCheck emptySupply pCont of
-         Right sc  -> return sc
-         Left errs -> do mapM_ (output . ppError) errs
-                         exitFailure
+       case scopeRes of
+         Just sc  -> return sc
+         Nothing  -> exitFailure
 
      (tcCont,tcSup) <-
        case typeCheck scSup scCont of
          Right tc  -> return tc
-         Left errs -> do mapM_ (output . ppError) errs
+         Left errs -> do mapM_ (\msg -> output (ppError (srcLoc msg) msg)) errs
                          exitFailure
 
      when (optAnnotations opts) (dumpAnnotations tcCont)

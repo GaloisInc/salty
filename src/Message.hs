@@ -11,5 +11,8 @@ ppMessage msg body =
        , nest 2 body
        , text " " ]
 
-ppError :: (HasSrcLoc a, PP a) => a -> Doc
-ppError loc = ppMessage ("[error] " ++ render (srcLoc loc)) (pp loc)
+ppError :: PP a => SrcLoc -> a -> Doc
+ppError loc a = ppMessage ("[error] " ++ render (srcLoc loc)) (pp a)
+
+ppWarning :: PP a => SrcLoc -> a -> Doc
+ppWarning loc a = ppMessage ("[warning] " ++ render (srcLoc loc)) (pp a)
