@@ -14,6 +14,7 @@ data Options = Options { optHelp         :: !Bool
                        , optSanity       :: !Bool
                        , optAnnotations  :: !Bool
                        , optJava         :: !(Maybe String)
+                       , optCpp          :: !(Maybe [String])
                        , optPython       :: !Bool
                        , optDot          :: !Bool
                        , optInput        :: !(Maybe Input)
@@ -47,6 +48,7 @@ defaultOptions  =
           , optSanity       = True
           , optAnnotations  = False
           , optJava         = Nothing
+          , optCpp          = Nothing
           , optPython       = False
           , optDot          = False
           , optInput        = Nothing
@@ -89,6 +91,9 @@ options  =
 
   , Option "p" ["python"] (NoArg setPython)
     "Output a python implementation of the controller"
+
+  , Option "" ["cpp"] (OptArg setCpp "CPP_NAMESPACE")
+    "Output a c++ implementation of the controller"
 
   , Option "d" ["dot"] (NoArg setDot)
     "Output a graphviz representation of the controller"
@@ -138,6 +143,16 @@ setHelp  = OK (\opts -> opts { optHelp = True })
 
 setJava :: Maybe String -> Parser
 setJava mb = OK (\opts -> opts { optJava = Just (fromMaybe "" mb) })
+
+setCpp :: Maybe String -> Parser
+setCpp mb =
+  case mb of
+    Just str ->
+      case parseCppNs str of
+        Just ns -> OK (\opts -> opts { optCpp = Just ns })
+        Nothing -> Error ["Failed to parse C++ namespace: " ++ str]
+
+    Nothing -> OK (\opts -> opts { optCpp = Just [] })
 
 setInput :: String -> Parser
 setInput str =
@@ -201,6 +216,14 @@ setPython  = OK (\opts -> opts { optPython = True })
 setDot :: Parser
 setDot  = OK (\opts -> opts { optDot = True })
 
+parseCppNs :: String -> Maybe [String]
+parseCppNs  = go []
+  where
+  go acc str =
+    case break (== ':') str of
+      (as, ':':':':bs) -> go (as:acc) bs
+      (as, [])         -> Just (reverse (as:acc))
+      _                -> Nothing
 
 parseOptions :: IO Options
 parseOptions  =

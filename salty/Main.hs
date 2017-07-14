@@ -3,6 +3,7 @@
 
 import Options
 
+import           CodeGen.Cpp (cppFSM)
 import           CodeGen.Dot (dotFSM)
 import           CodeGen.Java (Package,javaFSM)
 import           CodeGen.Python (pythonFSM)
@@ -51,6 +52,10 @@ main  =
        Nothing  -> return ()
 
      when (optPython opts) (writePackage opts (pythonFSM fsm))
+
+     case optCpp opts of
+       Just ns -> writePackage opts (cppFSM ns fsm)
+       Nothing -> return ()
 
      when (optDot opts) (writePackage opts (dotFSM fsm))
 

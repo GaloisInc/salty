@@ -6,8 +6,11 @@ module PP (
     render,
     optParens,
     ticks,
+    angles,
     semicolon,
     bullets,
+    commas,
+    semis,
 
     ppNameWithOrigin,
     ppOrigin,
@@ -36,12 +39,21 @@ optParens False = id
 ticks :: Doc -> Doc
 ticks d = char '`' <> d <> char '`'
 
+angles :: Doc -> Doc
+angles d = char '<' <> d <> char '>'
+
 -- | Join a bunch of lines together with bullet points.
 bullets :: [Doc] -> Doc
 bullets ds = vcat [ char '*' <+> nest 2 d | d <- ds ]
 
 semicolon :: Doc
 semicolon  = char ';'
+
+semis :: [Doc] -> [Doc]
+semis  = map (<> semi)
+
+commas :: [Doc] -> [Doc]
+commas  = punctuate comma
 
 class PP a where
   ppPrec :: Int -> a -> Doc
