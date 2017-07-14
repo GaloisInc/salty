@@ -23,7 +23,7 @@ ifeq ($(SALTY),)
   endif
 endif
 
-salty = $(SALTY) -s $(SLUGS) $(EXTRA) --dot --python --java=$1 -o build $2
+salty = $(SALTY) -s $(SLUGS) $(EXTRA) --dot --python --java=$1 --cpp -o build $2
 
 ifeq ($(V),)
   Q := @
@@ -54,6 +54,9 @@ gen-%.salt: %.salt
 	$(Q) $(MAKE) build/$*/.token
 
 gen-test: $(addprefix gen-,$(test_sources))
+
+build-objs: gen-test
+	$(Q) g++ -c -std=c++11 $(wildcard build/*.cpp)
 
 svg: $(built)
 	$(Q) cd build && \

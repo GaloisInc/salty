@@ -46,7 +46,7 @@ cppFSM ns FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes }
     mkEnums fsmEnums ++
 
     [ cls clsName
-      (vcat (resultTyDecl ++
+      (vcat (resTyDecl ++
              [ fun empty clsName [] <> semi
              , fun resTy (text "&move") [ mkInput i | i <- Map.toList fsmInputs ] <> semi
              ]))
@@ -65,7 +65,7 @@ cppFSM ns FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes }
     | Map.size fsmOutputs > 1  = text "result"
     | otherwise                = cppType (viType (head (Map.elems fsmOutputs)))
 
-  resultTyDecl
+  resTyDecl
     | Map.size fsmOutputs == 1 = []
     | otherwise                =
       [ struct (text "result")
@@ -97,8 +97,16 @@ cppFSM ns FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes }
           ]
       , text "" ]
 
+  srcResTy | null resTyDecl = resTy
+           | otherwise      = clsName <> text "::" <> resTy
+
   mapTy = template (text "std::map")
-          [keyTy, template (text "std::pair") [text "int", clsName <> text "::" <> resTy]]
+          [ keyTy
+          , template (text "std::pair")
+            [ text "int"
+            , srcResTy
+            ]
+          ]
 
   source = vcat $
     [ text "#include" <+> doubleQuotes (text headerName)
@@ -117,7 +125,7 @@ cppFSM ns FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes }
     , clsName <> text "::" <> clsName
       <> text "() : state" <> parens (pp fsmInitial) <+> text "{}"
     , text ""
-    , mkMoveFun clsName fsmInputs
+    , mkMoveFun clsName srcResTy fsmInputs
     , text ""
     , text (replicate (length ns) '}')
     , text ""
@@ -168,10 +176,9 @@ mkTable ts = text "static" <+> decl (text "transitions") (text "table[]") table
     | Map.size is == 1 = cppValue (head (Map.elems is))
     | otherwise        = initializer (map cppValue (Map.elems is))
 
-mkMoveFun :: Doc -> StateVars -> Doc
-mkMoveFun clsName inputs =
-  vcat [ fun (clsName <> text "::result")
-             (char '&' <> clsName <> text "::move") params <+> char '{'
+mkMoveFun :: Doc -> Doc -> StateVars -> Doc
+mkMoveFun clsName resTy inputs =
+  vcat [ fun resTy (char '&' <> clsName <> text "::move") params <+> char '{'
        , nest 2 $ vcat
          [ text "auto &ts = table[this->state];"
          , text "auto &next = ts.at" <> parens key <> semi
@@ -237,6 +244,7 @@ cppType :: VType -> Doc
 cppType VTBool      = text "bool"
 cppType (VTInt _ _) = text "int"
 cppType (VTEnum e)  = cppEnumName (eName e)
+cppType (VTEnum e)  = cppName (eName e)
 
 cppValue :: Value -> Doc
 cppValue (VBool True)  = text "true"
