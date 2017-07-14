@@ -9,8 +9,6 @@ import Scope.Name
 import Slugs.FSM
 import TypeCheck.AST
 
-import           Data.Function (on)
-import           Data.List (sortBy)
 import           Data.Maybe (fromMaybe)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
@@ -63,7 +61,7 @@ mkTable nodes =
 
   where
 
-  mkNode (ix,node) =
+  mkNode (_,node) =
     char '{'
     $$ nest 4 (vcat (map mkTrans (nodeTrans node)))
     $$ text "},"
