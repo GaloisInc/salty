@@ -55,8 +55,8 @@ gen-%.salt: %.salt
 
 gen-test: $(addprefix gen-,$(test_sources))
 
-build-objs: gen-test
-	$(Q) g++ -c -std=c++11 $(wildcard build/*.cpp)
+build-objs: gen-test | build
+	$(Q) (cd build; g++ -c -std=c++11 *.cpp)
 
 svg: $(built)
 	$(Q) cd build && \
