@@ -94,7 +94,7 @@ mkVar mk (Right var@Slugs.VarBool{}) =
 
 mkVar mk (Right var@Slugs.VarNum{})  =
   let use = mk var
-   in mkEAnd [ Slugs.EBit use i | i <- [0 .. Slugs.varBitSize var - 1] ]
+   in mkEAnd [ Slugs.EBit use i | i <- [0 .. Slugs.bitSize var - 1] ]
 
 
 -- | Translate an expression that's expected to be a variable (or a use of Next
