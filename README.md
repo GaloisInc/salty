@@ -36,11 +36,11 @@ the `-s` or `--slugs` flag. There is no installation target in the slugs
 Makefile, however the `slugs` executable has no runtime dependencies, and can
 just be copied into your `$PATH`.
 
-#### Z3 (Optional)
+#### Z3
 
-If z3 is installed, salty will do some additional sanity checking of
-specifications before sending them to slugs. On linux, z3 is likely available in
-your package manager, and on OSX it's available through [homebrew][homebrew]
+Salty will do some additional sanity checking of specifications before sending
+them to slugs. On linux, z3 is likely available in your package manager, and on
+OSX it's available through [homebrew][homebrew]
 
 ### Building
 
