@@ -18,8 +18,16 @@ import qualified Language.Slugs as S
 runSlugs :: Bool -> FilePath -> FilePath -> Controller -> IO (Maybe FSM)
 runSlugs dbg z3Prog slugsProg cont =
   do let (spec,env) = mkSpec cont
-     when dbg (print (S.ppSpec spec))
-     res <- S.runSlugs dbg slugsProg spec
+         spec' = S.simpSpec spec
+
+     when dbg $
+       do putStrLn "-- unoptimized --------------------------------"
+          print (S.ppSpec spec)
+          putStrLn ""
+          putStrLn "-- optimized ----------------------------------"
+          print (S.ppSpec spec')
+
+     res <- S.runSlugs dbg slugsProg spec'
      case res of
        S.Unrealizable{}  -> return Nothing
        S.StateMachine sm -> fromSlugs dbg z3Prog env cont sm
