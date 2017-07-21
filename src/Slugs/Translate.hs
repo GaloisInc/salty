@@ -62,20 +62,24 @@ mkExpr EFalse =
      return [Slugs.EFalse]
 
 mkExpr (EEq _ a b) =
-     slugsBinop (\x y -> Slugs.ENeg (Slugs.EXor x y)) Slugs.ENeg a b
+  do xs <- slugsBinop (\x y -> Slugs.ENeg (Slugs.EXor x y)) Slugs.ENeg a b
+     return [ conj xs ]
 
 mkExpr (ENot a) =
   do as <- mkExpr a
-     return [ Slugs.ENeg e | e <- as ]
+     return [ conj [ Slugs.ENeg e | e <- as ] ]
 
 mkExpr (EAnd a b) =
-     slugsBinop Slugs.EAnd id a b
+  do xs <- slugsBinop Slugs.EAnd id a b
+     return [ conj xs ]
 
 mkExpr (EOr a b) =
-     slugsBinop Slugs.EOr id a b
+  do xs <- slugsBinop Slugs.EOr id a b
+     return [ foldl1 Slugs.EOr xs ]
 
 mkExpr (EXor a b) =
-     slugsBinop Slugs.EXor id a b
+  do xs <- slugsBinop Slugs.EXor id a b
+     return [ foldl1 Slugs.EXor xs ]
 
 mkExpr (EVar _ v) =
   do env <- getEnv
