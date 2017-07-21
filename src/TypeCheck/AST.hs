@@ -159,6 +159,7 @@ data Prim = PAnd
           | PAny
           | PAll
           | PMutex
+          | PPlus
             deriving (Show,Eq,Ord)
 
 data Expr = ETrue
@@ -217,6 +218,7 @@ instance TypeInst Prim where
   typeInst _  t@PAny     = t
   typeInst _  t@PAll     = t
   typeInst _  t@PMutex   = t
+  typeInst _  t@PPlus    = t
 
 typeOf :: Expr -> Type
 typeOf  = typeOf' []
@@ -250,6 +252,7 @@ typeOf'  = go
   primTypeOf _  PAny       = tFun [TSet TBool, TBool]
   primTypeOf _  PAll       = tFun [TSet TBool, TBool]
   primTypeOf _  PMutex     = tFun [TSet TBool, TBool]
+  primTypeOf _  PPlus      = tFun [TInt,TInt,TInt]
 
 
 
@@ -282,6 +285,9 @@ pattern EAll a = EApp (EPrim PAll) a
 
 pattern EMutex :: Expr -> Expr
 pattern EMutex a = EApp (EPrim PMutex) a
+
+pattern EPlus :: Expr -> Expr -> Expr
+pattern EPlus a b = EApp (EApp (EPrim PPlus) a) b
 
 destTFun :: Type -> ([Type],Type)
 destTFun (TFun l r) =
@@ -448,6 +454,7 @@ instance PP Prim where
   ppPrec _ PAny      = text "any"
   ppPrec _ PAll      = text "all"
   ppPrec _ PMutex    = text "mutex"
+  ppPrec _ PPlus     = text "+"
 
 instance PP Expr where
   ppPrec _ ETrue        = text "True"
@@ -463,6 +470,7 @@ instance PP Expr where
   ppPrec _ (EIn ty e s) = text "in@" <> pp ty <+> ppPrec 10 e <+> ppPrec 10 s
   ppPrec _ (EAll s)     = text "all" <+> ppPrec 10 s
   ppPrec _ (EAny s)     = text "any" <+> ppPrec 10 s
+  ppPrec p (EPlus l r)  = ppBinop p l (char '+') r
   ppPrec p (EApp f x)   = optParens (p >= 10) (hang (pp f) 2 (ppPrec 10 x))
   ppPrec _ (ENext _ e)  = char 'X' <> parens (pp e)
   ppPrec _ (ESet _ es)  = braces (ppList es)

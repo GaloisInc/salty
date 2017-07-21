@@ -24,7 +24,7 @@ data Env = Env { envEnums   :: Map.Map Name EnumDef
                , envBounds  :: Map.Map Name Integer
                , envVars    :: Map.Map Name Slugs.Var
                , envVars'   :: Map.Map String Name
-               , envRefs    :: Map.Map Name Int
+               , envRefs    :: Map.Map Name [Int]
                } deriving (Show)
 
 emptyEnv :: Env
@@ -81,8 +81,8 @@ mkVar env name ty mbBounds =
     TSpec{} -> panic "spec-typed state variable"
 
 
-addRef :: Name -> Int -> Env -> Env
-addRef n ix Env {..} = Env { envRefs = Map.insert n ix envRefs, ..}
+addRef :: Name -> [Int] -> Env -> Env
+addRef n ixs Env {..} = Env { envRefs = Map.insert n ixs envRefs, ..}
 
 
 lookupEnum :: HasCallStack => Name -> Env -> EnumDef
@@ -95,7 +95,7 @@ lookupVar n Env { .. } = Map.findWithDefault missing n envVars
   where
   missing = panic ("Var missing from environment: " ++ show n ++ "\n" ++ unlines (map show (Map.toList envVars)))
 
-lookupVarExpr :: HasCallStack => Name -> Env -> Either Int Slugs.Var
+lookupVarExpr :: HasCallStack => Name -> Env -> Either [Int] Slugs.Var
 lookupVarExpr n Env { .. } =
   case Map.lookup n envVars of
     Just var -> Right var

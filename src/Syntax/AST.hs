@@ -145,6 +145,8 @@ data Expr a = EVar   (AnnotOf a) (NameOf a)
             | EIn    (AnnotOf a) (Expr a) (Expr a)
               -- ^ @ x <- { a, b, c } @
 
+            | EPlus  (AnnotOf a) (Expr a) (Expr a)
+
             | EAny   (AnnotOf a)
             | EAll   (AnnotOf a)
             | EMutex (AnnotOf a)
@@ -262,6 +264,7 @@ instance HasAnnot Expr where
   ann (EIff   a _ _)   = a
   ann (ESet   a _)     = a
   ann (EIn    a _ _)   = a
+  ann (EPlus  a _ _)   = a
   ann (EAny   a)       = a
   ann (EAll   a)       = a
   ann (EMutex a)       = a
@@ -358,6 +361,7 @@ exprFvs (EIff _ a b)   = Set.union (exprFvs a) (exprFvs b)
 exprFvs (ECase _ e gs) = Set.union (exprFvs e) (foldMap caseFvs gs)
 exprFvs (ESet _ es)    = Set.unions (map exprFvs es)
 exprFvs (EIn _ a b)    = Set.union (exprFvs a) (exprFvs b)
+exprFvs (EPlus _ a b)  = Set.union (exprFvs a) (exprFvs b)
 exprFvs EAny{}         = Set.empty
 exprFvs EAll{}         = Set.empty
 exprFvs EMutex{}       = Set.empty

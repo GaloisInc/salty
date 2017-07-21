@@ -86,9 +86,10 @@ mkExpr (ENext _ (EVar _ v)) =
      return (mkVar Slugs.UNext (lookupVarExpr v env))
 
 mkExpr (ELet n _ b e) =
-  do bs <- mkExpr b
-     bindName n =<< allocName
-     addDefs [conj bs]
+  do bs     <- mkExpr b
+     (_,is) <- allocNames (length bs)
+     bindName n is
+     addDefs bs
      mkExpr e
 
 mkExpr (ECon _ n) =
@@ -98,6 +99,23 @@ mkExpr (ECon _ n) =
 
 mkExpr (ENum i) =
      return (Slugs.atomBits (toInteger i))
+
+mkExpr (EPlus a b) =
+  do as <- mkExpr a
+     bs <- mkExpr b
+
+     -- NOTE: `sumbits` and `sel` both refer to references in the memory buffer
+     -- as though they start at 0. They need to be incremented to account for
+     -- anything that's already buffered.
+     let (sumbits,sel) = Slugs.add' as bs
+
+     -- reserve enough space for sumbits
+     (top,_) <- allocNames (length sumbits)
+     let upd = Slugs.modifyRefs (+ top)
+     addDefs (map upd sumbits)
+
+     return (map upd sel)
+
 
 mkExpr e@EApp{}  = panic ("Unexpected EApp: " ++ show e)
 mkExpr e@ETApp{} = panic ("Unexpected ETApp: " ++ show e)
@@ -122,10 +140,10 @@ slugsBinop op overflow = \ l r ->
               [ overflow y | y <- extra ]
 
 
-mkVar :: (Slugs.Var -> Slugs.Use) -> Either Int Slugs.Var -> [Slugs.Expr]
+mkVar :: (Slugs.Var -> Slugs.Use) -> Either [Int] Slugs.Var -> [Slugs.Expr]
 
-mkVar _ (Left ref) =
-  [Slugs.ERef ref]
+mkVar _ (Left refs) =
+  map Slugs.ERef refs
 
 mkVar mk (Right var@Slugs.VarBool{}) =
   Slugs.atomBits (mk var)
@@ -151,23 +169,18 @@ runCG env m =
   case runM (unCG m) RW { rwNextRef = 0, rwDefs = Seq.empty, rwEnv = env } of
     (final,rw) -> Slugs.EBuf (F.toList (rwDefs rw Seq.|> final))
 
-bindName :: Name -> Int -> CG ()
-bindName n i = bindNames [(n,i)]
+bindName :: Name -> [Int] -> CG ()
+bindName n is = bindNames [(n,is)]
 
-bindNames :: [(Name,Int)] -> CG ()
+bindNames :: [(Name,[Int])] -> CG ()
 bindNames binds = CG $ sets_ $ \ rw ->
   rw { rwEnv = foldr (uncurry addRef) (rwEnv rw) binds }
 
-allocName :: CG Int
-allocName  =
-  do [n] <- allocNames 1
-     return n
-
 -- | Allocate a block of names in the resulting memory buffer.
-allocNames :: Int -> CG [Int]
+allocNames :: Int -> CG (Int,[Int])
 allocNames n = CG $ sets $ \ rw ->
   let next = rwNextRef rw + n
-   in ([ rwNextRef rw .. next - 1 ], rw { rwNextRef = next })
+   in ((rwNextRef rw, [ rwNextRef rw .. next - 1 ]), rw { rwNextRef = next })
 
 addDefs :: [Slugs.Expr] -> CG ()
 addDefs defs = CG $ sets_ $ \ rw ->

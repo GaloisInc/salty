@@ -362,6 +362,7 @@ checkExpr (EIff  loc a b)   = withLoc loc (EIff  loc `fmap` checkExpr a <*> chec
 checkExpr (ECase loc e cs)  = withLoc loc (ECase loc `fmap` checkExpr e <*> traverse checkCase cs)
 checkExpr (ESet  loc es)    = withLoc loc (ESet  loc `fmap` traverse checkExpr es)
 checkExpr (EIn   loc a b)   = withLoc loc (EIn   loc `fmap` checkExpr a <*> checkExpr b)
+checkExpr (EPlus loc a b)   = withLoc loc (EPlus loc `fmap` checkExpr a <*> checkExpr b)
 
 checkExpr (ENum   loc i) = pure (ENum   loc i)
 checkExpr (ETrue  loc)   = pure (ETrue  loc)

@@ -244,7 +244,6 @@ cppType :: VType -> Doc
 cppType VTBool      = text "bool"
 cppType (VTInt _ _) = text "int"
 cppType (VTEnum e)  = cppEnumName (eName e)
-cppType (VTEnum e)  = cppName (eName e)
 
 cppValue :: Value -> Doc
 cppValue (VBool True)  = text "true"

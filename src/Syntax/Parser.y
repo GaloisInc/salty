@@ -87,6 +87,7 @@ import qualified Data.Text as T
   '^'          { Keyword Kxor        $$ }
   '!'          { Keyword Knot        $$ }
   '<->'        { Keyword Kiff        $$ }
+  '+'          { Keyword Kplus       $$ }
 
   -- layout
   'v{'  { Virt VBegin $$ }
@@ -101,6 +102,7 @@ import qualified Data.Text as T
 %right '^'
 %right NOT
 %nonassoc '==' '!=' '<-'
+%left '+'
 %right 'any' 'all' 'mutex'
 
 
@@ -264,6 +266,9 @@ bexpr :: { Expr Parsed }
 
   | bexpr '<-' bexpr
     { EIn (srcLoc ($1,$3)) $1 $3 }
+
+  | bexpr '+' bexpr
+    { EPlus (srcLoc ($1,$3)) $1 $3 }
 
   | 'any' bexpr
     { mkEApp (EAny (srcLoc $1)) [$2] }

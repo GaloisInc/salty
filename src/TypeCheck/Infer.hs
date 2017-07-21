@@ -16,6 +16,8 @@ import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import qualified Data.Set as Set
 
+import Debug.Trace
+
 
 inferController :: AST.Controller Renamed -> TC Controller
 inferController AST.Controller { AST.cName, AST.cDecls } =
@@ -342,6 +344,11 @@ checkExpr ty (AST.EMutex loc) = addLoc loc $
 checkExpr ty (AST.ENext loc e) = addLoc loc $
   do e' <- checkExpr ty e
      return (ENext ty e')
+
+checkExpr ty (AST.EPlus loc a b) = addLoc loc $
+  do a' <- checkExpr ty a
+     b' <- checkExpr ty b
+     return (EPlus a' b')
 
 
 -- | Turn a case expression into one big disjunction of implications.

@@ -190,6 +190,11 @@ exprToSMT (ENot a) =
 exprToSMT (ENext _ (EVar _ n)) =
      return (SMT.Atom (smtName n ++ "_next"))
 
+exprToSMT (EPlus a b) =
+  do a' <- exprToSMT a
+     b' <- exprToSMT b
+     return (SMT.add a' b')
+
 exprToSMT ETApp{} = panic "Unexpected ETApp"
 exprToSMT ESet{}  = panic "Unexpected ESet"
 exprToSMT EPrim{} = panic "Unexpected EPrim"
