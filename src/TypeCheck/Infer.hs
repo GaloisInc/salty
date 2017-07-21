@@ -16,8 +16,6 @@ import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import qualified Data.Set as Set
 
-import Debug.Trace
-
 
 inferController :: AST.Controller Renamed -> TC Controller
 inferController AST.Controller { AST.cName, AST.cDecls } =
