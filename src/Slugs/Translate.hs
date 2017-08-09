@@ -113,7 +113,7 @@ mkExpr (EPlus a b) =
      -- NOTE: `sumbits` and `sel` both refer to references in the memory buffer
      -- as though they start at 0. They need to be incremented to account for
      -- anything that's already buffered.
-     let (sumbits,sel) = Slugs.add' as bs
+     let (sumbits,sel,_) = Slugs.add' as bs
 
      -- reserve enough space for sumbits
      (top,_) <- allocNames (length sumbits)
