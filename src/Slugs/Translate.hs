@@ -10,6 +10,7 @@ import Scope.Name
 import Slugs.Env
 import TypeCheck.AST
 
+import           Data.Either (partitionEithers)
 import qualified Data.Foldable as F
 import qualified Data.Sequence as Seq
 import qualified Language.Slugs as Slugs
@@ -50,7 +51,7 @@ mkState env is trans liveness =
 conj :: [Slugs.Expr] -> Slugs.Expr
 conj []  = Slugs.ETrue
 conj [e] = e
-conj es  = foldl1 Slugs.EAnd es
+conj es  = foldr1 Slugs.EAnd (concatMap Slugs.elimEAnd es)
 
 
 -- | Translate a boolean-valued expression.
@@ -90,10 +91,11 @@ mkExpr (ENext _ (EVar _ v)) =
      return (mkVar Slugs.UNext (lookupVarExpr v env))
 
 mkExpr (ELet n _ b e) =
-  do bs     <- mkExpr b
-     (_,is) <- allocNames (length bs)
-     bindName n is
-     addDefs bs
+  do bs <- mkExpr b
+     let (refs,others) = partitionEithers (map isRef bs)
+     (_,is) <- allocNames (length others)
+     bindName n (refs ++ is)
+     addDefs others
      mkExpr e
 
 mkExpr (ECon _ n) =
@@ -126,6 +128,11 @@ mkExpr e@ETApp{} = panic ("Unexpected ETApp: " ++ show e)
 mkExpr ENext{}   = panic "Unexpected ENext"
 mkExpr EPrim{}   = panic "Unexpected EPrim"
 mkExpr ESet{}    = panic "Unexpected ESet"
+
+
+isRef :: Slugs.Expr -> Either Int Slugs.Expr
+isRef (Slugs.ERef i) = Left i
+isRef e              = Right e
 
 
 slugsBinop :: (Slugs.Expr -> Slugs.Expr -> Slugs.Expr)
