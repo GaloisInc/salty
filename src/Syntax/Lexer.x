@@ -246,24 +246,19 @@ lexWithLayout src bytes =
   sep   = wrapToken (TVirt VSep)
   end   = wrapToken (TVirt VEnd)
 
-data LexerState = LexerState { lsMode   :: !Mode
-                             , lsSource :: !T.Text
-                             }
 
-mkConfig :: FilePath -> LexerConfig LexerState Token
-mkConfig src =
-  LexerConfig { lexerInitialState = LexerState { lsMode = Normal
-                                               , lsSource = T.pack src
-                                               }
+mkConfig :: LexerConfig Mode Token
+mkConfig  =
+  LexerConfig { lexerInitialState = Normal
               , lexerStateMode    = modeToInt
               , lexerEOF          = \_ -> [] }
 
 lexer :: FilePath -> Maybe SourcePos -> T.Text -> [Lexeme Token]
-lexer src mbPos bytes = $makeLexer (mkConfig src) input
+lexer src mbPos bytes = $makeLexer mkConfig input
   where
   input = case mbPos of
-            Just start -> (initialInput bytes) { inputPos = start }
-            Nothing    ->  initialInput bytes
+            Just start -> (initialInput (T.pack src) bytes) { inputPos = start }
+            Nothing    ->  initialInput (T.pack src) bytes
 
 alexGetByte = makeAlexGetByte $ \ c ->
   if isAscii c
@@ -276,57 +271,46 @@ data Mode = Normal
           | InCode !SourcePos T.Text [T.Text] [T.Text]
             deriving (Show)
 
-modeToInt :: LexerState -> Int
-modeToInt LexerState { lsMode = Normal     } = 0
-modeToInt LexerState { lsMode = InString{} } = string
-modeToInt LexerState { lsMode = InCode{}   } = code
+modeToInt :: Mode -> Int
+modeToInt Normal     = 0
+modeToInt InString{} = string
+modeToInt InCode{}   = code
 
 
 -- Actions ---------------------------------------------------------------------
 
-getMode :: Action LexerState Mode
-getMode  = lsMode <$> getLexerState
+getMode :: Action Mode Mode
+getMode  = getLexerState
 
-setMode :: Mode -> Action LexerState ()
-setMode mode =
-  do LexerState { .. } <- getLexerState
-     setLexerState $! LexerState { lsMode = mode, .. }
+setMode :: Mode -> Action Mode ()
+setMode  = setLexerState
 
-getSource :: Action LexerState T.Text
-getSource  = lsSource <$> getLexerState
+getSource :: Action Mode T.Text
+getSource  = inputFile <$> startInput
 
-matchRange' :: Action LexerState SourceRange
-matchRange'  =
-  do sourceFile <- getSource
-     start      <- startInput
-     end        <- endInput
-     return $! SourceRange { sourceFrom = inputPos start
-                           , sourceTo   = inputPos end
-                           , .. }
-
-keyword :: Keyword -> Action LexerState [Lexeme Token]
+keyword :: Keyword -> Action Mode [Lexeme Token]
 keyword kw = token (TKeyword kw)
 
-number :: Action LexerState [Lexeme Token]
+number :: Action Mode [Lexeme Token]
 number  =
   do txt <- matchText
      case T.decimal txt of
        Right (n,_) -> token (TNum n)
        Left err    -> error ("number: " ++ err)
 
-token :: Token -> Action LexerState [Lexeme Token]
+token :: Token -> Action Mode [Lexeme Token]
 token lexemeToken =
   do lexemeText  <- matchText
-     lexemeRange <- matchRange'
+     lexemeRange <- matchRange
      return [ Lexeme { .. } ]
 
 
-startString, addString, endString :: Action LexerState [Lexeme Token]
+startString, addString, endString :: Action Mode [Lexeme Token]
 
 startString  =
   do Normal <- getMode
      txt    <- matchText
-     r      <- matchRange'
+     r      <- matchRange
      setMode (InString (sourceFrom r) [txt] [])
      return []
 
@@ -339,8 +323,7 @@ addString  =
 endString  =
   do InString sourceFrom txts acc <- getMode
      txt                          <- matchText
-     r                            <- matchRange'
-     sourceFile                   <- getSource
+     r                            <- matchRange
      setMode Normal
      return [ Lexeme { lexemeText  = T.concat (reverse (txt:txts))
                      , lexemeToken = TString (T.concat (reverse acc))
@@ -348,13 +331,13 @@ endString  =
                      } ]
 
 
-startCode, addCode, endCode :: Action LexerState [Lexeme Token]
+startCode, addCode, endCode :: Action Mode [Lexeme Token]
 
 startCode =
   do Normal <- getMode
      len    <- matchLength
      txt    <- matchText
-     r      <- matchRange'
+     r      <- matchRange
 
      let ty = T.take (fromIntegral len - 2) (T.drop 1 txt)
      setMode (InCode (sourceFrom r) ty [txt] [])
@@ -371,8 +354,7 @@ addCode =
 endCode =
   do InCode sourceFrom n txts acc <- getMode
      chunk                        <- matchText
-     r                            <- matchRange'
-     sourceFile                   <- getSource
+     r                            <- matchRange
      setMode Normal
 
      -- remove common leading whitespace from lines

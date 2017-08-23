@@ -105,7 +105,7 @@ instance PP SourcePos where
 
 instance PP SourceRange where
   ppPrec _ SourceRange { .. } =
-    pp sourceFile <> char ':' <> pp sourceFrom <> char '-' <> pp sourceTo
+    pp (sourceFile sourceFrom) <> char ':' <> pp sourceFrom <> char '-' <> pp sourceTo
 
 instance PP SrcLoc where
   ppPrec p (Known r) = ppPrec p r
