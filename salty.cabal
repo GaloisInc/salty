@@ -48,7 +48,7 @@ library
                        TypeCheck.Sanity
                        TypeCheck.Unify
   other-modules:       Panic
-  build-tools:         happy >= 1.19.5,
+  build-tools:         happy == 1.19.5,
                        alex  >= 3.1.7
   build-depends:       base >=4.8 && <5,
                        language-slugs,
