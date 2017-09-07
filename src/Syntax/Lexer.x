@@ -59,6 +59,7 @@ $white+ ;
 "env_trans"    { keyword Kenv_trans    }
 "sys_liveness" { keyword Ksys_liveness }
 "env_liveness" { keyword Kenv_liveness }
+"leads_to"     { keyword Kleads_to     }
 
 "def"   { keyword Kdef  }
 
@@ -201,6 +202,7 @@ data Keyword = Kif
              | Kenv_trans
              | Kenv_liveness
              | Ksys_liveness
+             | Kleads_to
 
              | Kann
                deriving (Eq,Show)
@@ -232,6 +234,7 @@ lexWithLayout src bytes =
   beginsLayout (TKeyword Kenv_init     ) = True
   beginsLayout (TKeyword Kenv_trans    ) = True
   beginsLayout (TKeyword Kenv_liveness ) = True
+  beginsLayout (TKeyword Kleads_to     ) = True
   beginsLayout _                         = False
 
   endsLayout (TKeyword Ksys_init     ) = True
@@ -240,6 +243,7 @@ lexWithLayout src bytes =
   endsLayout (TKeyword Kenv_init     ) = True
   endsLayout (TKeyword Kenv_trans    ) = True
   endsLayout (TKeyword Kenv_liveness ) = True
+  endsLayout (TKeyword Kleads_to     ) = True
   endsLayout _                         = False
 
   start = wrapToken (TVirt VBegin)

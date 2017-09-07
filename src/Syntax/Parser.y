@@ -81,6 +81,7 @@ import qualified Data.Text as T
   'env_liveness' { Keyword Kenv_liveness $$ }
   'sys_trans'    { Keyword Ksys_trans    $$ }
   'env_trans'    { Keyword Kenv_trans    $$ }
+  'leads_to'     { Keyword Kleads_to     $$ }
 
   '&&'         { Keyword Kand        $$ }
   '||'         { Keyword Kor         $$ }
@@ -145,13 +146,13 @@ con_def :: { (PName, Maybe T.Text) }
 -- Specification ---------------------------------------------------------------
 
 spec :: { Spec Parsed }
-  : 'sys_trans' layout(expr)
+  : 'sys_trans' layout(expr) opt(leads_to)
     { SSysTrans (srcLoc $2) $2 }
 
   | 'sys_liveness' layout(expr)
     { SSysLiveness (srcLoc $2) $2 }
 
-  | 'env_trans' layout(expr)
+  | 'env_trans' layout(expr) opt(leads_to)
     { SEnvTrans (srcLoc $2) $2 }
 
   | 'env_liveness' layout(expr)
@@ -162,6 +163,10 @@ spec :: { Spec Parsed }
 
   | 'env_init' layout(expr)
     { SEnvInit (srcLoc $2) $2 }
+
+
+leads_to :: { [Expr Parsed] }
+  : 'leads_to' layout(expr) { $2 }
 
 
 -- Functions -------------------------------------------------------------------
