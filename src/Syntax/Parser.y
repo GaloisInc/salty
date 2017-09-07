@@ -166,8 +166,11 @@ spec :: { Spec Parsed }
 
 -- Functions -------------------------------------------------------------------
 
+fun_args :: { [NameOf Parsed] }
+  : sep(',', IDENT) { $1 }
+
 fun_decl :: { Fun Parsed }
-  : opt(ann) 'def' IDENT parens(sep(',', IDENT)) '=' fun_body
+  : opt(ann) 'def' IDENT parens(fun_args) '=' fun_body
     { Fun (srcLoc ($1,$2,$3,$4,$6)) $1 $3 $4 $6 }
 
   | opt(ann) 'def' IDENT '=' fun_body
@@ -282,8 +285,11 @@ bexpr :: { Expr Parsed }
   | aexpr
     { $1 }
 
+app_args :: { [Expr Parsed] }
+  : sep(',', expr) { $1 }
+
 aexpr :: { Expr Parsed }
-  : IDENT parens(sep(',', expr))
+  : IDENT parens(app_args)
     { mkEApp (EVar (srcLoc $1) $1) $2 }
 
   | IDENT opt('prime')
@@ -317,8 +323,11 @@ ann :: { Ann Parsed }
   : '@' ann_expr opt('v;')
     { $2 }
 
+ann_args :: { [Ann Parsed] }
+  : sep(',', ann_expr) { $1 }
+
 ann_app :: { Ann Parsed }
-  : CONIDENT parens(sep(',', ann_expr))
+  : CONIDENT parens(ann_args)
     { AnnApp (srcLoc ($1,$2)) (pnameText $1) $2 }
 
 ann_expr :: { Ann Parsed }
