@@ -1,5 +1,4 @@
-# The Salty DSL
-![The Salty DSL](docs/salty-header.png)
+![The Salty DSL](doc/salty-header.png)
 
 Salty is a domain specific language for describing `GR(1)` synthesis problems.
 
