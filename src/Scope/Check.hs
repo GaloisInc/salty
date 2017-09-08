@@ -278,12 +278,16 @@ checkTopDecl (TDSpec   loc s)    = withLoc loc (TDSpec   loc `fmap` checkSpec s)
 checkTopDecl (TDExpr   loc e)    = withLoc loc (TDExpr   loc `fmap` checkExpr e)
 
 checkSpec :: Check Spec
-checkSpec (SSysTrans    loc e) = withLoc loc (SSysTrans    loc `fmap` traverse checkExpr e)
-checkSpec (SEnvTrans    loc e) = withLoc loc (SEnvTrans    loc `fmap` traverse checkExpr e)
 checkSpec (SSysLiveness loc e) = withLoc loc (SSysLiveness loc `fmap` traverse checkExpr e)
 checkSpec (SEnvLiveness loc e) = withLoc loc (SEnvLiveness loc `fmap` traverse checkExpr e)
 checkSpec (SSysInit     loc e) = withLoc loc (SSysInit     loc `fmap` traverse checkExpr e)
 checkSpec (SEnvInit     loc e) = withLoc loc (SEnvInit     loc `fmap` traverse checkExpr e)
+
+checkSpec (SSysTrans    loc e lt) =
+  withLoc loc (SSysTrans loc `fmap` traverse checkExpr e <*> traverse (traverse checkExpr) lt)
+
+checkSpec (SEnvTrans    loc e lt) =
+  withLoc loc (SEnvTrans loc `fmap` traverse checkExpr e <*> traverse (traverse checkExpr) lt)
 
 checkEnum :: Check EnumDef
 checkEnum EnumDef { .. } = withLoc eAnnot $

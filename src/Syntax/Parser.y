@@ -147,13 +147,13 @@ con_def :: { (PName, Maybe T.Text) }
 
 spec :: { Spec Parsed }
   : 'sys_trans' layout(expr) opt(leads_to)
-    { SSysTrans (srcLoc $2) $2 }
+    { SSysTrans (srcLoc $2) $2 $3 }
 
   | 'sys_liveness' layout(expr)
     { SSysLiveness (srcLoc $2) $2 }
 
   | 'env_trans' layout(expr) opt(leads_to)
-    { SEnvTrans (srcLoc $2) $2 }
+    { SEnvTrans (srcLoc $2) $2 $3 }
 
   | 'env_liveness' layout(expr)
     { SEnvLiveness (srcLoc $2) $2 }

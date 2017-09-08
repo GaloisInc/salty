@@ -66,10 +66,10 @@ data TopDecl a = TDEnum   (AnnotOf a) (EnumDef a)
                | TDSpec   (AnnotOf a) (Spec a)
                | TDExpr   (AnnotOf a) (Expr a)
 
-data Spec a = SEnvTrans    (AnnotOf a) [Expr a]
+data Spec a = SEnvTrans    (AnnotOf a) [Expr a] (Maybe [Expr a])
             | SEnvLiveness (AnnotOf a) [Expr a]
             | SEnvInit     (AnnotOf a) [Expr a]
-            | SSysTrans    (AnnotOf a) [Expr a]
+            | SSysTrans    (AnnotOf a) [Expr a] (Maybe [Expr a])
             | SSysLiveness (AnnotOf a) [Expr a]
             | SSysInit     (AnnotOf a) [Expr a]
 
@@ -220,10 +220,10 @@ instance HasAnnot TopDecl where
 
 instance HasAnnot Spec where
   ann (SEnvInit     a _) = a
-  ann (SEnvTrans    a _) = a
+  ann (SEnvTrans    a _ _) = a
   ann (SEnvLiveness a _) = a
   ann (SSysInit     a _) = a
-  ann (SSysTrans    a _) = a
+  ann (SSysTrans    a _ _) = a
   ann (SSysLiveness a _) = a
 
 instance HasAnnot Ann where
@@ -317,11 +317,13 @@ topDeclFvs (TDExpr   _ s)   = exprFvs s
 -- | Free variables used in this specification.
 specFvs :: Ord (NameOf a) => Spec a -> Set.Set (NameOf a)
 specFvs (SSysInit     _ es) = foldMap exprFvs es
-specFvs (SSysTrans    _ es) = foldMap exprFvs es
 specFvs (SSysLiveness _ es) = foldMap exprFvs es
 specFvs (SEnvInit     _ es) = foldMap exprFvs es
-specFvs (SEnvTrans    _ es) = foldMap exprFvs es
 specFvs (SEnvLiveness _ es) = foldMap exprFvs es
+specFvs (SSysTrans    _ es lt) = Set.union (foldMap exprFvs es)
+                                           (foldMap (foldMap exprFvs) lt)
+specFvs (SEnvTrans    _ es lt) = Set.union (foldMap exprFvs es)
+                                           (foldMap (foldMap exprFvs) lt)
 
 -- | The free variables of the function body.
 funFvs :: Ord (NameOf a) => Fun a -> Set.Set (NameOf a)

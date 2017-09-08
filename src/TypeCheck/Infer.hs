@@ -70,16 +70,18 @@ simpleTopDecl (AST.TDExpr _ e) =
 -- | Check a specification value.
 checkSpec :: AST.Spec Renamed -> TC Spec
 
-checkSpec (AST.SSysTrans loc es) = addLoc loc $
+checkSpec (AST.SSysTrans loc es lt) = addLoc loc $
   do es' <- checkSpecEntry es
+     lt' <- traverse checkSpecEntry lt
      return $ mempty { sSysTrans = es' }
 
 checkSpec (AST.SSysLiveness loc es) = addLoc loc $
   do l <- checkLiveness es
      return $ mempty { sSysLiveness = [l] }
 
-checkSpec (AST.SEnvTrans loc es) = addLoc loc $
+checkSpec (AST.SEnvTrans loc es lt) = addLoc loc $
   do es' <- checkSpecEntry es
+     lt' <- traverse checkSpecEntry lt
      return $ mempty { sEnvTrans = es' }
 
 checkSpec (AST.SEnvLiveness loc es) = addLoc loc $
