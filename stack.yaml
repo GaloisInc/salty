@@ -7,4 +7,5 @@ packages:
 extra-deps:
     - alex-tools-0.3
     - layout-rules-0.1.0.1
+    - prettyprinter-1.1.1
 resolver: nightly-2016-07-11

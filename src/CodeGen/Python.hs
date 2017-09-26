@@ -196,7 +196,7 @@ cls :: Doc -> Doc -> Doc
 cls x super = text "class" <+> x <> parens super
 
 block :: Doc -> Doc -> Doc
-block hdr body = (hdr <> char ':') $$ nest 4 body
+block hdr body = (hdr <> char ':') $$ indent 4 body
 
 def :: String -> [Doc] -> Doc
 def name args =
