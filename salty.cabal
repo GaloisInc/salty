@@ -60,7 +60,7 @@ library
                        GraphSCC,
                        text,
                        bytestring,
-                       pretty,
+                       prettyprinter,
                        filepath,
                        simple-smt
   hs-source-dirs:      src
