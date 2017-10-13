@@ -19,7 +19,6 @@ import           TypeCheck.AST
 import           TypeCheck.SMT
 
 import           Control.Monad (guard,filterM)
-import           Data.Either (partitionEithers)
 import           Data.Foldable (traverse_)
 import           Data.List (mapAccumL,find,break,group)
 import qualified Data.Map.Strict as Map
@@ -92,8 +91,9 @@ fromSlugs dbg z3Prog env cont Slugs.FSM { .. } =
 
   -- translate the state variables from slugs back to names from the original
   -- specification, and partition into inputs/outputs
-  (inps,outs) =
-    partitionEithers [ getStateVar env cont str a | (str,a) <- varGroups ]
+  vars = [ getStateVar env cont str a | (str, a) <- varGroups ]
+  inps = [ (sv, a) | InputVar sv a <- vars ]
+  outs = [ (sv, a) | OutputVar sv a <- vars ]
 
 
 mkVarInfo :: HasCallStack => Env -> StateVar -> Int -> VarInfo
@@ -105,16 +105,19 @@ mkVarInfo env StateVar { .. } viBits =
                        _                 -> panic ("mkVarInfo: Invalid type: " ++ show svType)
           , .. }
 
+data VarType a
+  = InputVar StateVar a
+  | OutputVar StateVar a
 
 -- | Lookup the state var from the input controller. The result is Left when the
 -- state var was an input, and Right when it was an output.
-getStateVar :: HasCallStack => Env -> Controller -> String -> a -> Either (StateVar, a) (StateVar, a)
+getStateVar :: HasCallStack => Env -> Controller -> String -> a -> VarType a
 getStateVar env cont str a =
   case find svDef (cInputs cont) of
-    Just sv -> Left (sv,a)
+    Just sv -> InputVar sv a
     Nothing ->
       case find svDef (cOutputs cont) of
-        Just sv -> Right (sv,a)
+        Just sv -> OutputVar sv a
         Nothing -> panic ("getStateVar: var from slugs missing from spec: " ++ str)
 
   where

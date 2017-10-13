@@ -16,7 +16,6 @@ import           Data.Either (partitionEithers)
 import           Data.List (foldl')
 import qualified Data.Set as Set
 
-
 inferController :: AST.Controller Renamed -> TC Controller
 inferController AST.Controller { AST.cName, AST.cDecls } =
   do updates <- traverse inferTopGroup (sccTopDecls cDecls)
@@ -59,7 +58,13 @@ simpleTopDecl (AST.TDOutput _ sv) =
 
 simpleTopDecl (AST.TDSpec _ s) =
   do s' <- zonk =<< checkSpec s
-     return $ \ c -> c { cSpec = s' `mappend` cSpec c }
+     (ins, outs) <- getVars
+     let svIns = [ StateVar Nothing n TInt (Just (1,2)) | n <- ins ]
+         svOuts = [ StateVar Nothing n TInt (Just (1,2)) | n <- outs ]
+     return $ \ c -> c { cSpec = s' `mappend` cSpec c
+                       , cOutputs = cOutputs c ++ svOuts
+                       , cInputs  = cInputs c ++ svIns
+                       }
 
 simpleTopDecl (AST.TDExpr _ e) =
   do e'  <- zonk =<< checkExpr TSpec e
@@ -67,22 +72,52 @@ simpleTopDecl (AST.TDExpr _ e) =
      return $ \ c -> c { cTopExprs = (loc,e') : cTopExprs c }
 
 
+-- | Specially handle the leads_to cases. This will have to create a
+-- new input and output variable
+checkLeadsTo :: [(SrcLoc,Expr)] -> [(SrcLoc,Expr)] -> TC Spec
+checkLeadsTo (e:es) (l:ls) =
+  do (sIn', sOut') <- newVarPair
+     let sIn = EVar TInt sIn'
+         sOut = EVar TInt sOut'
+         p = foldl EAnd (snd e) (map snd es)
+         q = foldl EAnd (snd l) (map snd ls)
+         s_s1_in = EEq TInt sIn (ENum 1)
+         s_s2_in = EEq TInt sIn (ENum 2)
+         s_s1_out = EEq TInt sOut (ENum 1)
+         s_s2_out = EEq TInt sOut (ENum 2)
+         rho = (s_s1_in `EAnd` ((p `EAnd` q) `EOr` (ENot p)) `EAnd` s_s1_out)
+            `EOr` (s_s1_in `EAnd` (p `EAnd` (ENot q)) `EAnd` s_s2_out)
+            `EOr` (s_s2_in `EAnd` ENot q `EAnd` s_s1_out)
+            `EOr` (s_s2_in `EAnd` q `EAnd` s_s2_out)
+         rExp = (fst (head es), rho `EAnd` EEq TInt sOut (ENext TInt sIn))
+     return $ mempty { sSysTrans = [rExp]
+                     , sSysInit  = [(undefined, EEq TInt sIn (ENum 1))] }
+checkLeadsTo _ _ = error "leads_to code expects at least one expression"
+
 -- | Check a specification value.
 checkSpec :: AST.Spec Renamed -> TC Spec
 
-checkSpec (AST.SSysTrans loc es lt) = addLoc loc $
+checkSpec (AST.SSysTrans loc es Nothing) = addLoc loc $
   do es' <- checkSpecEntry es
-     lt' <- traverse checkSpecEntry lt
      return $ mempty { sSysTrans = es' }
+
+checkSpec (AST.SSysTrans loc es (Just lt)) = addLoc loc $
+  do es' <- checkSpecEntry es
+     lt' <- checkSpecEntry lt
+     checkLeadsTo es' lt'
 
 checkSpec (AST.SSysLiveness loc es) = addLoc loc $
   do l <- checkLiveness es
      return $ mempty { sSysLiveness = [l] }
 
-checkSpec (AST.SEnvTrans loc es lt) = addLoc loc $
+checkSpec (AST.SEnvTrans loc es Nothing) = addLoc loc $
   do es' <- checkSpecEntry es
-     lt' <- traverse checkSpecEntry lt
      return $ mempty { sEnvTrans = es' }
+
+checkSpec (AST.SEnvTrans loc es (Just lt)) = addLoc loc $
+  do es' <- checkSpecEntry es
+     lt' <- checkSpecEntry lt
+     checkLeadsTo es' lt'
 
 checkSpec (AST.SEnvLiveness loc es) = addLoc loc $
   do l <- checkLiveness es

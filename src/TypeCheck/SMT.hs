@@ -224,7 +224,7 @@ declareStateVar StateVar { .. } =
      _ <- declare (name ++ "_next")
      return ()
 
-  where 
+  where
   name = smtName svName
   ty   = typeToSMT svType
 

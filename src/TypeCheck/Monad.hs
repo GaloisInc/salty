@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module TypeCheck.Monad (
     -- * Type-checking Monad
@@ -16,11 +17,16 @@ module TypeCheck.Monad (
     zonk,
     ftvs,
 
-    -- ** Type Environment 
+    -- ** Type Environment
     lookupVar,
     newTVar,
     withTypes,
     addTypes,
+
+    -- ** Value Environment
+
+    newVarPair,
+    getVars,
 
     -- ** Error handling
     record,
@@ -37,7 +43,7 @@ module TypeCheck.Monad (
 
 import           PP
 import           Scope.Check (Renamed)
-import           Scope.Name (Name,Supply,nextUnique)
+import           Scope.Name (Name,Supply,nextUnique,mkName,Origin(Generated))
 import           SrcLoc
 import qualified Syntax.AST as AST
 import           TypeCheck.AST (Type(..),TVar(..),Schema(..))
@@ -57,6 +63,7 @@ data RW = RW { rwSubst :: !Unify.Env
              , rwEnv   :: Map.Map Name TCType
              , rwSupply:: !Supply
              , rwErrs  :: ![TCError]
+             , rwTmps  :: ![(Name, Name)]
              }
 
 emptyRW :: Supply -> RW
@@ -64,6 +71,7 @@ emptyRW rwSupply = RW { rwSubst = Unify.emptyEnv
                       , rwLoc   = mempty
                       , rwEnv   = Map.empty
                       , rwErrs  = []
+                      , rwTmps  = []
                       , .. }
 
 data TCType = HasType !Schema -- ^ A variable with known type.
@@ -179,6 +187,18 @@ addTypes tys =
   let binds = Map.fromList [ (n, HasType s) | (n,s) <- tys ]
    in TC (sets_ (\ RW { .. } -> RW { rwEnv = Map.union binds rwEnv, .. }))
 
+
+-- New synthetic values --------------------------------------------------------
+
+newVarPair :: TC (Name, Name)
+newVarPair = TC $ sets $ \ RW { .. } ->
+  let (nameIn, sup') = mkName (Generated "pattern specification") "s_in" Nothing rwSupply
+      (nameOut, sup'') = mkName (Generated "pattern specification") "s_out" Nothing sup'
+   in ((nameIn, nameOut), RW { rwSupply = sup'', rwTmps = (nameIn, nameOut) : rwTmps, .. })
+
+getVars :: TC ([Name], [Name])
+getVars = TC $ sets $ \ RW { .. } ->
+  (unzip rwTmps, RW { rwTmps = [], .. })
 
 -- Errors ----------------------------------------------------------------------
 
