@@ -7,6 +7,7 @@ import           CodeGen.Cpp (cppFSM)
 import           CodeGen.Dot (dotFSM)
 import           CodeGen.Java (Package,javaFSM)
 import           CodeGen.Python (pythonFSM)
+import           CodeGen.PySQLite (pySQLiteFSM)
 import           Message (ppError)
 import           Opt (opt)
 import           Opt.Simpl (simp)
@@ -52,6 +53,8 @@ main  =
        Nothing  -> return ()
 
      when (optPython opts) (writePackage opts (pythonFSM fsm))
+
+     when (optPySQLite opts) (writePackage opts (pySQLiteFSM fsm))
 
      case optCpp opts of
        Just ns -> writePackage opts (cppFSM ns fsm)
@@ -103,7 +106,7 @@ genFSM opts (InpSpec path) =
      when (optDumpSimp opts) (output (pp (simp exCont)))
 
      (oCont,_) <-
-       if optOptLevel opts >= 1 
+       if optOptLevel opts >= 1
           then do let (oCont,oSup) = opt tcSup exCont
                   when (optDumpOpt opts) (output (pp oCont))
                   return (oCont,oSup)
@@ -185,12 +188,12 @@ dumpAnnotations TC.Controller { .. } =
 
   enums = mapMaybe dumpEnum cEnums
 
-  dumpEnum TC.EnumDef { .. } = 
+  dumpEnum TC.EnumDef { .. } =
     do annot <- eAnn
        return $ JSON.object [ "enum"       JSON..= jsonName eName
                             , "annotation" JSON..= jsonAnnotation annot
                             , "values"     JSON..= map jsonName eCons ]
- 
+
   stateVars = mapMaybe (dumpStateVar "input")  cInputs
            ++ mapMaybe (dumpStateVar "output") cOutputs
 

@@ -16,6 +16,7 @@ data Options = Options { optHelp         :: !Bool
                        , optJava         :: !(Maybe String)
                        , optCpp          :: !(Maybe [String])
                        , optPython       :: !Bool
+                       , optPySQLite     :: !Bool
                        , optDot          :: !Bool
                        , optInput        :: !(Maybe Input)
                        , optInputLen     :: !(Maybe Int)
@@ -50,6 +51,7 @@ defaultOptions  =
           , optJava         = Nothing
           , optCpp          = Nothing
           , optPython       = False
+          , optPySQLite     = False
           , optDot          = False
           , optInput        = Nothing
           , optInputLen     = Nothing
@@ -91,6 +93,9 @@ options  =
 
   , Option "p" ["python"] (NoArg setPython)
     "Output a python implementation of the controller"
+
+  , Option "P" ["pysqlite"] (NoArg setPySQLite)
+    "Output a python + sqlite implementation of the controller"
 
   , Option "" ["cpp"] (OptArg setCpp "CPP_NAMESPACE")
     "Output a c++ implementation of the controller"
@@ -212,6 +217,9 @@ setDumpSanity  = OK (\opts -> opts { optDumpSanity = True })
 
 setPython :: Parser
 setPython  = OK (\opts -> opts { optPython = True })
+
+setPySQLite :: Parser
+setPySQLite  = OK (\opts -> opts { optPySQLite = True })
 
 setDot :: Parser
 setDot  = OK (\opts -> opts { optDot = True })
