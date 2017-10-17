@@ -23,6 +23,7 @@ library
                        CodeGen.Dot
                        CodeGen.Java
                        CodeGen.Python
+                       CodeGen.PySQLite
                        Message
                        Opt
                        Opt.HashCons
@@ -60,8 +61,8 @@ library
                        GraphSCC,
                        text,
                        bytestring,
-                       prettyprinter,
                        filepath,
+                       prettyprinter,
                        simple-smt
   hs-source-dirs:      src
   default-language:    Haskell2010
