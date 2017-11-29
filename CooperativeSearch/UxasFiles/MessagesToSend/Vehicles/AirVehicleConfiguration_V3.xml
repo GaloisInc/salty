@@ -1,0 +1,40 @@
+<AirVehicleConfiguration Series="CMASI">
+    <ID>3</ID>
+    <Label>UGV-3</Label>
+    <MinimumSpeed>5.0</MinimumSpeed>
+    <MaximumSpeed>33.4388885498047</MaximumSpeed>
+    <NominalSpeed>10.0</NominalSpeed>
+    <NominalFlightProfile>
+        <FlightProfile Series="CMASI">
+            <Name></Name>
+            <Airspeed>10.0</Airspeed>
+            <PitchAngle>0</PitchAngle>
+            <VerticalSpeed>0</VerticalSpeed>
+            <MaxBankAngle>20</MaxBankAngle>
+            <EnergyRate>0.0001</EnergyRate>
+        </FlightProfile>
+    </NominalFlightProfile>
+    <AlternateFlightProfiles>
+        <FlightProfile Series="CMASI">
+            <Name/>
+            <Airspeed>10.0</Airspeed>
+            <PitchAngle>0.0</PitchAngle>
+            <VerticalSpeed>5.0</VerticalSpeed>
+            <MaxBankAngle>20.0</MaxBankAngle>
+            <EnergyRate>3.0E-5</EnergyRate>
+        </FlightProfile>
+    </AlternateFlightProfiles>
+    <AvailableLoiterTypes/>
+    <AvailableTurnTypes/>
+    <MinimumAltitude>0.0</MinimumAltitude>
+    <MinAltitudeType>MSL</MinAltitudeType>
+    <MaximumAltitude>1000000.0</MaximumAltitude>
+    <MaxAltitudeType>MSL</MaxAltitudeType>
+    <Affiliation>Unknown</Affiliation>
+    <EntityType/>
+    <NominalSpeed>22.0</NominalSpeed>
+    <NominalAltitude>60.0</NominalAltitude>
+    <NominalAltitudeType>MSL</NominalAltitudeType>
+    <PayloadConfigurationList></PayloadConfigurationList>
+    <Info/>
+</AirVehicleConfiguration>

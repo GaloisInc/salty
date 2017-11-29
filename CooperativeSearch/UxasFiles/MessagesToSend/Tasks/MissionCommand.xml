@@ -1,0 +1,60 @@
+<MissionCommand Series="CMASI">
+    <CommandID>300</CommandID>
+    <VehicleID>3</VehicleID>
+    <WaypointList>
+        <Waypoint Series="CMASI">
+            <Number>1</Number>
+            <NextWaypoint>2</NextWaypoint>
+            <Speed>10.0</Speed>
+            <SpeedType>Airspeed</SpeedType>
+            <ClimbRate>0.0</ClimbRate>
+            <TurnType>TurnShort</TurnType>
+            <ContingencyWaypoint>0</ContingencyWaypoint>
+            <AssociatedTasks/>
+            <Altitude>60.0</Altitude>
+            <Latitude>30.4750931191074</Latitude>
+            <Longitude>-87.1681847851902</Longitude>
+        </Waypoint>
+        <Waypoint Series="CMASI">
+            <Number>2</Number>
+            <NextWaypoint>3</NextWaypoint>
+            <Speed>10.0</Speed>
+            <SpeedType>Airspeed</SpeedType>
+            <ClimbRate>0.0</ClimbRate>
+            <TurnType>TurnShort</TurnType>
+            <ContingencyWaypoint>0</ContingencyWaypoint>
+            <AssociatedTasks/>
+            <Altitude>60.0</Altitude>
+            <Latitude>30.4750931191074</Latitude>
+            <Longitude>-87.1881847851902</Longitude>
+        </Waypoint>
+        <Waypoint Series="CMASI">
+            <Number>3</Number>
+            <NextWaypoint>4</NextWaypoint>
+            <Speed>10.0</Speed>
+            <SpeedType>Airspeed</SpeedType>
+            <ClimbRate>0.0</ClimbRate>
+            <TurnType>TurnShort</TurnType>
+            <ContingencyWaypoint>0</ContingencyWaypoint>
+            <AssociatedTasks/>
+            <Altitude>60.0</Altitude>
+            <Latitude>30.4818931191074</Latitude>
+            <Longitude>-87.1881847851902</Longitude>
+        </Waypoint>
+        <Waypoint Series="CMASI">
+            <Number>4</Number>
+            <NextWaypoint>1</NextWaypoint>
+            <Speed>10.0</Speed>
+            <SpeedType>Airspeed</SpeedType>
+            <ClimbRate>0.0</ClimbRate>
+            <TurnType>TurnShort</TurnType>
+            <ContingencyWaypoint>0</ContingencyWaypoint>
+            <AssociatedTasks/>
+            <Altitude>60.0</Altitude>
+            <Latitude>30.4818931191074</Latitude>
+            <Longitude>-87.1681847851902</Longitude>
+        </Waypoint>
+    </WaypointList>
+    <FirstWaypoint>1</FirstWaypoint>
+    <Status>Approved</Status>
+</MissionCommand>

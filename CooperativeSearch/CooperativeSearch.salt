@@ -1,0 +1,66 @@
+controller CooperativeSearch where
+
+--Whether a vehicle is recalled
+input recalled_1 : Bool = False
+input recalled_2 : Bool = False
+
+--Whether a vehicle can detect the target
+input inRange_1_3 : Bool = False
+input inRange_2_3 : Bool = False
+
+--Enumerate allowed behaviors for each vehicle
+enum Behavior_1 = Search1_1 | Search2_1 | Track_1 | Return_1
+enum Behavior_2 = Search1_2 | Search2_2 | Track_2 | Return_2
+
+--Which behavior a vehicle is executing
+output behavior_1 : Behavior_1
+output behavior_2 : Behavior_2
+
+--Region in which the target is seen
+output reg1 : Bool = False
+output reg2 : Bool = False
+
+
+env_trans
+  -- Assume that if the target has never been detected, at most one vehicle can detect it
+  all{!reg1, !reg2} -> mutex{inRange_1_3', inRange_2_3'}
+
+env_liveness
+  True
+
+sys_init
+  --Initially, each vehicle searches 'its region,' i.e. the region that matches its number
+  behavior_1 == Search1_1
+  behavior_2 == Search2_2
+
+sys_trans
+  --The target can be seen in at most one region
+  mutex{reg1', reg2'}
+
+  --Once the target's region is known, it remains known
+  (reg1 -> reg1') /\ (reg2 -> reg2')
+
+  --If the target has not been seen, and neither vehicle sees it, don't flag it as seen
+  all{!reg1, !reg2, !inRange_1_3', !inRange_2_3'} -> !reg1' /\ !reg2'
+
+  --If the target has not been seen, and it is in range of a vehicle, mark it as seen
+  all{!reg1, !reg2, inRange_1_3'} -> reg1'
+  all{!reg1, !reg2, inRange_2_3'} -> reg2'
+
+  --Behavior constraints, encoded in the definition 'search'
+  search(reg1, reg2, inRange_1_3, inRange_2_3, recalled_1, recalled_2, behavior_1, Return_1, Track_1, Search1_1, Search2_1)
+  search(reg2, reg1, inRange_2_3, inRange_1_3, recalled_2, recalled_1, behavior_2, Return_2, Track_2, Search2_2, Search1_2)
+
+sys_liveness
+  True
+
+def search(myReg, theirReg, imInRange, theyreInRange, imRecalled, theyreRecalled, myBehavior, return, track, searchMyReg, searchTheirReg) =
+  (imRecalled' <-> myBehavior' == return) /\
+  (all{!theirReg', !imInRange', !theyreInRange', !imRecalled'} <-> myBehavior' == searchMyReg) /\
+  (all{theirReg', ((!imInRange' /\ !theyreInRange') \/ (theyreInRange' /\ !theyreRecalled')), !imRecalled'} <-> myBehavior' == searchTheirReg)
+--This last condition is redundant if all the other conditions are correct, but putting it in helps validate that
+--the other conditions are indeed correct (since a contradictory condition will lead to an unrealizble specification)
+--(all{(imInRange' \/ theyInRange'), (myReg' \/ (theirReg' /\ (theyreRecalled' \/ !theyInRange'))), !imRecalled'} <-> myBehavior' == track)
+
+
+

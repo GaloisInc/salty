@@ -1,0 +1,17 @@
+<PointSearchTask Series="CMASI">
+    <TaskID>4</TaskID>
+    <EligibleEntities>
+        <int64>1</int64>
+        <int64>2</int64>
+    </EligibleEntities>
+    <SearchLocation>
+        <Location3D Series="CMASI">
+            <Latitude>30.43258611</Latitude>
+            <Longitude>-87.17408333</Longitude>
+            <Altitude>200.0</Altitude>
+            <AltitudeType>MSL</AltitudeType>
+        </Location3D>
+    </SearchLocation>
+    <DwellTime>5</DwellTime>
+    <GroundSampleDistance>1.0</GroundSampleDistance>
+</PointSearchTask>

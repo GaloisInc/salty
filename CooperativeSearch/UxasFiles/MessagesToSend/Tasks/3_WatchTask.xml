@@ -1,0 +1,14 @@
+<WatchTask Series="IMPACT">
+    <TaskID>3</TaskID>
+    <EligibleEntities>
+        <int64>1</int64>
+        <int64>2</int64>
+    </EligibleEntities>
+    <WatchedEntityID>3</WatchedEntityID>
+    <RevisitRate>0</RevisitRate>
+    <Parameters></Parameters>
+    <Priority>0</Priority>
+    <Required>true</Required>
+    <DwellTime>0</DwellTime>
+    <GroundSampleDistance>1.0</GroundSampleDistance>
+</WatchTask>
