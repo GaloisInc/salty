@@ -27,7 +27,7 @@ The concept is that the logic for each function is the same across all UAVs, but
 
 The tools here create the function declaration, but the user is responsible for filling in the logic. For UAV applications, an auxiliary class for representing UAV state is provided.
 
-### The main simuation
+### The main simulation
 The tools generate a simulation that interfaces the Salty synthesized controller with UxAS, which implements autonomous UAV behaviors through `AutomationRequests` and `MissionCommands`, and AMASE, which simulates movement of UAVs.
 
 At each time step, the simulation gets UAV state data from AMASE. It then calls all input functions with UAV state data as referenced by the synthesized controller. It calls the synthesized controller with this Boolean input vector, which produces an vector of Boolean outputs (or current enumeration values). It then calls all output functions that are true (or current enumeration values) with UAV state data as referenced by the synthesized controller.
