@@ -59,7 +59,7 @@ or
 * Create a specification, e.g. `CooperativeSearch.salt`, that follows the "Variable Naming Convention" in the "Concept" section
 * Run command `salty --python CooperativeSearch.salt`
   * This synthesizes a controller `CooperativeSearch.py`
-* Run command `python CreateUxasPython.py CooperativeSearch.salt`
+* Run command `python CreateUxasSkeleton.py CooperativeSearch.salt`
   * This also creates `CooperativeSearch_Simulation.py`
   * This also creates skeleton code for functions in `psaltlib/Inputs/*` and `psaltlib/Outputs/*` (but will not overwrite existing functions)
 * Fill in logic for the functions in `psaltlib/Inputs/*` and `psaltlib/Outputs/*`, which are already provided for `CooperativeSearch` 
