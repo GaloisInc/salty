@@ -30,4 +30,4 @@ First, this script will generate `ctrl.salt` by running the script `gen_ltl.py` 
 
 Run `python simulation.py`
 
-The script will load the controller `Controller.py` and the environment `pygame_env.py` and will run the simulation on the screen.
+The script will load the controller `Controller.py` and the pygame environment. The simulation should display on the screen.
