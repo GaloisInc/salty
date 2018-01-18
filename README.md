@@ -4,8 +4,8 @@ Salty is a domain specific language for describing `GR(1)` synthesis problems.
 
 ## Current State
 
-Salty is currently under active development, and can be used to produce Java
-source from a `GR(1)` specification.
+Salty is currently under active development, and can be used to produce Python,
+Java, and C++ source from a `GR(1)` specification.
 
 ## Language Goals
 
@@ -15,7 +15,7 @@ source from a `GR(1)` specification.
   - Allowing state variables to range over values of an enumeration, rather than
     just integer values
 * Integrate with the slugs `GR(1)` synthesizer for the heavy lifting
-* Generate controller implementations in python, and potentially java
+* Generate controller implementations in Python, Java and C++.
 
 ## Building Salty
 
