@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/GaloisInc/salty.svg?branch=wip%2Fspeedup-build)](https://travis-ci.org/GaloisInc/salty)
+
 # The Salty DSL
 
 Salty is a domain specific language for describing `GR(1)` synthesis problems.
