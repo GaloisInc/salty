@@ -1,0 +1,38 @@
+<AreaSearchTask Series="CMASI">
+    <TaskID>4</TaskID>
+    <Label>AS40</Label>
+      <SearchArea>
+        <Rectangle Series="CMASI">
+          <CenterPoint>
+            <Location3D Series="CMASI">
+              <Latitude>45.3729</Latitude>
+              <Longitude>-121.0122</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+          </CenterPoint>
+          <Width>3000.0</Width>
+          <Height>3000.0</Height>
+          <Rotation>0.0</Rotation>
+        </Rectangle>
+      </SearchArea>
+    <ViewAngleList>
+        <Wedge Series="CMASI">
+            <AzimuthCenterline>0</AzimuthCenterline>
+            <VerticalCenterline>-60</VerticalCenterline>
+            <AzimuthExtent>0</AzimuthExtent>
+            <VerticalExtent>25</VerticalExtent>
+        </Wedge>
+    </ViewAngleList>
+    <UseInertialViewAngles>false</UseInertialViewAngles>
+    <RevisitRate>0</RevisitRate>
+    <Parameters></Parameters>
+    <Priority>0</Priority>
+    <Required>true</Required>
+    <DesiredWavelengthBands>
+        <WavelengthBand>AnyAll</WavelengthBand>
+    </DesiredWavelengthBands>
+    <DwellTime>0</DwellTime>
+    <GroundSampleDistance>1.0</GroundSampleDistance>
+    </AreaSearchTask>
+    
