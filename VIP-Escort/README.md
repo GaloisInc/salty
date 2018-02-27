@@ -33,8 +33,7 @@ This will invoke salty on `vip.salt` and generate `Vip.py`, a concrete implement
 
 - Run the simulation
 
-`cd ..`
-`python simulation.py`
+`cd ..; python simulation.py`
 
 Once the controller is loaded (it may take some time depending on the controller's size) a message will be printed that the controller been successfully loaded.
 
