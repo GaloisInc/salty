@@ -195,18 +195,24 @@ def main():
         avlocs = update_avlocs(av_states, avlocs)
         splist = update_surv(splist,av_states)
         input_states = update_inputs(splist, avlocs)
-        print(input_states)
-        output_state = controller.move(**input_states)
-        print(output_state)
+        ctrl_input = rm_noninputs(input_states.copy())
+        output_state = controller.move(**ctrl_input)
         enemy_loc = fire_outputs(output_state, av_states)
         while (input_states['vlocs'] != output_state['vloc'] or
                 input_states['uloc1s'] != output_state['uloc1'] or
                 input_states['uloc2s'] != output_state['uloc2'] or
                 input_states['olocs'] != enemy_loc-1):
+            
             avlocs = update_avlocs(av_states, avlocs)
             splist = update_surv(splist,av_states)
             input_states = update_inputs(splist, avlocs)
             (msg_obj, av_states) = update_av_states(av_states, msg_obj, lmcp_factory, socket_sub)
+
+def rm_noninputs(inp):
+    del inp['vlocs']
+    del inp['uloc1s']
+    del inp['uloc2s']
+    return inp
 
 if __name__ == '__main__':
     main()
