@@ -102,3 +102,5 @@ sys_liveness
    vloc == 4
 sys_liveness   
    vloc == 0
+sys_liveness
+   sp0
