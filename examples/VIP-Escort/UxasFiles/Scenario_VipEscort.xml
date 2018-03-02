@@ -1,303 +1,300 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" ?>
+
 <AMASE>
-    <ScenarioData></ScenarioData>
-    <ScenarioEventList>
-     <AirVehicleConfiguration Series="CMASI" Time="1.1">
+  <ScenarioData/>
+  <ScenarioEventList>
+    <AirVehicleConfiguration Series="CMASI" Time="1.1">
       <ID>1</ID>
       <Label>Escort 1</Label>
-            <MinimumSpeed>18.0055561065674</MinimumSpeed>
-            <MaximumSpeed>33.4388885498047</MaximumSpeed>
-            <NominalSpeed>33.0</NominalSpeed>
-            <NominalAltitude>600.0</NominalAltitude>
-            <NominalAltitudeType>MSL</NominalAltitudeType>
-            <NominalFlightProfile>
-                <FlightProfile Series="CMASI">
-                    <Name></Name>
-                    <Airspeed>33.1211109161377</Airspeed>
-                    <PitchAngle>0</PitchAngle>
-                    <VerticalSpeed>0</VerticalSpeed>
-                    <MaxBankAngle>20</MaxBankAngle>
-                    <EnergyRate>0.0001</EnergyRate>
-                </FlightProfile>
-            </NominalFlightProfile>
-            <AlternateFlightProfiles>
-            </AlternateFlightProfiles>
-            <PayloadConfigurationList>
-                <GimbalConfiguration Series="CMASI">
-                    <SupportedPointingModes />
-                    <MinAzimuth>-180.0</MinAzimuth>
-                    <MaxAzimuth>180.0</MaxAzimuth>
-                    <IsAzimuthClamped>true</IsAzimuthClamped>
-                    <MinElevation>-130.0</MinElevation>
-                    <MaxElevation>40.0</MaxElevation>
-                    <IsElevationClamped>true</IsElevationClamped>
-                    <MinRotation>0.0</MinRotation>
-                    <MaxRotation>0.0</MaxRotation>
-                    <IsRotationClamped>true</IsRotationClamped>
-                    <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
-                    <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
-                    <MaxRotationRate>0.0</MaxRotationRate>
-                    <ContainedPayloadList>
-                        <uint32>10001</uint32>
-                    </ContainedPayloadList>
-                    <PayloadID>1</PayloadID>
-                    <PayloadKind />
-                </GimbalConfiguration>
-                <CameraConfiguration Series="CMASI">
-                    <SupportedWavelengthBands>
-                        <WavelengthBand>AllAny</WavelengthBand>
-                    </SupportedWavelengthBands>
-                    <FieldOfViewMode>Discrete</FieldOfViewMode>
-                    <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
-                    <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
-                    <DiscreteHorizontalFieldOfViewList>
-                        <real32>45.0</real32>
-                        <real32>22.0</real32>
-                        <real32>7.6</real32>
-                        <real32>3.7</real32>
-                        <real32>0.63</real32>
-                        <real32>0.11</real32>
-                    </DiscreteHorizontalFieldOfViewList>
-                    <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
-                    <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
-                    <PayloadID>10001</PayloadID>
-                    <PayloadKind />
-                </CameraConfiguration>
-            </PayloadConfigurationList>
-            <AvailableLoiterTypes>
-                <LoiterType>Circular</LoiterType>
-            </AvailableLoiterTypes>
-            <AvailableTurnTypes>
-                <TurnType>TurnShort</TurnType>
-                <TurnType>FlyOver</TurnType>
-            </AvailableTurnTypes>
-            <MinimumAltitude>0</MinimumAltitude>
-            <MaximumAltitude>1000000</MaximumAltitude>
-            <MinAltAboveGround>0</MinAltAboveGround>
-        </AirVehicleConfiguration>
+      <MinimumSpeed>18.0055561065674</MinimumSpeed>
+      <MaximumSpeed>33.4388885498047</MaximumSpeed>
+      <NominalSpeed>33.0</NominalSpeed>
+      <NominalAltitude>600.0</NominalAltitude>
+      <NominalAltitudeType>MSL</NominalAltitudeType>
+      <NominalFlightProfile>
+        <FlightProfile Series="CMASI">
+          <Name/>
+          <Airspeed>33.1211109161377</Airspeed>
+          <PitchAngle>0</PitchAngle>
+          <VerticalSpeed>0</VerticalSpeed>
+          <MaxBankAngle>20</MaxBankAngle>
+          <EnergyRate>0.0001</EnergyRate>
+        </FlightProfile>
+      </NominalFlightProfile>
+      <AlternateFlightProfiles/>
+      <PayloadConfigurationList>
+        <GimbalConfiguration Series="CMASI">
+          <SupportedPointingModes/>
+          <MinAzimuth>-180.0</MinAzimuth>
+          <MaxAzimuth>180.0</MaxAzimuth>
+          <IsAzimuthClamped>true</IsAzimuthClamped>
+          <MinElevation>-130.0</MinElevation>
+          <MaxElevation>40.0</MaxElevation>
+          <IsElevationClamped>true</IsElevationClamped>
+          <MinRotation>0.0</MinRotation>
+          <MaxRotation>0.0</MaxRotation>
+          <IsRotationClamped>true</IsRotationClamped>
+          <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
+          <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
+          <MaxRotationRate>0.0</MaxRotationRate>
+          <ContainedPayloadList>
+            <uint32>10001</uint32>
+          </ContainedPayloadList>
+          <PayloadID>1</PayloadID>
+          <PayloadKind/>
+        </GimbalConfiguration>
+        <CameraConfiguration Series="CMASI">
+          <SupportedWavelengthBands>
+            <WavelengthBand>AllAny</WavelengthBand>
+          </SupportedWavelengthBands>
+          <FieldOfViewMode>Discrete</FieldOfViewMode>
+          <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
+          <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
+          <DiscreteHorizontalFieldOfViewList>
+            <real32>45.0</real32>
+            <real32>22.0</real32>
+            <real32>7.6</real32>
+            <real32>3.7</real32>
+            <real32>0.63</real32>
+            <real32>0.11</real32>
+          </DiscreteHorizontalFieldOfViewList>
+          <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
+          <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
+          <PayloadID>10001</PayloadID>
+          <PayloadKind/>
+        </CameraConfiguration>
+      </PayloadConfigurationList>
+      <AvailableLoiterTypes>
+        <LoiterType>Circular</LoiterType>
+      </AvailableLoiterTypes>
+      <AvailableTurnTypes>
+        <TurnType>TurnShort</TurnType>
+        <TurnType>FlyOver</TurnType>
+      </AvailableTurnTypes>
+      <MinimumAltitude>0</MinimumAltitude>
+      <MaximumAltitude>1000000</MaximumAltitude>
+      <MinAltAboveGround>0</MinAltAboveGround>
+    </AirVehicleConfiguration>
     <AirVehicleConfiguration Series="CMASI" Time="1.2">
       <ID>2</ID>
       <Label>Escort 2</Label>
-            <MinimumSpeed>18.0055561065674</MinimumSpeed>
-            <MaximumSpeed>33.4388885498047</MaximumSpeed>
-            <NominalSpeed>33.0</NominalSpeed>
-            <NominalAltitude>600.0</NominalAltitude>
-            <NominalAltitudeType>MSL</NominalAltitudeType>
-            <NominalFlightProfile>
-                <FlightProfile Series="CMASI">
-                    <Name></Name>
-                    <Airspeed>33.1211109161377</Airspeed>
-                    <PitchAngle>0</PitchAngle>
-                    <VerticalSpeed>0</VerticalSpeed>
-                    <MaxBankAngle>20</MaxBankAngle>
-                    <EnergyRate>0.0001</EnergyRate>
-                </FlightProfile>
-            </NominalFlightProfile>
-            <AlternateFlightProfiles>
-            </AlternateFlightProfiles>
-            <PayloadConfigurationList>
-                <GimbalConfiguration Series="CMASI">
-                    <SupportedPointingModes />
-                    <MinAzimuth>-180.0</MinAzimuth>
-                    <MaxAzimuth>180.0</MaxAzimuth>
-                    <IsAzimuthClamped>true</IsAzimuthClamped>
-                    <MinElevation>-130.0</MinElevation>
-                    <MaxElevation>40.0</MaxElevation>
-                    <IsElevationClamped>true</IsElevationClamped>
-                    <MinRotation>0.0</MinRotation>
-                    <MaxRotation>0.0</MaxRotation>
-                    <IsRotationClamped>true</IsRotationClamped>
-                    <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
-                    <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
-                    <MaxRotationRate>0.0</MaxRotationRate>
-                    <ContainedPayloadList>
-                        <uint32>10001</uint32>
-                    </ContainedPayloadList>
-                    <PayloadID>1</PayloadID>
-                    <PayloadKind />
-                </GimbalConfiguration>
-                <CameraConfiguration Series="CMASI">
-                    <SupportedWavelengthBands>
-                        <WavelengthBand>AllAny</WavelengthBand>
-                    </SupportedWavelengthBands>
-                    <FieldOfViewMode>Discrete</FieldOfViewMode>
-                    <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
-                    <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
-                    <DiscreteHorizontalFieldOfViewList>
-                        <real32>45.0</real32>
-                        <real32>22.0</real32>
-                        <real32>7.6</real32>
-                        <real32>3.7</real32>
-                        <real32>0.63</real32>
-                        <real32>0.11</real32>
-                    </DiscreteHorizontalFieldOfViewList>
-                    <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
-                    <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
-                    <PayloadID>10001</PayloadID>
-                    <PayloadKind />
-                </CameraConfiguration>
-            </PayloadConfigurationList>
-            <AvailableLoiterTypes>
-                <LoiterType>Circular</LoiterType>
-            </AvailableLoiterTypes>
-            <AvailableTurnTypes>
-                <TurnType>TurnShort</TurnType>
-                <TurnType>FlyOver</TurnType>
-            </AvailableTurnTypes>
-            <MinimumAltitude>0</MinimumAltitude>
-            <MaximumAltitude>1000000</MaximumAltitude>
-            <MinAltAboveGround>0</MinAltAboveGround>
-        </AirVehicleConfiguration>
-      <AirVehicleConfiguration Series="CMASI" Time="1.1">
+      <MinimumSpeed>18.0055561065674</MinimumSpeed>
+      <MaximumSpeed>33.4388885498047</MaximumSpeed>
+      <NominalSpeed>33.0</NominalSpeed>
+      <NominalAltitude>600.0</NominalAltitude>
+      <NominalAltitudeType>MSL</NominalAltitudeType>
+      <NominalFlightProfile>
+        <FlightProfile Series="CMASI">
+          <Name/>
+          <Airspeed>33.1211109161377</Airspeed>
+          <PitchAngle>0</PitchAngle>
+          <VerticalSpeed>0</VerticalSpeed>
+          <MaxBankAngle>20</MaxBankAngle>
+          <EnergyRate>0.0001</EnergyRate>
+        </FlightProfile>
+      </NominalFlightProfile>
+      <AlternateFlightProfiles/>
+      <PayloadConfigurationList>
+        <GimbalConfiguration Series="CMASI">
+          <SupportedPointingModes/>
+          <MinAzimuth>-180.0</MinAzimuth>
+          <MaxAzimuth>180.0</MaxAzimuth>
+          <IsAzimuthClamped>true</IsAzimuthClamped>
+          <MinElevation>-130.0</MinElevation>
+          <MaxElevation>40.0</MaxElevation>
+          <IsElevationClamped>true</IsElevationClamped>
+          <MinRotation>0.0</MinRotation>
+          <MaxRotation>0.0</MaxRotation>
+          <IsRotationClamped>true</IsRotationClamped>
+          <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
+          <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
+          <MaxRotationRate>0.0</MaxRotationRate>
+          <ContainedPayloadList>
+            <uint32>10001</uint32>
+          </ContainedPayloadList>
+          <PayloadID>1</PayloadID>
+          <PayloadKind/>
+        </GimbalConfiguration>
+        <CameraConfiguration Series="CMASI">
+          <SupportedWavelengthBands>
+            <WavelengthBand>AllAny</WavelengthBand>
+          </SupportedWavelengthBands>
+          <FieldOfViewMode>Discrete</FieldOfViewMode>
+          <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
+          <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
+          <DiscreteHorizontalFieldOfViewList>
+            <real32>45.0</real32>
+            <real32>22.0</real32>
+            <real32>7.6</real32>
+            <real32>3.7</real32>
+            <real32>0.63</real32>
+            <real32>0.11</real32>
+          </DiscreteHorizontalFieldOfViewList>
+          <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
+          <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
+          <PayloadID>10001</PayloadID>
+          <PayloadKind/>
+        </CameraConfiguration>
+      </PayloadConfigurationList>
+      <AvailableLoiterTypes>
+        <LoiterType>Circular</LoiterType>
+      </AvailableLoiterTypes>
+      <AvailableTurnTypes>
+        <TurnType>TurnShort</TurnType>
+        <TurnType>FlyOver</TurnType>
+      </AvailableTurnTypes>
+      <MinimumAltitude>0</MinimumAltitude>
+      <MaximumAltitude>1000000</MaximumAltitude>
+      <MinAltAboveGround>0</MinAltAboveGround>
+    </AirVehicleConfiguration>
+    <AirVehicleConfiguration Series="CMASI" Time="1.1">
       <ID>3</ID>
       <Label>Enemy</Label>
-            <MinimumSpeed>18.0055561065674</MinimumSpeed>
-            <MaximumSpeed>33.4388885498047</MaximumSpeed>
-            <NominalSpeed>33.0</NominalSpeed>
-            <NominalAltitude>600.0</NominalAltitude>
-            <NominalAltitudeType>MSL</NominalAltitudeType>
-            <NominalFlightProfile>
-                <FlightProfile Series="CMASI">
-                    <Name></Name>
-                    <Airspeed>33.1211109161377</Airspeed>
-                    <PitchAngle>0</PitchAngle>
-                    <VerticalSpeed>0</VerticalSpeed>
-                    <MaxBankAngle>20</MaxBankAngle>
-                    <EnergyRate>0.0001</EnergyRate>
-                </FlightProfile>
-            </NominalFlightProfile>
-            <AlternateFlightProfiles>
-            </AlternateFlightProfiles>
-            <PayloadConfigurationList>
-                <GimbalConfiguration Series="CMASI">
-                    <SupportedPointingModes />
-                    <MinAzimuth>-180.0</MinAzimuth>
-                    <MaxAzimuth>180.0</MaxAzimuth>
-                    <IsAzimuthClamped>true</IsAzimuthClamped>
-                    <MinElevation>-130.0</MinElevation>
-                    <MaxElevation>40.0</MaxElevation>
-                    <IsElevationClamped>true</IsElevationClamped>
-                    <MinRotation>0.0</MinRotation>
-                    <MaxRotation>0.0</MaxRotation>
-                    <IsRotationClamped>true</IsRotationClamped>
-                    <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
-                    <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
-                    <MaxRotationRate>0.0</MaxRotationRate>
-                    <ContainedPayloadList>
-                        <uint32>10001</uint32>
-                    </ContainedPayloadList>
-                    <PayloadID>1</PayloadID>
-                    <PayloadKind />
-                </GimbalConfiguration>
-                <CameraConfiguration Series="CMASI">
-                    <SupportedWavelengthBands>
-                        <WavelengthBand>AllAny</WavelengthBand>
-                    </SupportedWavelengthBands>
-                    <FieldOfViewMode>Discrete</FieldOfViewMode>
-                    <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
-                    <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
-                    <DiscreteHorizontalFieldOfViewList>
-                        <real32>45.0</real32>
-                        <real32>22.0</real32>
-                        <real32>7.6</real32>
-                        <real32>3.7</real32>
-                        <real32>0.63</real32>
-                        <real32>0.11</real32>
-                    </DiscreteHorizontalFieldOfViewList>
-                    <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
-                    <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
-                    <PayloadID>10001</PayloadID>
-                    <PayloadKind />
-                </CameraConfiguration>
-            </PayloadConfigurationList>
-            <AvailableLoiterTypes>
-                <LoiterType>Circular</LoiterType>
-            </AvailableLoiterTypes>
-            <AvailableTurnTypes>
-                <TurnType>TurnShort</TurnType>
-                <TurnType>FlyOver</TurnType>
-            </AvailableTurnTypes>
-            <MinimumAltitude>0</MinimumAltitude>
-            <MaximumAltitude>1000000</MaximumAltitude>
-            <MinAltAboveGround>0</MinAltAboveGround>
-        </AirVehicleConfiguration>
-      <AirVehicleConfiguration Series="CMASI" Time="1.1">
+      <MinimumSpeed>18.0055561065674</MinimumSpeed>
+      <MaximumSpeed>33.4388885498047</MaximumSpeed>
+      <NominalSpeed>33.0</NominalSpeed>
+      <NominalAltitude>600.0</NominalAltitude>
+      <NominalAltitudeType>MSL</NominalAltitudeType>
+      <NominalFlightProfile>
+        <FlightProfile Series="CMASI">
+          <Name/>
+          <Airspeed>33.1211109161377</Airspeed>
+          <PitchAngle>0</PitchAngle>
+          <VerticalSpeed>0</VerticalSpeed>
+          <MaxBankAngle>20</MaxBankAngle>
+          <EnergyRate>0.0001</EnergyRate>
+        </FlightProfile>
+      </NominalFlightProfile>
+      <AlternateFlightProfiles/>
+      <PayloadConfigurationList>
+        <GimbalConfiguration Series="CMASI">
+          <SupportedPointingModes/>
+          <MinAzimuth>-180.0</MinAzimuth>
+          <MaxAzimuth>180.0</MaxAzimuth>
+          <IsAzimuthClamped>true</IsAzimuthClamped>
+          <MinElevation>-130.0</MinElevation>
+          <MaxElevation>40.0</MaxElevation>
+          <IsElevationClamped>true</IsElevationClamped>
+          <MinRotation>0.0</MinRotation>
+          <MaxRotation>0.0</MaxRotation>
+          <IsRotationClamped>true</IsRotationClamped>
+          <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
+          <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
+          <MaxRotationRate>0.0</MaxRotationRate>
+          <ContainedPayloadList>
+            <uint32>10001</uint32>
+          </ContainedPayloadList>
+          <PayloadID>1</PayloadID>
+          <PayloadKind/>
+        </GimbalConfiguration>
+        <CameraConfiguration Series="CMASI">
+          <SupportedWavelengthBands>
+            <WavelengthBand>AllAny</WavelengthBand>
+          </SupportedWavelengthBands>
+          <FieldOfViewMode>Discrete</FieldOfViewMode>
+          <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
+          <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
+          <DiscreteHorizontalFieldOfViewList>
+            <real32>45.0</real32>
+            <real32>22.0</real32>
+            <real32>7.6</real32>
+            <real32>3.7</real32>
+            <real32>0.63</real32>
+            <real32>0.11</real32>
+          </DiscreteHorizontalFieldOfViewList>
+          <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
+          <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
+          <PayloadID>10001</PayloadID>
+          <PayloadKind/>
+        </CameraConfiguration>
+      </PayloadConfigurationList>
+      <AvailableLoiterTypes>
+        <LoiterType>Circular</LoiterType>
+      </AvailableLoiterTypes>
+      <AvailableTurnTypes>
+        <TurnType>TurnShort</TurnType>
+        <TurnType>FlyOver</TurnType>
+      </AvailableTurnTypes>
+      <MinimumAltitude>0</MinimumAltitude>
+      <MaximumAltitude>1000000</MaximumAltitude>
+      <MinAltAboveGround>0</MinAltAboveGround>
+    </AirVehicleConfiguration>
+    <AirVehicleConfiguration Series="CMASI" Time="1.1">
       <ID>4</ID>
       <Label>VIP</Label>
-            <MinimumSpeed>18.0055561065674</MinimumSpeed>
-            <MaximumSpeed>33.4388885498047</MaximumSpeed>
-            <NominalSpeed>33.0</NominalSpeed>
-            <NominalAltitude>600.0</NominalAltitude>
-            <NominalAltitudeType>MSL</NominalAltitudeType>
-            <NominalFlightProfile>
-                <FlightProfile Series="CMASI">
-                    <Name></Name>
-                    <Airspeed>33.1211109161377</Airspeed>
-                    <PitchAngle>0</PitchAngle>
-                    <VerticalSpeed>0</VerticalSpeed>
-                    <MaxBankAngle>20</MaxBankAngle>
-                    <EnergyRate>0.0001</EnergyRate>
-                </FlightProfile>
-            </NominalFlightProfile>
-            <AlternateFlightProfiles>
-            </AlternateFlightProfiles>
-            <PayloadConfigurationList>
-                <GimbalConfiguration Series="CMASI">
-                    <SupportedPointingModes />
-                    <MinAzimuth>-180.0</MinAzimuth>
-                    <MaxAzimuth>180.0</MaxAzimuth>
-                    <IsAzimuthClamped>true</IsAzimuthClamped>
-                    <MinElevation>-130.0</MinElevation>
-                    <MaxElevation>40.0</MaxElevation>
-                    <IsElevationClamped>true</IsElevationClamped>
-                    <MinRotation>0.0</MinRotation>
-                    <MaxRotation>0.0</MaxRotation>
-                    <IsRotationClamped>true</IsRotationClamped>
-                    <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
-                    <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
-                    <MaxRotationRate>0.0</MaxRotationRate>
-                    <ContainedPayloadList>
-                        <uint32>10001</uint32>
-                    </ContainedPayloadList>
-                    <PayloadID>1</PayloadID>
-                    <PayloadKind />
-                </GimbalConfiguration>
-                <CameraConfiguration Series="CMASI">
-                    <SupportedWavelengthBands>
-                        <WavelengthBand>AllAny</WavelengthBand>
-                    </SupportedWavelengthBands>
-                    <FieldOfViewMode>Discrete</FieldOfViewMode>
-                    <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
-                    <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
-                    <DiscreteHorizontalFieldOfViewList>
-                        <real32>45.0</real32>
-                        <real32>22.0</real32>
-                        <real32>7.6</real32>
-                        <real32>3.7</real32>
-                        <real32>0.63</real32>
-                        <real32>0.11</real32>
-                    </DiscreteHorizontalFieldOfViewList>
-                    <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
-                    <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
-                    <PayloadID>10001</PayloadID>
-                    <PayloadKind />
-                </CameraConfiguration>
-            </PayloadConfigurationList>
-            <AvailableLoiterTypes>
-                <LoiterType>Circular</LoiterType>
-            </AvailableLoiterTypes>
-            <AvailableTurnTypes>
-                <TurnType>TurnShort</TurnType>
-                <TurnType>FlyOver</TurnType>
-            </AvailableTurnTypes>
-            <MinimumAltitude>0</MinimumAltitude>
-            <MaximumAltitude>1000000</MaximumAltitude>
-            <MinAltAboveGround>0</MinAltAboveGround>
-        </AirVehicleConfiguration>
-      <AirVehicleState Series="CMASI" Time="1.5">
+      <MinimumSpeed>18.0055561065674</MinimumSpeed>
+      <MaximumSpeed>33.4388885498047</MaximumSpeed>
+      <NominalSpeed>33.0</NominalSpeed>
+      <NominalAltitude>600.0</NominalAltitude>
+      <NominalAltitudeType>MSL</NominalAltitudeType>
+      <NominalFlightProfile>
+        <FlightProfile Series="CMASI">
+          <Name/>
+          <Airspeed>33.1211109161377</Airspeed>
+          <PitchAngle>0</PitchAngle>
+          <VerticalSpeed>0</VerticalSpeed>
+          <MaxBankAngle>20</MaxBankAngle>
+          <EnergyRate>0.0001</EnergyRate>
+        </FlightProfile>
+      </NominalFlightProfile>
+      <AlternateFlightProfiles/>
+      <PayloadConfigurationList>
+        <GimbalConfiguration Series="CMASI">
+          <SupportedPointingModes/>
+          <MinAzimuth>-180.0</MinAzimuth>
+          <MaxAzimuth>180.0</MaxAzimuth>
+          <IsAzimuthClamped>true</IsAzimuthClamped>
+          <MinElevation>-130.0</MinElevation>
+          <MaxElevation>40.0</MaxElevation>
+          <IsElevationClamped>true</IsElevationClamped>
+          <MinRotation>0.0</MinRotation>
+          <MaxRotation>0.0</MaxRotation>
+          <IsRotationClamped>true</IsRotationClamped>
+          <MaxAzimuthSlewRate>114.59</MaxAzimuthSlewRate>
+          <MaxElevationSlewRate>114.59</MaxElevationSlewRate>
+          <MaxRotationRate>0.0</MaxRotationRate>
+          <ContainedPayloadList>
+            <uint32>10001</uint32>
+          </ContainedPayloadList>
+          <PayloadID>1</PayloadID>
+          <PayloadKind/>
+        </GimbalConfiguration>
+        <CameraConfiguration Series="CMASI">
+          <SupportedWavelengthBands>
+            <WavelengthBand>AllAny</WavelengthBand>
+          </SupportedWavelengthBands>
+          <FieldOfViewMode>Discrete</FieldOfViewMode>
+          <MinHorizontalFieldOfView>0.11</MinHorizontalFieldOfView>
+          <MaxHorizontalFieldOfView>45.0</MaxHorizontalFieldOfView>
+          <DiscreteHorizontalFieldOfViewList>
+            <real32>45.0</real32>
+            <real32>22.0</real32>
+            <real32>7.6</real32>
+            <real32>3.7</real32>
+            <real32>0.63</real32>
+            <real32>0.11</real32>
+          </DiscreteHorizontalFieldOfViewList>
+          <VideoStreamHorizontalResolution>1024</VideoStreamHorizontalResolution>
+          <VideoStreamVerticalResolution>768</VideoStreamVerticalResolution>
+          <PayloadID>10001</PayloadID>
+          <PayloadKind/>
+        </CameraConfiguration>
+      </PayloadConfigurationList>
+      <AvailableLoiterTypes>
+        <LoiterType>Circular</LoiterType>
+      </AvailableLoiterTypes>
+      <AvailableTurnTypes>
+        <TurnType>TurnShort</TurnType>
+        <TurnType>FlyOver</TurnType>
+      </AvailableTurnTypes>
+      <MinimumAltitude>0</MinimumAltitude>
+      <MaximumAltitude>1000000</MaximumAltitude>
+      <MinAltAboveGround>0</MinAltAboveGround>
+    </AirVehicleConfiguration>
+    <AirVehicleState Series="CMASI" Time="1.5">
       <ID>1</ID>
       <Location>
-      <Location3D Series="CMASI">
+        <Location3D Series="CMASI">
           <Latitude>45.3297</Latitude>
           <Longitude>-120.9619</Longitude>
           <Altitude>1000.0</Altitude>
@@ -351,7 +348,7 @@
       <AssociatedTasks/>
       <Time>0</Time>
       <Info/>
-  </AirVehicleState> 
+    </AirVehicleState>
     <AirVehicleState Series="CMASI" Time="1.5">
       <ID>2</ID>
       <Location>
@@ -409,8 +406,8 @@
       <AssociatedTasks/>
       <Time>0</Time>
       <Info/>
-      </AirVehicleState>    
-      <AirVehicleState Series="CMASI" Time="1.5">
+    </AirVehicleState>
+    <AirVehicleState Series="CMASI" Time="1.5">
       <ID>3</ID>
       <Location>
         <Location3D Series="CMASI">
@@ -467,11 +464,11 @@
       <AssociatedTasks/>
       <Time>0</Time>
       <Info/>
-    </AirVehicleState>  
-     <AirVehicleState Series="CMASI" Time="1.5">
+    </AirVehicleState>
+    <AirVehicleState Series="CMASI" Time="1.5">
       <ID>4</ID>
       <Location>
-         <Location3D Series="CMASI">
+        <Location3D Series="CMASI">
           <Latitude>45.274</Latitude>
           <Longitude>-120.9308</Longitude>
           <Altitude>1000.0</Altitude>
@@ -496,7 +493,7 @@
       <r>0.0</r>
       <Course>0.0</Course>
       <Groundspeed>0.0</Groundspeed>
-       <EnergyAvailable>100.0</EnergyAvailable>
+      <EnergyAvailable>100.0</EnergyAvailable>
       <PayloadStateList>
         <GimbalState Series="CMASI">
           <PointingMode>AirVehicleRelativeAngle</PointingMode>
@@ -525,6 +522,2924 @@
       <AssociatedTasks/>
       <Time>0</Time>
       <Info/>
-    </AirVehicleState> 
+    </AirVehicleState>
+    <KeepOutZone Series="CMASI">
+      <ZoneType>Physical</ZoneType>
+      <ZoneID>1</ZoneID>
+      <MinAltitude>0.0</MinAltitude>
+      <MinAltitudeType>AGL</MinAltitudeType>
+      <MaxAltitude>5000.0</MaxAltitude>
+      <MaxAltitudeType>MSL</MaxAltitudeType>
+      <AffectedAircraft/>
+      <StartTime>0</StartTime>
+      <EndTime>0</EndTime>
+      <Padding>0.0</Padding>
+      <Label/>
+      <Boundary>
+        <Polygon Series="CMASI">
+          <BoundaryPoints>
+            <Location3D Series="CMASI">
+              <Latitude>45.33579077243455</Latitude>
+              <Longitude>-120.8702876480349</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.336124871642085</Latitude>
+              <Longitude>-120.87313867110846</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33645897084961</Latitude>
+              <Longitude>-120.87361384162072</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33645897084961</Latitude>
+              <Longitude>-120.874089012133</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33645897084961</Latitude>
+              <Longitude>-120.87503935315752</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33712716926467</Latitude>
+              <Longitude>-120.87598969418204</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.337461268472204</Latitude>
+              <Longitude>-120.8764648646943</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.337461268472204</Latitude>
+              <Longitude>-120.87741520571882</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33779536767973</Latitude>
+              <Longitude>-120.87789037623108</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33779536767973</Latitude>
+              <Longitude>-120.87836554674335</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33779536767973</Latitude>
+              <Longitude>-120.87884071725561</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33812946688726</Latitude>
+              <Longitude>-120.87979105828013</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33812946688726</Latitude>
+              <Longitude>-120.8802662287924</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33846356609479</Latitude>
+              <Longitude>-120.88074139930465</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33879766530232</Latitude>
+              <Longitude>-120.88121656981691</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.88216691084143</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.8826420813537</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.88311725186597</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.88359242237823</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.88454276340275</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.88501793391501</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.88549310442727</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.88596827493953</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.88739378647632</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.88834412750084</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.88929446852536</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.88976963903762</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89024480954988</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89071998006214</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89167032108666</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.8926206621112</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89309583262346</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89404617364798</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89452134416024</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.8949965146725</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.8964220262093</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33946586371738</Latitude>
+              <Longitude>-120.89689719672155</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33913176450985</Latitude>
+              <Longitude>-120.89737236723381</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33879766530232</Latitude>
+              <Longitude>-120.89784753774607</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33879766530232</Latitude>
+              <Longitude>-120.8987978787706</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33846356609479</Latitude>
+              <Longitude>-120.89927304928285</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33846356609479</Latitude>
+              <Longitude>-120.89974821979511</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33846356609479</Latitude>
+              <Longitude>-120.90022339030737</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33812946688726</Latitude>
+              <Longitude>-120.90069856081963</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33812946688726</Latitude>
+              <Longitude>-120.90117373133191</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33812946688726</Latitude>
+              <Longitude>-120.90164890184417</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33779536767973</Latitude>
+              <Longitude>-120.90212407235643</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33779536767973</Latitude>
+              <Longitude>-120.90354958389321</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33712716926467</Latitude>
+              <Longitude>-120.90449992491773</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33679307005714</Latitude>
+              <Longitude>-120.90497509542999</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33679307005714</Latitude>
+              <Longitude>-120.90592543645452</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33645897084961</Latitude>
+              <Longitude>-120.90687577747904</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33645897084961</Latitude>
+              <Longitude>-120.9073509479913</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.336124871642085</Latitude>
+              <Longitude>-120.90830128901582</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33579077243455</Latitude>
+              <Longitude>-120.90925163004034</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33545667322702</Latitude>
+              <Longitude>-120.9097268005526</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33512257401949</Latitude>
+              <Longitude>-120.91020197106488</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33512257401949</Latitude>
+              <Longitude>-120.91067714157714</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33512257401949</Latitude>
+              <Longitude>-120.9111523120894</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33478847481196</Latitude>
+              <Longitude>-120.91162748260166</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33478847481196</Latitude>
+              <Longitude>-120.91210265311392</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33445437560443</Latitude>
+              <Longitude>-120.91257782362618</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33445437560443</Latitude>
+              <Longitude>-120.91305299413844</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3341202763969</Latitude>
+              <Longitude>-120.91447850567523</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33345207798184</Latitude>
+              <Longitude>-120.91542884669975</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33345207798184</Latitude>
+              <Longitude>-120.91590401721201</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33311797877431</Latitude>
+              <Longitude>-120.91637918772427</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33311797877431</Latitude>
+              <Longitude>-120.91685435823653</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33311797877431</Latitude>
+              <Longitude>-120.91780469926105</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33278387956678</Latitude>
+              <Longitude>-120.91827986977331</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33278387956678</Latitude>
+              <Longitude>-120.91875504028557</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33278387956678</Latitude>
+              <Longitude>-120.91923021079785</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.332449780359255</Latitude>
+              <Longitude>-120.91970538131011</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33211568115172</Latitude>
+              <Longitude>-120.92018055182237</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33178158194419</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33111338352913</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3307792843216</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33044518511407</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.330111085906545</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32977698669901</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32910878828395</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.328774689076425</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32844058986889</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32810649066136</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32710419303877</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32576779620865</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325433697001124</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325099597793596</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32476549858606</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-120.92113089284689</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32376320096347</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32342910175594</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32309500254841</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32242680413335</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32209270492582</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.321758605718294</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.321424506510766</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3207563080957</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.320422208888175</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31841761364299</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.318083514435465</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31708121681287</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.316747117605345</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31641301839781</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315410720775226</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31507662156769</Latitude>
+              <Longitude>-120.92065572233463</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31474252236016</Latitude>
+              <Longitude>-120.92018055182237</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-120.91970538131011</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31374022473757</Latitude>
+              <Longitude>-120.91970538131011</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.313406125530044</Latitude>
+              <Longitude>-120.91923021079785</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31273792711498</Latitude>
+              <Longitude>-120.91827986977331</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31240382790745</Latitude>
+              <Longitude>-120.9173295287488</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.312069728699925</Latitude>
+              <Longitude>-120.91685435823653</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3117356294924</Latitude>
+              <Longitude>-120.91637918772427</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3117356294924</Latitude>
+              <Longitude>-120.91590401721201</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3117356294924</Latitude>
+              <Longitude>-120.91542884669975</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31140153028486</Latitude>
+              <Longitude>-120.9149536761875</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31140153028486</Latitude>
+              <Longitude>-120.91400333516296</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31106743107733</Latitude>
+              <Longitude>-120.9135281646507</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31106743107733</Latitude>
+              <Longitude>-120.91305299413844</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31106743107733</Latitude>
+              <Longitude>-120.91257782362618</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.310733331869805</Latitude>
+              <Longitude>-120.91210265311392</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31039923266228</Latitude>
+              <Longitude>-120.91162748260166</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31006513345474</Latitude>
+              <Longitude>-120.9111523120894</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31006513345474</Latitude>
+              <Longitude>-120.91067714157714</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.309731034247214</Latitude>
+              <Longitude>-120.91020197106488</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.309731034247214</Latitude>
+              <Longitude>-120.90925163004034</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.309396935039686</Latitude>
+              <Longitude>-120.90877645952808</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.309396935039686</Latitude>
+              <Longitude>-120.90830128901582</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30906283583215</Latitude>
+              <Longitude>-120.90782611850356</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30872873662462</Latitude>
+              <Longitude>-120.9073509479913</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30872873662462</Latitude>
+              <Longitude>-120.90687577747904</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30872873662462</Latitude>
+              <Longitude>-120.90640060696678</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.308394637417095</Latitude>
+              <Longitude>-120.90592543645452</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30806053820957</Latitude>
+              <Longitude>-120.90545026594226</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30806053820957</Latitude>
+              <Longitude>-120.90449992491773</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30772643900203</Latitude>
+              <Longitude>-120.90354958389321</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307392339794504</Latitude>
+              <Longitude>-120.90259924286869</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307058240586976</Latitude>
+              <Longitude>-120.90212407235643</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307058240586976</Latitude>
+              <Longitude>-120.90164890184417</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30672414137945</Latitude>
+              <Longitude>-120.90117373133191</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30672414137945</Latitude>
+              <Longitude>-120.90069856081963</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30639004217191</Latitude>
+              <Longitude>-120.89927304928285</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.306055942964385</Latitude>
+              <Longitude>-120.89832270825833</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.306055942964385</Latitude>
+              <Longitude>-120.89737236723381</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30572184375686</Latitude>
+              <Longitude>-120.8964220262093</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30538774454932</Latitude>
+              <Longitude>-120.89594685569702</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30505364534179</Latitude>
+              <Longitude>-120.89547168518476</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30505364534179</Latitude>
+              <Longitude>-120.8949965146725</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30505364534179</Latitude>
+              <Longitude>-120.89452134416024</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.304719546134265</Latitude>
+              <Longitude>-120.89357100313572</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.304719546134265</Latitude>
+              <Longitude>-120.8926206621112</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30438544692674</Latitude>
+              <Longitude>-120.89214549159894</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30438544692674</Latitude>
+              <Longitude>-120.89167032108666</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30438544692674</Latitude>
+              <Longitude>-120.8911951505744</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30438544692674</Latitude>
+              <Longitude>-120.89024480954988</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.304719546134265</Latitude>
+              <Longitude>-120.88929446852536</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30538774454932</Latitude>
+              <Longitude>-120.88739378647632</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30572184375686</Latitude>
+              <Longitude>-120.88644344545179</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30572184375686</Latitude>
+              <Longitude>-120.88549310442727</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.306055942964385</Latitude>
+              <Longitude>-120.88454276340275</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.306055942964385</Latitude>
+              <Longitude>-120.88406759289049</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30639004217191</Latitude>
+              <Longitude>-120.88311725186597</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30639004217191</Latitude>
+              <Longitude>-120.8826420813537</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307058240586976</Latitude>
+              <Longitude>-120.88169174032917</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307392339794504</Latitude>
+              <Longitude>-120.88074139930465</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307392339794504</Latitude>
+              <Longitude>-120.8802662287924</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.307392339794504</Latitude>
+              <Longitude>-120.87979105828013</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30772643900203</Latitude>
+              <Longitude>-120.87931588776787</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30772643900203</Latitude>
+              <Longitude>-120.87836554674335</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30806053820957</Latitude>
+              <Longitude>-120.87741520571882</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30872873662462</Latitude>
+              <Longitude>-120.8764648646943</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30872873662462</Latitude>
+              <Longitude>-120.87598969418204</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30906283583215</Latitude>
+              <Longitude>-120.87551452366978</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.30906283583215</Latitude>
+              <Longitude>-120.87503935315752</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.309396935039686</Latitude>
+              <Longitude>-120.87456418264526</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.309731034247214</Latitude>
+              <Longitude>-120.87313867110846</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31039923266228</Latitude>
+              <Longitude>-120.87218833008394</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.310733331869805</Latitude>
+              <Longitude>-120.87171315957168</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.310733331869805</Latitude>
+              <Longitude>-120.87123798905942</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31106743107733</Latitude>
+              <Longitude>-120.8702876480349</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31140153028486</Latitude>
+              <Longitude>-120.86981247752264</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31140153028486</Latitude>
+              <Longitude>-120.86886213649811</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3117356294924</Latitude>
+              <Longitude>-120.86838696598585</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.312069728699925</Latitude>
+              <Longitude>-120.86791179547359</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31240382790745</Latitude>
+              <Longitude>-120.86743662496133</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31273792711498</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.313072026322516</Latitude>
+              <Longitude>-120.86601111342455</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31374022473757</Latitude>
+              <Longitude>-120.86458560188777</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31374022473757</Latitude>
+              <Longitude>-120.8641104313755</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31407432394511</Latitude>
+              <Longitude>-120.86316009035097</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-120.86268491983871</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31474252236016</Latitude>
+              <Longitude>-120.86220974932645</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315410720775226</Latitude>
+              <Longitude>-120.8617345788142</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-120.86078423778967</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-120.86030906727741</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31641301839781</Latitude>
+              <Longitude>-120.85935872625288</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.316747117605345</Latitude>
+              <Longitude>-120.85888355574062</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31708121681287</Latitude>
+              <Longitude>-120.85840838522836</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31774941522794</Latitude>
+              <Longitude>-120.8579332147161</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.318083514435465</Latitude>
+              <Longitude>-120.85745804420384</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31841761364299</Latitude>
+              <Longitude>-120.85745804420384</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-120.85745804420384</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-120.85698287369158</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.320422208888175</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3207563080957</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32109040730323</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.321758605718294</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32209270492582</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32242680413335</Latitude>
+              <Longitude>-120.85650770317932</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.322760903340885</Latitude>
+              <Longitude>-120.85698287369158</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32309500254841</Latitude>
+              <Longitude>-120.85745804420384</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32309500254841</Latitude>
+              <Longitude>-120.85840838522836</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32309500254841</Latitude>
+              <Longitude>-120.85888355574062</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32342910175594</Latitude>
+              <Longitude>-120.85983389676514</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32376320096347</Latitude>
+              <Longitude>-120.86030906727741</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-120.86078423778967</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-120.86125940830193</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-120.8617345788142</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32443139937853</Latitude>
+              <Longitude>-120.86220974932645</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32443139937853</Latitude>
+              <Longitude>-120.86316009035097</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32476549858606</Latitude>
+              <Longitude>-120.86363526086323</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32476549858606</Latitude>
+              <Longitude>-120.8641104313755</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325099597793596</Latitude>
+              <Longitude>-120.86458560188777</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325433697001124</Latitude>
+              <Longitude>-120.86506077240003</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32576779620865</Latitude>
+              <Longitude>-120.86553594291229</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-120.86601111342455</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32710419303877</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.327772391453834</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32844058986889</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.328774689076425</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32910878828395</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32944288749148</Latitude>
+              <Longitude>-120.86648628393681</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.330111085906545</Latitude>
+              <Longitude>-120.86696145444907</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33044518511407</Latitude>
+              <Longitude>-120.86696145444907</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3307792843216</Latitude>
+              <Longitude>-120.86696145444907</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33111338352913</Latitude>
+              <Longitude>-120.86743662496133</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.331447482736664</Latitude>
+              <Longitude>-120.86791179547359</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.331447482736664</Latitude>
+              <Longitude>-120.86838696598585</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33178158194419</Latitude>
+              <Longitude>-120.86886213649811</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33211568115172</Latitude>
+              <Longitude>-120.86933730701038</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.332449780359255</Latitude>
+              <Longitude>-120.86981247752264</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.332449780359255</Latitude>
+              <Longitude>-120.8702876480349</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33278387956678</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.333786177189374</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3341202763969</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33445437560443</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33512257401949</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33545667322702</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33579077243455</Latitude>
+              <Longitude>-120.87076281854716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.336124871642085</Latitude>
+              <Longitude>-120.8702876480349</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+          </BoundaryPoints>
+        </Polygon>
+      </Boundary>
+    </KeepOutZone>
+    <KeepOutZone Series="CMASI">
+      <ZoneType>Physical</ZoneType>
+      <ZoneID>2</ZoneID>
+      <MinAltitude>0.0</MinAltitude>
+      <MinAltitudeType>AGL</MinAltitudeType>
+      <MaxAltitude>5000.0</MaxAltitude>
+      <MaxAltitudeType>MSL</MaxAltitudeType>
+      <AffectedAircraft/>
+      <StartTime>0</StartTime>
+      <EndTime>0</EndTime>
+      <Padding>0.0</Padding>
+      <Label/>
+      <Boundary>
+        <Polygon Series="CMASI">
+          <BoundaryPoints>
+            <Location3D Series="CMASI">
+              <Latitude>45.32844058986889</Latitude>
+              <Longitude>-121.04134903244908</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.327772391453834</Latitude>
+              <Longitude>-121.03897317988776</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.327772391453834</Latitude>
+              <Longitude>-121.0384980093755</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-121.03802283886324</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-121.03754766835098</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-121.03707249783872</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-121.03659732732645</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-121.03612215681419</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32710419303877</Latitude>
+              <Longitude>-121.03564698630193</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.03517181578967</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.0346966452774</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.03422147476515</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.03374630425289</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.03279596322837</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.0323207927161</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.03184562220383</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.03089528117931</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.03042011066705</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02994494015479</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02946976964253</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02899459913027</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02756908759348</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02709391708122</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02661874656896</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02566840554444</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02519323503218</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02471806451992</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02424289400766</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02329255298314</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02281738247086</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.0223422119586</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.02186704144634</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.02091670042182</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.02044152990956</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.0199663593973</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01949118888504</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.0185408478605</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01806567734825</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01759050683599</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01711533632373</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.0161649952992</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01568982478695</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01521465427469</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01473948376243</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01378914273789</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01331397222563</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01283880171337</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01236363120111</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01141329017659</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.01093811966433</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.00998777863981</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.00903743761528</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.00856226710302</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32610189541618</Latitude>
+              <Longitude>-121.00808709659076</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32576779620865</Latitude>
+              <Longitude>-121.0076119260785</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32576779620865</Latitude>
+              <Longitude>-121.00666158505398</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325433697001124</Latitude>
+              <Longitude>-121.00618641454172</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325099597793596</Latitude>
+              <Longitude>-121.00571124402946</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32476549858606</Latitude>
+              <Longitude>-121.00476090300492</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32476549858606</Latitude>
+              <Longitude>-121.00428573249266</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32443139937853</Latitude>
+              <Longitude>-121.0038105619804</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32443139937853</Latitude>
+              <Longitude>-121.00333539146814</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32443139937853</Latitude>
+              <Longitude>-121.00286022095588</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-121.00238505044362</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-121.00190987993136</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.324097300171005</Latitude>
+              <Longitude>-121.0014347094191</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32376320096347</Latitude>
+              <Longitude>-121.00048436839457</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32342910175594</Latitude>
+              <Longitude>-121.0000091978823</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32309500254841</Latitude>
+              <Longitude>-120.99953402737005</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.322760903340885</Latitude>
+              <Longitude>-120.99905885685779</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.321424506510766</Latitude>
+              <Longitude>-120.99953402737005</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3207563080957</Latitude>
+              <Longitude>-121.0000091978823</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.320422208888175</Latitude>
+              <Longitude>-121.0000091978823</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.00048436839457</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.00095953890684</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.0014347094191</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-121.00238505044362</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31841761364299</Latitude>
+              <Longitude>-121.00286022095588</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31841761364299</Latitude>
+              <Longitude>-121.00333539146814</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.318083514435465</Latitude>
+              <Longitude>-121.0038105619804</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.318083514435465</Latitude>
+              <Longitude>-121.00428573249266</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.318083514435465</Latitude>
+              <Longitude>-121.00476090300492</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31774941522794</Latitude>
+              <Longitude>-121.00571124402946</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.00666158505398</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.00713675556624</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.00808709659076</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.00856226710302</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.00903743761528</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.00951260812754</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.01046294915207</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.01141329017659</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31708121681287</Latitude>
+              <Longitude>-121.01188846068885</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.316747117605345</Latitude>
+              <Longitude>-121.01236363120111</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31641301839781</Latitude>
+              <Longitude>-121.01331397222563</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31641301839781</Latitude>
+              <Longitude>-121.01378914273789</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31641301839781</Latitude>
+              <Longitude>-121.01426431325017</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-121.01473948376243</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-121.01521465427469</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-121.01568982478695</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-121.0161649952992</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-121.01664016581147</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-121.01759050683599</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-121.01806567734825</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315410720775226</Latitude>
+              <Longitude>-121.01901601837278</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31507662156769</Latitude>
+              <Longitude>-121.01949118888504</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31474252236016</Latitude>
+              <Longitude>-121.0199663593973</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31474252236016</Latitude>
+              <Longitude>-121.02044152990956</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31474252236016</Latitude>
+              <Longitude>-121.02091670042182</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.02139187093408</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.0223422119586</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.02281738247086</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.02329255298314</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.0237677234954</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.02471806451992</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.314408423152635</Latitude>
+              <Longitude>-121.02519323503218</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31474252236016</Latitude>
+              <Longitude>-121.02566840554444</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31507662156769</Latitude>
+              <Longitude>-121.0261435760567</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31507662156769</Latitude>
+              <Longitude>-121.02709391708122</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315410720775226</Latitude>
+              <Longitude>-121.02756908759348</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.315744819982754</Latitude>
+              <Longitude>-121.02851942861801</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-121.02899459913027</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-121.02946976964253</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31607891919028</Latitude>
+              <Longitude>-121.02994494015479</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.316747117605345</Latitude>
+              <Longitude>-121.03089528117931</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.316747117605345</Latitude>
+              <Longitude>-121.03184562220383</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31708121681287</Latitude>
+              <Longitude>-121.0323207927161</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31708121681287</Latitude>
+              <Longitude>-121.03279596322837</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31708121681287</Latitude>
+              <Longitude>-121.03327113374063</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.03374630425289</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.03422147476515</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3174153160204</Latitude>
+              <Longitude>-121.0346966452774</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31774941522794</Latitude>
+              <Longitude>-121.03517181578967</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.318083514435465</Latitude>
+              <Longitude>-121.03612215681419</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31841761364299</Latitude>
+              <Longitude>-121.03659732732645</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31841761364299</Latitude>
+              <Longitude>-121.03707249783872</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-121.03754766835098</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-121.03802283886324</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-121.03897317988776</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-121.03944835040002</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31875171285052</Latitude>
+              <Longitude>-121.03992352091228</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.04039869142454</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.04134903244908</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.04182420296134</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.04277454398586</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.04372488501038</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.04420005552264</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.0446752260349</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04515039654716</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04562556705942</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04610073757169</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04657590808395</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04705107859621</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04752624910847</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.04847659013299</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.04895176064525</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.04942693115751</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.04990210166977</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.0508524426943</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.05180278371883</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.05227795423109</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.05322829525561</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.05417863628013</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.05465380679239</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.05560414781692</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319085812058056</Latitude>
+              <Longitude>-121.05607931832918</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.05655448884144</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.319419911265584</Latitude>
+              <Longitude>-121.0570296593537</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.31975401047311</Latitude>
+              <Longitude>-121.05750482986596</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32008810968064</Latitude>
+              <Longitude>-121.05798000037822</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.320422208888175</Latitude>
+              <Longitude>-121.05845517089048</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3207563080957</Latitude>
+              <Longitude>-121.05893034140274</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32109040730323</Latitude>
+              <Longitude>-121.05940551191502</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32109040730323</Latitude>
+              <Longitude>-121.06035585293954</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.321424506510766</Latitude>
+              <Longitude>-121.0608310234518</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.321758605718294</Latitude>
+              <Longitude>-121.06130619396406</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32209270492582</Latitude>
+              <Longitude>-121.06178136447632</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32209270492582</Latitude>
+              <Longitude>-121.06273170550084</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32242680413335</Latitude>
+              <Longitude>-121.0632068760131</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.322760903340885</Latitude>
+              <Longitude>-121.06368204652536</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32309500254841</Latitude>
+              <Longitude>-121.0632068760131</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325099597793596</Latitude>
+              <Longitude>-121.06130619396406</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.325433697001124</Latitude>
+              <Longitude>-121.0608310234518</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32576779620865</Latitude>
+              <Longitude>-121.06035585293954</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.326435994623715</Latitude>
+              <Longitude>-121.05940551191502</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32677009383124</Latitude>
+              <Longitude>-121.05940551191502</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32710419303877</Latitude>
+              <Longitude>-121.05893034140274</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3274382922463</Latitude>
+              <Longitude>-121.05845517089048</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.327772391453834</Latitude>
+              <Longitude>-121.05798000037822</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.327772391453834</Latitude>
+              <Longitude>-121.05750482986596</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.327772391453834</Latitude>
+              <Longitude>-121.05560414781692</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.328774689076425</Latitude>
+              <Longitude>-121.05370346576787</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32910878828395</Latitude>
+              <Longitude>-121.05275312474335</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32910878828395</Latitude>
+              <Longitude>-121.05180278371883</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32944288749148</Latitude>
+              <Longitude>-121.0508524426943</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32944288749148</Latitude>
+              <Longitude>-121.05037727218205</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32944288749148</Latitude>
+              <Longitude>-121.04942693115751</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.330111085906545</Latitude>
+              <Longitude>-121.04800141962073</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33044518511407</Latitude>
+              <Longitude>-121.04752624910847</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33044518511407</Latitude>
+              <Longitude>-121.04705107859621</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33044518511407</Latitude>
+              <Longitude>-121.04657590808395</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3307792843216</Latitude>
+              <Longitude>-121.04610073757169</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3307792843216</Latitude>
+              <Longitude>-121.04562556705942</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33111338352913</Latitude>
+              <Longitude>-121.04420005552264</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.331447482736664</Latitude>
+              <Longitude>-121.04324971449812</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33111338352913</Latitude>
+              <Longitude>-121.04277454398586</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33111338352913</Latitude>
+              <Longitude>-121.0422993734736</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33111338352913</Latitude>
+              <Longitude>-121.04182420296134</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.3307792843216</Latitude>
+              <Longitude>-121.04134903244908</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.33044518511407</Latitude>
+              <Longitude>-121.0408738619368</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.330111085906545</Latitude>
+              <Longitude>-121.04039869142454</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.330111085906545</Latitude>
+              <Longitude>-121.03992352091228</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32977698669901</Latitude>
+              <Longitude>-121.03944835040002</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32977698669901</Latitude>
+              <Longitude>-121.03897317988776</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32944288749148</Latitude>
+              <Longitude>-121.0384980093755</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+            <Location3D Series="CMASI">
+              <Latitude>45.32910878828395</Latitude>
+              <Longitude>-121.03802283886324</Longitude>
+              <Altitude>0.0</Altitude>
+              <AltitudeType>MSL</AltitudeType>
+            </Location3D>
+          </BoundaryPoints>
+        </Polygon>
+      </Boundary>
+    </KeepOutZone>
   </ScenarioEventList>
 </AMASE>
