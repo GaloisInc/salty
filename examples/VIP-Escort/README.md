@@ -2,6 +2,22 @@
 
 This is an example of using a Salty synthesized controller to control unmanned air vehicles (UAVs) following the VIP-escort protocol for UAVs in the presence of an adversary.
 
+## Description
+
+In this scenario we have one main UAV we call “VIP”, multiple support UAVs
+we call “escorts”, one adversary UAV we call “enemy”, and multiple pre-defined
+locations on the map. These locations are shown in green in fig 2. Our aim
+is to automatically synthesize a control protocol that guarantees the following
+four properties. First, The VIP can only fly from one location to another if it
+is being followed by one of the escorts. Second, The VIP cannot visit certain
+locations until at least one of the escorts have previously inspected by flying over
+the location. In order for the UAVs not to pass through the prohibited regions
+shown in red in fig 2, the UAVs must follow certain paths between the locations
+in green. For example, to go from the bottom right location to the upper right,
+the UAVs must pass through the location in the center in order to not fly over
+the prohibited regions.
+
+
 ## Running the Example
 
 ### Dependencies
