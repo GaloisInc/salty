@@ -54,6 +54,6 @@ the prohibited regions.
 
 - Hit play in OpenAMASE and watch the simulation
 
-Or if you just want to see it in action then simply play this demo:
+Or simply play this demo if you just want to see the action:
 
 [![Alt text for your video](https://img.youtube.com/vi/sCLT1iMOpnQ/0.jpg)](https://youtu.be/sCLT1iMOpnQ)
