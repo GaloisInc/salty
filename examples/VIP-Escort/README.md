@@ -37,3 +37,6 @@ This will invoke salty on `vip.salt` and generate `Vip.py`, a concrete implement
 Once the controller is loaded (it may take some time depending on the controller's size) a message will be printed that the controller been successfully loaded.
 
 - Hit play in OpenAMASE and watch the simulation
+
+Or you can simply play this demo:
+[![Alt text for your video](https://img.youtube.com/vi/sCLT1iMOpnQ/0.jpg)](https://youtu.be/sCLT1iMOpnQ)
