@@ -20,17 +20,15 @@ the prohibited regions.
 
 ## Running the Example
 
-### Dependencies
+- Install the following Dependencies
 
-- Python 2
+  - Python 2
 
-- Salty
+  - [Salty](https://github.com/GaloisInc/salty)
 
-- OpenUxAS
+  - [OpenUxAS](https://github.com/afrl-rq/OpenUxAS)
 
-- OpenAMASE
-
-### Steps:
+  - [OpenAMASE](https://github.com/afrl-rq/OpenAMASE)
 
 - Generate the controller
 
