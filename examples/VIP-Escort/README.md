@@ -39,4 +39,5 @@ Once the controller is loaded (it may take some time depending on the controller
 - Hit play in OpenAMASE and watch the simulation
 
 Or you can simply play this demo:
+
 [![Alt text for your video](https://img.youtube.com/vi/sCLT1iMOpnQ/0.jpg)](https://youtu.be/sCLT1iMOpnQ)
