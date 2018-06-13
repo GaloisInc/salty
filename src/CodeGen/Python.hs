@@ -29,10 +29,10 @@ pythonFSM FSM { .. } =
     , block (cls cont (text "object")) $ vcat $
         [ text ""
 
-        , hang (text "__slots__ =")
-             2 (brackets (fsep (punctuate comma (map doubleQuotes [text "_state", text "_table" ]))))
+        --, hang (text "__slots__ =")
+          --   2 (brackets (fsep (punctuate comma (map doubleQuotes [text "_state", text "_table" ]))))
 
-        , text ""
+        --, text ""
         , block (def "__init__" [text "self"]) $ vcat
             [ assign (self "_state") (int fsmInitial)
             ]
