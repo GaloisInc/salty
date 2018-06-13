@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -42,18 +42,18 @@ class GimballedPayloadState(PayloadState.PayloadState):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadState.PayloadState.pack(self))
-        buffer.append(struct.pack(">i", self.PointingMode))
-        buffer.append(struct.pack(">f", self.Azimuth))
-        buffer.append(struct.pack(">f", self.Elevation))
-        buffer.append(struct.pack(">f", self.Rotation))
+        buffer.extend(struct.pack(">i", self.PointingMode))
+        buffer.extend(struct.pack(">f", self.Azimuth))
+        buffer.extend(struct.pack(">f", self.Elevation))
+        buffer.extend(struct.pack(">f", self.Rotation))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadState.PayloadState.unpack(self, buffer, _pos)
         self.PointingMode = struct.unpack_from(">i", buffer, _pos)[0]

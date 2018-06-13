@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -27,7 +27,7 @@ class GraphNode(LMCPObject.LMCPObject):
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.route.GraphNode"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 5931053054693474304
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.NodeID = 0   #int64
@@ -40,24 +40,24 @@ class GraphNode(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.NodeID))
-        buffer.append(struct.pack("B", self.Coordinates != None ))
+        buffer.extend(struct.pack(">q", self.NodeID))
+        buffer.extend(struct.pack("B", self.Coordinates != None ))
         if self.Coordinates != None:
-            buffer.append(struct.pack(">q", self.Coordinates.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Coordinates.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Coordinates.SERIES_VERSION))
-            buffer.append(self.Coordinates.pack())
-        buffer.append(struct.pack(">H", len(self.AssociatedEdges) ))
+            buffer.extend(struct.pack(">q", self.Coordinates.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Coordinates.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Coordinates.SERIES_VERSION))
+            buffer.extend(self.Coordinates.pack())
+        buffer.extend(struct.pack(">H", len(self.AssociatedEdges) ))
         for x in self.AssociatedEdges:
-            buffer.append(struct.pack(">q", x ))
+            buffer.extend(struct.pack(">q", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.NodeID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -77,11 +77,10 @@ class GraphNode(LMCPObject.LMCPObject):
         else:
             self.Coordinates = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AssociatedEdges = [None] * _arraylen
         _pos += 2
+        self.AssociatedEdges = [None] * _arraylen
         if _arraylen > 0:
-            self.AssociatedEdges = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.AssociatedEdges = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         return _pos
 

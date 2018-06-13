@@ -10,13 +10,13 @@
 
 ## This file was auto-created by LmcpGen. Modifications will be overwritten.
 
-__all__ = [ "SeriesEnum", "VideoRecord", "StartupComplete", "CreateNewService", "KillService", "IncrementWaypoint", "EntityLocation", "BandwidthTest", "BandwidthReceiveReport", "SubTaskExecution", "SubTaskAssignment", "AutopilotKeepAlive", "OnboardProcessorIsAlive", "EntityJoin", "EntityExit", ]
+__all__ = [ "SeriesEnum", "VideoRecord", "StartupComplete", "CreateNewService", "KillService", "IncrementWaypoint", "SafeHeadingAction", "EntityLocation", "BandwidthTest", "BandwidthReceiveReport", "SubTaskExecution", "SubTaskAssignment", "AutopilotKeepAlive", "OnboardProcessorIsAlive", "EntityJoin", "EntityExit", ]
 
 
 SERIES_NAME = "UXNATIVE"
 #Series Name turned into a long for quick comparisons.
 SERIES_NAME_ID = 6149751333668345413
-SERIES_VERSION = 3
+SERIES_VERSION = 4
 
 
 

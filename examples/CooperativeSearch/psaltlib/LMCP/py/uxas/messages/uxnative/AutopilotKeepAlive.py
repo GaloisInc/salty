@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -21,15 +21,16 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
 
     def __init__(self):
 
-        self.LMCP_TYPE = 11
+        self.LMCP_TYPE = 12
         self.SERIES_NAME = "UXNATIVE"
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.uxnative.AutopilotKeepAlive"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 6149751333668345413
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.AutopilotEnabled = True   #bool
+        self.SpeedAuthorized = True   #bool
         self.GimbalEnabled = True   #bool
         self.TimeSent = 0   #int64
 
@@ -39,23 +40,28 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
         boolChar = 1 if self.AutopilotEnabled == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
+        boolChar = 1 if self.SpeedAuthorized == True else 0
+        buffer.extend(struct.pack(">B",boolChar))
         boolChar = 1 if self.GimbalEnabled == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">q", self.TimeSent))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">q", self.TimeSent))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         boolChar = struct.unpack_from(">B", buffer, _pos)[0]
         self.AutopilotEnabled = True if boolChar == 1 else False
+        _pos += 1
+        boolChar = struct.unpack_from(">B", buffer, _pos)[0]
+        self.SpeedAuthorized = True if boolChar == 1 else False
         _pos += 1
         boolChar = struct.unpack_from(">B", buffer, _pos)[0]
         self.GimbalEnabled = True if boolChar == 1 else False
@@ -71,6 +77,8 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
             if e.nodeType == xml.dom.Node.ELEMENT_NODE:
                 if e.localName == "AutopilotEnabled" and len(e.childNodes) > 0 :
                     self.AutopilotEnabled = e.childNodes[0].nodeValue.lower() == 'true'
+                elif e.localName == "SpeedAuthorized" and len(e.childNodes) > 0 :
+                    self.SpeedAuthorized = e.childNodes[0].nodeValue.lower() == 'true'
                 elif e.localName == "GimbalEnabled" and len(e.childNodes) > 0 :
                     self.GimbalEnabled = e.childNodes[0].nodeValue.lower() == 'true'
                 elif e.localName == "TimeSent" and len(e.childNodes) > 0 :
@@ -83,6 +91,8 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
         for key in d:
             if key == "AutopilotEnabled":
                 self.AutopilotEnabled = d[key]
+            elif key == "SpeedAuthorized":
+                self.SpeedAuthorized = d[key]
             elif key == "GimbalEnabled":
                 self.GimbalEnabled = d[key]
             elif key == "TimeSent":
@@ -95,6 +105,12 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
 
     def set_AutopilotEnabled(self, value):
         self.AutopilotEnabled = bool( value )
+
+    def get_SpeedAuthorized(self):
+        return self.SpeedAuthorized
+
+    def set_SpeedAuthorized(self, value):
+        self.SpeedAuthorized = bool( value )
 
     def get_GimbalEnabled(self):
         return self.GimbalEnabled
@@ -117,6 +133,7 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
         buf = LMCPObject.LMCPObject.toString(self)
         buf += "From AutopilotKeepAlive:\n"
         buf +=    "AutopilotEnabled = " + str( self.AutopilotEnabled ) + "\n" 
+        buf +=    "SpeedAuthorized = " + str( self.SpeedAuthorized ) + "\n" 
         buf +=    "GimbalEnabled = " + str( self.GimbalEnabled ) + "\n" 
         buf +=    "TimeSent = " + str( self.TimeSent ) + "\n" 
 
@@ -138,6 +155,7 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
     def toDictMembers(self, d):
         LMCPObject.LMCPObject.toDictMembers(self, d)
         d['AutopilotEnabled'] = self.AutopilotEnabled
+        d['SpeedAuthorized'] = self.SpeedAuthorized
         d['GimbalEnabled'] = self.GimbalEnabled
         d['TimeSent'] = self.TimeSent
 
@@ -166,6 +184,7 @@ class AutopilotKeepAlive(LMCPObject.LMCPObject):
         buf = ""
         buf += LMCPObject.LMCPObject.toXMLMembersStr(self, ws)
         buf += ws + "<AutopilotEnabled>" + ('True' if self.AutopilotEnabled else 'False') + "</AutopilotEnabled>\n"
+        buf += ws + "<SpeedAuthorized>" + ('True' if self.SpeedAuthorized else 'False') + "</SpeedAuthorized>\n"
         buf += ws + "<GimbalEnabled>" + ('True' if self.GimbalEnabled else 'False') + "</GimbalEnabled>\n"
         buf += ws + "<TimeSent>" + str(self.TimeSent) + "</TimeSent>\n"
 

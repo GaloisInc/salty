@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,23 +43,23 @@ class PatternSearchTask(SearchTask.SearchTask):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(SearchTask.SearchTask.pack(self))
-        buffer.append(struct.pack(">q", self.SearchLocationID))
-        buffer.append(struct.pack("B", self.SearchLocation != None ))
+        buffer.extend(struct.pack(">q", self.SearchLocationID))
+        buffer.extend(struct.pack("B", self.SearchLocation != None ))
         if self.SearchLocation != None:
-            buffer.append(struct.pack(">q", self.SearchLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.SearchLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.SearchLocation.SERIES_VERSION))
-            buffer.append(self.SearchLocation.pack())
-        buffer.append(struct.pack(">i", self.Pattern))
-        buffer.append(struct.pack(">f", self.Extent))
+            buffer.extend(struct.pack(">q", self.SearchLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.SearchLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.SearchLocation.SERIES_VERSION))
+            buffer.extend(self.SearchLocation.pack())
+        buffer.extend(struct.pack(">i", self.Pattern))
+        buffer.extend(struct.pack(">f", self.Extent))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = SearchTask.SearchTask.unpack(self, buffer, _pos)
         self.SearchLocationID = struct.unpack_from(">q", buffer, _pos)[0]

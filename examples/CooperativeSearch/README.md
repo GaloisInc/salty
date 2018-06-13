@@ -1,42 +1,43 @@
 # Salty Reactive Synthesis Example
 
-This is an example of using a Salty synthesized controller to control unmanned air vehicles (UAVs) using UxAS (Unmanned Systems Autonomy Services) as simulated in AMASE (Aerospace Multi-Agent Simulation Environment). This example -- `CooperativeSearch` -- demonstrates the tools and general workflow. Tools and scripts currently work on Linux-style systems only.
+This is an example of using a Salty-synthesized controller to control unmanned air vehicles (UAVs) using UxAS (Unmanned Systems Autonomy Services) as simulated in AMASE (Aerospace Multi-Agent Simulation Environment). This example -- `CooperativeSearch` -- demonstrates the tools and general workflow. Tools and scripts currently work on Linux-style systems with Python 3 only.
 
 
 ## Concept:
-Salty synthesizes a controller that produces controlled Boolean outputs in response to uncontrolled Boolean inputs according to a specification. This specification describes the assumed behavior of the inputs and the desired behavior of the outputs. However, in many applications, these Boolean inputs and outputs are abstractions that reference a more detailed implementation.
+Salty synthesizes a controller that produces controlled Boolean outputs in response to uncontrolled Boolean inputs according to a specification. This specification describes the assumed behavior of the inputs and the desired behavior of the outputs given the inputs. However, these Boolean inputs and outputs are often abstractions. To work with a real system, we therefore need to implement functions to provide valuations for each  input and output.
 
 ### UAV Applications
 For instance, in UAV applications, a Boolean input like `fuel_1` might encode whether the fuel level of a UAV with ID 1 is good (i.e. above a threshold), and a Boolean output like `return_1` might encode that UAV-1 should return home. Then an example specification would be:
 
-`! fuel_1 -> return_1`
+`sys_trans
+   !fuel_1 -> return_1`
 
 That is, if `fuel_1` is not high enough, UAV-1 should return home. We might then have a function `fuel(uav_id)` that returns `True` or `False` depending on whether the fuel level of a UAV with a particular ID is above a threshold. According to this specification, if `fuel(uav_1)` returns `False`, then some function `return(uav_1)` should be called that commands UAV-1 to return home. Both `fuel(uav_id)` and `return(uav_id)` require an implementation.
 
 ### Variable naming convention
-The tools provided here help set up the code for the implementation of functions that correspond to Boolean variables referenced in a Salty specification. This relies on following a variable naming convention for Boolean inputs, Boolean outputs, and output enumerations in Salty:
+The tools provided here help set up Python 3 code for implementing the functions that provide valuations of the Boolean variables used in a Salty specification. This relies on following a variable naming convention for Boolean inputs, Boolean outputs, and output enumerations in Salty:
 
 `varname == ([a-zA-z0-9]+)(_[0-9]+)*` where the first group `[a-zA-z0-9]+` becomes the name of a function, and subsequent groups `_[0-9]` are the IDs of UAVs whose states will be passed into the function.
 
 For instance `fuel_1` and `fuel_2` would correspond to function calls `fuel(uav_1)` and `fuel(uav_2)`, and `inRange_1_2` and `inRange_1_3` to function calls `inRange(uav_1, uav_3)` and `inRange(uav_2, uav_3)`.
 
-### Input and output functions
-For inputs, functions get called every simulation time step. For an output, a function is called only if the controller says the output is true (or corresponds to the current value of an enumeration).
-
-The concept is that the logic for each function is the same across all UAVs, but the function is evaluated over states of UAVs referenced in the variable names of the Salty synthesized controller.
-
-The tools here create the function declaration, but the user is responsible for filling in the logic. For UAV applications, an auxiliary class for representing UAV state is provided.
-
-### The main simulation
+### The main simuation
 The tools generate a simulation that interfaces the Salty synthesized controller with UxAS, which implements autonomous UAV behaviors through `AutomationRequests` and `MissionCommands`, and AMASE, which simulates movement of UAVs.
 
 At each time step, the simulation gets UAV state data from AMASE. It then calls all input functions with UAV state data as referenced by the synthesized controller. It calls the synthesized controller with this Boolean input vector, which produces an vector of Boolean outputs (or current enumeration values). It then calls all output functions that are true (or current enumeration values) with UAV state data as referenced by the synthesized controller.
+
+### Input and output functions
+For inputs, functions get called every simulation time step in the main simulation. For an output, a function is called only if the controller says the output is true (or corresponds to the current value of an enumeration).
+
+The concept is that the logic for each function is the same across all UAVs, but for each input or output, the function is evaluated over the state of the UAV(s) named in the input or output.
+
+The tools here create the function declaration, but the user is responsible for filling in the logic. For UAV applications, an auxiliary class `AvState` for working with UAV state information is provided.
 
 
 ## Files:
 * `CooperativeSearch.salt` - The Salty specification.
 * `CooperativeSearch.py` - The Python controller synthesized by Salty from the above specification. 
-* `CreateUxasSkeleton.py` - A script to create skeleton Python code to interface a Salty synthesized controller with UxAS.
+* `CreateUxasSkeleton.py` - A script to create the main simulation and input and output declarations needed to interface a Salty synthesized controller with UxAS.
 * `CooperativeSearch_Simulation.py` - The main simulation generated in full by `CreateUxasSkeleton.py` to run the controller with UxAS and AMASE.
 * `psaltlib/Inputs/*` - Skeleton code for input functions generated by `CreateUxasSkeleton.py`. These must be implemented by the user. For `CooperativeSearch`, they are already implemented.
 * `psaltlib/Outputs/*` - Skeleton code for output functions generated by `CreateUxasSkeleton.py`. These must be implemented by the user. For `CooperativeSearch`, they are already implemented.
@@ -48,10 +49,6 @@ At each time step, the simulation gets UAV state data from AMASE. It then calls 
 ## Installing "LocalCoords":
 In `psaltlib/General/localcoords`, there is a script for installing a python module to convert between Latitude/Longitude and North/East coordinates. If you have already installed this during the course of using UxAS, you will not need to install it again. But if you haven't, you'll need to run this command from the `psaltlib/General/localcoords/` directory:
 
-`python setup.py install`
-
-or
-
 `python3 setup.py install`
 
 
@@ -59,8 +56,8 @@ or
 * Create a specification, e.g. `CooperativeSearch.salt`, that follows the "Variable Naming Convention" in the "Concept" section
 * Run command `salty --python CooperativeSearch.salt`
   * This synthesizes a controller `CooperativeSearch.py`
-* Run command `python CreateUxasSkeleton.py CooperativeSearch.salt`
-  * This also creates `CooperativeSearch_Simulation.py`
+* Run command `python CreateUxasPython.py CooperativeSearch.salt`
+  * This creates `CooperativeSearch_Simulation.py`
   * This also creates skeleton code for functions in `psaltlib/Inputs/*` and `psaltlib/Outputs/*` (but will not overwrite existing functions)
 * Fill in logic for the functions in `psaltlib/Inputs/*` and `psaltlib/Outputs/*`, which are already provided for `CooperativeSearch` 
 * Create scenario file for AMASE and setup the configuration file and messages for UxAS in `UxasFiles` (see `UxasFiles/README.md`)
@@ -75,9 +72,11 @@ or
 ## Notes
 * During the simulation for `CooperativeSearch`, you can type '1' or '2' in the Python console running `CooperativeSearch_Simulation.py` to recall UAV-1 or UAV-2 to a home location.
 * See `UxAS/README.md` for notes on how files were set up for UxAS and AMASE.
-* This example requires AMASE. AMASE is implemented in Java and is available from [https://github.com/afrl-rq/OpenAMASE](https://github.com/afrl-rq/OpenAMASE). The path to the main AMASE directory must be defined in environment variable `AMASE_PATH`, e.g. `export AMASE_PATH = ~/Documents/Git/OpenAMASE/OpenAMASE`
-* This example also requires UxAS. UxAS is available from [https://github.com/afrl-rq/OpenUxAS](https://github.com/afrl-rq/OpenUxAS). UxAS is implemented in C++. Clone from the `develop` branch, and follow instructions on the site to build UxAS. The path to the UxAS executable must be defined in environment variable `UXAS_PATH`, e.g. `export UXAS_PATH = ~/Documents/Git/OpenUxAS/build`
+* This example requires AMASE. AMASE is implemented in Java and is freely available from [https://github.com/afrl-rq/OpenAMASE](https://github.com/afrl-rq/OpenAMASE). The path to the main AMASE directory must be defined in environment variable `AMASE_PATH`, e.g. `export AMASE_PATH = ~/Documents/Git/OpenAMASE/OpenAMASE`
+* This example also requires UxAS. UxAS is freely available from [https://github.com/afrl-rq/OpenUxAS](https://github.com/afrl-rq/OpenUxAS). UxAS is implemented in C++. Clone from the `develop` branch, and follow instructions on the site to build UxAS. The path to the UxAS executable must be defined in environment variable `UXAS_PATH`, e.g. `export UXAS_PATH = ~/Documents/Git/OpenUxAS/build`
 * LMCP is the protocol used to exchange messages with UxAS and AMASE. LMCP takes a Message Data Model (MDM) as an XML file that defines the types of messages to be exchaged, and creates serialization/deserialization routines and classes to hold message contents in target languages such as C++ and Java. You should not generally need to regenerate LMCP messages if you keep AMASE and UxAS updated. However, if there is a mismatch between the MDMs used by AMASE and UxAS, you may need to regenerate the message libraries for AMASE and UxAS. This is done using LmcpGen. LmcpGen is available at [https://github.com/afrl-rq/LmcpGen](https://github.com/afrl-rq/LmcpGen), and you should have it already if you have UxAS running. See instructions for LmcpGen and UxAS if you suspect you need to regenerate the message libraries and rebuild UxAS.
+* UxAS, AMASE, and the main simulation used here exchange LMCP messages using ZeroMQ.
+
 
 
  

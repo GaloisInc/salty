@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,27 +41,26 @@ class SearchTask(Task.Task):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Task.Task.pack(self))
-        buffer.append(struct.pack(">H", len(self.DesiredWavelengthBands) ))
+        buffer.extend(struct.pack(">H", len(self.DesiredWavelengthBands) ))
         for x in self.DesiredWavelengthBands:
-            buffer.append(struct.pack(">i", x ))
-        buffer.append(struct.pack(">q", self.DwellTime))
-        buffer.append(struct.pack(">f", self.GroundSampleDistance))
+            buffer.extend(struct.pack(">i", x ))
+        buffer.extend(struct.pack(">q", self.DwellTime))
+        buffer.extend(struct.pack(">f", self.GroundSampleDistance))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Task.Task.unpack(self, buffer, _pos)
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.DesiredWavelengthBands = [None] * _arraylen
         _pos += 2
+        self.DesiredWavelengthBands = [None] * _arraylen
         if _arraylen > 0:
-            self.DesiredWavelengthBands = struct.unpack_from(">" + `_arraylen` + "i", buffer, _pos )
+            self.DesiredWavelengthBands = struct.unpack_from(">" + repr(_arraylen) + "i", buffer, _pos )
             _pos += 4 * _arraylen
         self.DwellTime = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8

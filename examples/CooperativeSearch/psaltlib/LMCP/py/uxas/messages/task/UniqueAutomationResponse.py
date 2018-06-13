@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,29 +41,29 @@ class UniqueAutomationResponse(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.ResponseID))
-        buffer.append(struct.pack("B", self.OriginalResponse != None ))
+        buffer.extend(struct.pack(">q", self.ResponseID))
+        buffer.extend(struct.pack("B", self.OriginalResponse != None ))
         if self.OriginalResponse != None:
-            buffer.append(struct.pack(">q", self.OriginalResponse.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.OriginalResponse.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.OriginalResponse.SERIES_VERSION))
-            buffer.append(self.OriginalResponse.pack())
-        buffer.append(struct.pack(">H", len(self.FinalStates) ))
+            buffer.extend(struct.pack(">q", self.OriginalResponse.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.OriginalResponse.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.OriginalResponse.SERIES_VERSION))
+            buffer.extend(self.OriginalResponse.pack())
+        buffer.extend(struct.pack(">H", len(self.FinalStates) ))
         for x in self.FinalStates:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.ResponseID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -83,9 +83,8 @@ class UniqueAutomationResponse(LMCPObject.LMCPObject):
         else:
             self.OriginalResponse = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.FinalStates = [None] * _arraylen
         _pos += 2
+        self.FinalStates = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

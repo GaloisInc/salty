@@ -11,12 +11,12 @@ from lmcp.LMCPObject import *
 
 ## This file was auto-created by LmcpGen. Modifications will be overwritten.
 
-import GroundVehicleConfiguration
-import GroundVehicleState
-import SurfaceVehicleConfiguration
-import SurfaceVehicleState
-import StationarySensorConfiguration
-import StationarySensorState
+from afrl.vehicles import GroundVehicleConfiguration
+from afrl.vehicles import GroundVehicleState
+from afrl.vehicles import SurfaceVehicleConfiguration
+from afrl.vehicles import SurfaceVehicleState
+from afrl.vehicles import StationarySensorConfiguration
+from afrl.vehicles import StationarySensorState
 
 
 SERIES_NAME = "VEHICLES"
@@ -27,13 +27,13 @@ SERIES_VERSION = 1
 
 class SeriesEnum:
 
-    def getName(self, type):
-        if(type ==  1): return "GroundVehicleConfiguration"
-        if(type ==  2): return "GroundVehicleState"
-        if(type ==  3): return "SurfaceVehicleConfiguration"
-        if(type ==  4): return "SurfaceVehicleState"
-        if(type ==  5): return "StationarySensorConfiguration"
-        if(type ==  6): return "StationarySensorState"
+    def getName(self, type_):
+        if(type_ ==  1): return "GroundVehicleConfiguration"
+        if(type_ ==  2): return "GroundVehicleState"
+        if(type_ ==  3): return "SurfaceVehicleConfiguration"
+        if(type_ ==  4): return "SurfaceVehicleState"
+        if(type_ ==  5): return "StationarySensorConfiguration"
+        if(type_ ==  6): return "StationarySensorState"
 
 
     def getType(self, name):
@@ -46,12 +46,12 @@ class SeriesEnum:
 
         return -1
 
-    def getInstance(self, type):
-        if(type ==  1): return GroundVehicleConfiguration.GroundVehicleConfiguration()
-        if(type ==  2): return GroundVehicleState.GroundVehicleState()
-        if(type ==  3): return SurfaceVehicleConfiguration.SurfaceVehicleConfiguration()
-        if(type ==  4): return SurfaceVehicleState.SurfaceVehicleState()
-        if(type ==  5): return StationarySensorConfiguration.StationarySensorConfiguration()
-        if(type ==  6): return StationarySensorState.StationarySensorState()
+    def getInstance(self, type_):
+        if(type_ ==  1): return GroundVehicleConfiguration.GroundVehicleConfiguration()
+        if(type_ ==  2): return GroundVehicleState.GroundVehicleState()
+        if(type_ ==  3): return SurfaceVehicleConfiguration.SurfaceVehicleConfiguration()
+        if(type_ ==  4): return SurfaceVehicleState.SurfaceVehicleState()
+        if(type_ ==  5): return StationarySensorConfiguration.StationarySensorConfiguration()
+        if(type_ ==  6): return StationarySensorState.StationarySensorState()
 
         return None

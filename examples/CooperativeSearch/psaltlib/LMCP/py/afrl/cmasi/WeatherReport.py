@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,25 +43,25 @@ class WeatherReport(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack("B", self.Area != None ))
+        buffer.extend(struct.pack("B", self.Area != None ))
         if self.Area != None:
-            buffer.append(struct.pack(">q", self.Area.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Area.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Area.SERIES_VERSION))
-            buffer.append(self.Area.pack())
-        buffer.append(struct.pack(">f", self.WindSpeed))
-        buffer.append(struct.pack(">f", self.WindDirection))
-        buffer.append(struct.pack(">f", self.Visibility))
-        buffer.append(struct.pack(">f", self.CloudCeiling))
-        buffer.append(struct.pack(">f", self.CloudCoverage))
+            buffer.extend(struct.pack(">q", self.Area.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Area.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Area.SERIES_VERSION))
+            buffer.extend(self.Area.pack())
+        buffer.extend(struct.pack(">f", self.WindSpeed))
+        buffer.extend(struct.pack(">f", self.WindDirection))
+        buffer.extend(struct.pack(">f", self.Visibility))
+        buffer.extend(struct.pack(">f", self.CloudCeiling))
+        buffer.extend(struct.pack(">f", self.CloudCoverage))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -39,25 +39,24 @@ class ImpactPayloadConfiguration(PayloadConfiguration.PayloadConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadConfiguration.PayloadConfiguration.pack(self))
-        buffer.append(struct.pack(">H", len(self.AvailablePayloads) ))
+        buffer.extend(struct.pack(">H", len(self.AvailablePayloads) ))
         for x in self.AvailablePayloads:
-            buffer.append(struct.pack(">i", x ))
+            buffer.extend(struct.pack(">i", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadConfiguration.PayloadConfiguration.unpack(self, buffer, _pos)
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AvailablePayloads = [None] * _arraylen
         _pos += 2
+        self.AvailablePayloads = [None] * _arraylen
         if _arraylen > 0:
-            self.AvailablePayloads = struct.unpack_from(">" + `_arraylen` + "i", buffer, _pos )
+            self.AvailablePayloads = struct.unpack_from(">" + repr(_arraylen) + "i", buffer, _pos )
             _pos += 4 * _arraylen
         return _pos
 

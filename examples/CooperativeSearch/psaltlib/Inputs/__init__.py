@@ -1,2 +1,2 @@
-from inRange import inRange
-from recalled import recalled
+from psaltlib.Inputs.recalled import *
+from psaltlib.Inputs.inRange import *

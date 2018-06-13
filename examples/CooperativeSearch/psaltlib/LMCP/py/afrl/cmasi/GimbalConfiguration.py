@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -52,43 +52,42 @@ class GimbalConfiguration(PayloadConfiguration.PayloadConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadConfiguration.PayloadConfiguration.pack(self))
-        buffer.append(struct.pack(">H", len(self.SupportedPointingModes) ))
+        buffer.extend(struct.pack(">H", len(self.SupportedPointingModes) ))
         for x in self.SupportedPointingModes:
-            buffer.append(struct.pack(">i", x ))
-        buffer.append(struct.pack(">f", self.MinAzimuth))
-        buffer.append(struct.pack(">f", self.MaxAzimuth))
+            buffer.extend(struct.pack(">i", x ))
+        buffer.extend(struct.pack(">f", self.MinAzimuth))
+        buffer.extend(struct.pack(">f", self.MaxAzimuth))
         boolChar = 1 if self.IsAzimuthClamped == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">f", self.MinElevation))
-        buffer.append(struct.pack(">f", self.MaxElevation))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">f", self.MinElevation))
+        buffer.extend(struct.pack(">f", self.MaxElevation))
         boolChar = 1 if self.IsElevationClamped == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">f", self.MinRotation))
-        buffer.append(struct.pack(">f", self.MaxRotation))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">f", self.MinRotation))
+        buffer.extend(struct.pack(">f", self.MaxRotation))
         boolChar = 1 if self.IsRotationClamped == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">f", self.MaxAzimuthSlewRate))
-        buffer.append(struct.pack(">f", self.MaxElevationSlewRate))
-        buffer.append(struct.pack(">f", self.MaxRotationRate))
-        buffer.append(struct.pack(">H", len(self.ContainedPayloadList) ))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">f", self.MaxAzimuthSlewRate))
+        buffer.extend(struct.pack(">f", self.MaxElevationSlewRate))
+        buffer.extend(struct.pack(">f", self.MaxRotationRate))
+        buffer.extend(struct.pack(">H", len(self.ContainedPayloadList) ))
         for x in self.ContainedPayloadList:
-            buffer.append(struct.pack(">q", x ))
+            buffer.extend(struct.pack(">q", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadConfiguration.PayloadConfiguration.unpack(self, buffer, _pos)
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.SupportedPointingModes = [None] * _arraylen
         _pos += 2
+        self.SupportedPointingModes = [None] * _arraylen
         if _arraylen > 0:
-            self.SupportedPointingModes = struct.unpack_from(">" + `_arraylen` + "i", buffer, _pos )
+            self.SupportedPointingModes = struct.unpack_from(">" + repr(_arraylen) + "i", buffer, _pos )
             _pos += 4 * _arraylen
         self.MinAzimuth = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
@@ -118,11 +117,10 @@ class GimbalConfiguration(PayloadConfiguration.PayloadConfiguration):
         self.MaxRotationRate = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.ContainedPayloadList = [None] * _arraylen
         _pos += 2
+        self.ContainedPayloadList = [None] * _arraylen
         if _arraylen > 0:
-            self.ContainedPayloadList = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.ContainedPayloadList = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         return _pos
 

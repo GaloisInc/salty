@@ -12,19 +12,17 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "h", [])
     except getopt.GetoptError:
-        print 'usage: CreateUxasSkeleton.py \033[4m' + 'input_file.salt' + '\033[0m'
+        print('usage: CreateUxasSkeleton.py \033[4m' + 'input_file.salt' + '\033[0m')
         sys.exit()
     if len(args) < 1:
-        print 'usage: CreateUxasSkeleton.py \033[4m' + 'input_file.salt' + '\033[0m'
+        print('usage: CreateUxasSkeleton.py \033[4m' + 'input_file.salt' + '\033[0m')
         sys.exit()
     try:
         salty_file = open(args[0], 'r')
-        salty_filename = re.split(args[0],'.').pop(0)
     except:
-        print 'error: could not open file ' + args[0]
-        print 'error details:'
-        for info in sys.exc_info():
-            print str(sys.exc_info())
+        print('error: could not open file ' + args[0])
+        print('error details:')
+        print(str(sys.exc_info()))
         sys.exit()
     dir_inputs = os.path.relpath('./psaltlib/Inputs')
     dir_outputs = os.path.relpath('./psaltlib/Outputs')
@@ -33,14 +31,14 @@ def main(argv):
     except OSError:
         if not os.path.isdir(dir_inputs):
             raise
-            print 'error: could not create directory "' + dir_inputs + '"'
+            print('error: could not create directory "' + dir_inputs + '"')
             sys.exit()
     try:
         os.makedirs(dir_outputs)
     except OSError:
         if not os.path.isdir(dir_outputs):
             raise
-            print 'error: could not create directory "' + dir_outputs + '"'
+            print('error: could not create directory "' + dir_outputs + '"')
             sys.exit()
 
     # ================================================================================
@@ -73,18 +71,19 @@ def main(argv):
     for salt_input in boolean_inputs:
         sub_strings = re.match('([a-zA-Z0-9]+)(\_[0-9]+)*$', salt_input)
         if sub_strings is None:
-            print 'Improper format on input ' + salt_input
-            print 'Inputs must follow format [a-zA-Z0-9]+(_[0-9]+)*'
+            print('Improper format on input ' + salt_input)
+            print('Inputs must follow format [a-zA-Z0-9]+(_[0-9]+)*')
             sys.exit()
-        uav_args = re.split('_',salt_input)[1 :]
+        uav_args = re.split('_', salt_input)[1:]
         num_uav_args = len(uav_args)
         base_name = sub_strings.groups()[0]
-        if not input_dict.has_key(base_name):
+        # if not input_dict.has_key(base_name):
+        if base_name not in input_dict:
             input_dict[base_name] = [num_uav_args]
         else:
             if input_dict[base_name][0] != num_uav_args:
-                print 'Inconsistent number of arguments between ' + salt_input + ' and other inputs(s) ' \
-                      + str(input_dict[base_name][1 :])
+                print('Inconsistent number of arguments between ' + salt_input + ' and other inputs(s) '
+                      + str(input_dict[base_name][1:]))
                 sys.exit()
             else:
                 input_dict[base_name].append(salt_input)
@@ -97,19 +96,20 @@ def main(argv):
     for salt_output in boolean_outputs + enumeration_elements:
         sub_strings = re.match('([a-zA-Z0-9]+)(\_[0-9]+)*$', salt_output)
         if sub_strings is None:
-            print 'Improper format on output ' + salt_output
-            print 'Outputs must follow format [a-zA-Z0-9]+(_[0-9]+)*'
+            print('Improper format on output ' + salt_output)
+            print('Outputs must follow format [a-zA-Z0-9]+(_[0-9]+)*')
             sys.exit()
         uav_args = re.split('_', salt_output)[1:]
         num_uav_args = len(uav_args)
         base_name = sub_strings.groups()[0]
 
-        if not output_dict.has_key(base_name):
+        # if not output_dict.has_key(base_name):
+        if base_name not in output_dict:
             output_dict[base_name] = [num_uav_args]
         else:
             if output_dict[base_name][0] != num_uav_args:
-                print 'Inconsistent number of arguments between ' + salt_output + ' and other output(s) ' \
-                      + str(output_dict[base_name][1 :])
+                print('Inconsistent number of arguments between ' + salt_output + ' and other output(s) '
+                      + str(output_dict[base_name][1:]))
                 sys.exit()
             else:
                 output_dict[base_name].append(salt_output)
@@ -123,7 +123,7 @@ def main(argv):
     # ================================================================================
 
     # Create input function files
-    for input_name, input_list in input_dict.iteritems():
+    for input_name, input_list in input_dict.items():
         file_path = dir_inputs + '/' + input_name + '.py'
         if not os.path.exists(file_path):
             input_file = open(file_path, 'w')
@@ -133,17 +133,17 @@ def main(argv):
             input_file.write('from lmcp import LMCPFactory\n\n\n')
             input_file.write('def ' + input_name + '(')
             num_args = input_list[0]
-            for ii in range(1,num_args+1):
+            for ii in range(1, num_args+1):
                 input_file.write('av_state_' + str(ii) + ', ')
             input_file.write('socket_send')
             input_file.write('):\n    return\n')
             input_file.close()
-            print 'Input function ' + file_path + ' created.'
+            print('Input function ' + file_path + ' created.')
         else:
-            print 'Input function ' + file_path + ' already exists. Skipping...'
+            print('Input function ' + file_path + ' already exists. Skipping...')
 
     # Create output function files
-    for output_name, output_list in output_dict.iteritems():
+    for output_name, output_list in output_dict.items():
         file_path = dir_outputs + '/' + output_name + '.py'
         if not os.path.exists(file_path):
             output_file = open(file_path, 'w')
@@ -153,27 +153,27 @@ def main(argv):
             output_file.write('from lmcp import LMCPFactory\n\n\n')
             output_file.write('def ' + output_name + '(')
             num_args = output_list[0]
-            for ii in range(1,num_args+1):
+            for ii in range(1, num_args+1):
                 output_file.write('av_state_' + str(ii) + ', ')
             output_file.write('socket_send')
             output_file.write('):\n    return\n')
             output_file.close()
-            print 'Output function ' + file_path + ' created.'
+            print('Output function ' + file_path + ' created.')
         else:
-            print 'Output function ' + file_path + ' already exists. Skipping...'
+            print('Output function ' + file_path + ' already exists. Skipping...')
 
     # Create __init__.py files in Inputs and Outputs. Set to import all functions from all files.
     input_init_file = open(dir_inputs + '/__init__.py', 'w')
     for function_name in input_dict.keys():
-        input_init_file.write('from ' + function_name + ' import ' + function_name + '\n')
+        input_init_file.write('from psaltlib.Inputs.' + function_name + ' import *\n')
     input_init_file.close()
-    print '__init__.py in ' + dir_inputs + ' created.'
+    print('__init__.py in ' + dir_inputs + ' created.')
 
     output_init_file = open(dir_outputs + '/__init__.py', 'w')
     for function_name in output_dict.keys():
-        output_init_file.write('from ' + function_name + ' import ' + function_name + '\n')
+        output_init_file.write('from psaltlib.Outputs.' + function_name + ' import *\n')
     output_init_file.close()
-    print '__init__.py in ' + dir_outputs + ' created.'
+    print('__init__.py in ' + dir_outputs + ' created.')
 
     # Get name of controller from salty file
     sub_strings = re.findall('controller[ ]+(\w+)[ ]+where', salty_text)
@@ -186,7 +186,7 @@ def main(argv):
     template_file.close()
 
     # Replace all instances of @ControllerName@ in template text with controller_name
-    template_text = re.sub('@ControllerName@',controller_name,template_text)
+    template_text = re.sub('@ControllerName@', controller_name, template_text)
 
     # Replace all instances of @av_ids@ with list of av_ids
     template_text = re.sub('@av_ids@', str(uav_ids), template_text)
@@ -200,8 +200,8 @@ def main(argv):
     # Write the file and report it as done
     sim_file.write(template_text)
     sim_file.close()
-    print '\nMain simulation file ' + controller_name + '_Simulation.py created.\n'
-    print 'Done!'
+    print('\nMain simulation file ' + controller_name + '_Simulation.py created.\n')
+    print('Done!')
 
 
 if __name__ == "__main__":

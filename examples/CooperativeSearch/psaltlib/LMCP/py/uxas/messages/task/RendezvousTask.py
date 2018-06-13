@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -44,32 +44,32 @@ class RendezvousTask(Task.Task):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Task.Task.pack(self))
-        buffer.append(struct.pack(">B", self.NumberOfParticipants))
-        buffer.append(struct.pack("B", self.Location != None ))
+        buffer.extend(struct.pack(">B", self.NumberOfParticipants))
+        buffer.extend(struct.pack("B", self.Location != None ))
         if self.Location != None:
-            buffer.append(struct.pack(">q", self.Location.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Location.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Location.SERIES_VERSION))
-            buffer.append(self.Location.pack())
-        buffer.append(struct.pack(">f", self.Heading))
+            buffer.extend(struct.pack(">q", self.Location.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Location.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Location.SERIES_VERSION))
+            buffer.extend(self.Location.pack())
+        buffer.extend(struct.pack(">f", self.Heading))
         boolChar = 1 if self.MultiLocationRendezvous == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">H", len(self.RendezvousStates) ))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">H", len(self.RendezvousStates) ))
         for x in self.RendezvousStates:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Task.Task.unpack(self, buffer, _pos)
         self.NumberOfParticipants = struct.unpack_from(">B", buffer, _pos)[0]
@@ -94,9 +94,8 @@ class RendezvousTask(Task.Task):
         self.MultiLocationRendezvous = True if boolChar == 1 else False
         _pos += 1
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.RendezvousStates = [None] * _arraylen
         _pos += 2
+        self.RendezvousStates = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

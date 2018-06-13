@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,37 +43,39 @@ class LineOfInterest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.LineID))
-        buffer.append(struct.pack(">H", len(self.Line) ))
+        buffer.extend(struct.pack(">q", self.LineID))
+        buffer.extend(struct.pack(">H", len(self.Line) ))
         for x in self.Line:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">i", self.LineAction))
-        buffer.append(struct.pack(">H", len(self.LineLabel) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">i", self.LineAction))
+        buffer.extend(struct.pack(">H", len(self.LineLabel) ))
         if len(self.LineLabel) > 0:
-            buffer.append(struct.pack( `len(self.LineLabel)` + "s", str(self.LineLabel)))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.LineLabel)) + "s", bytearray(self.LineLabel,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.LineLabel)) + "s", self.LineLabel))
         boolChar = 1 if self.BackgroundBehaviorLine == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.LineID = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Line = [None] * _arraylen
         _pos += 2
+        self.Line = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -94,7 +96,7 @@ class LineOfInterest(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.LineLabel = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.LineLabel = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.LineLabel = ""

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -49,34 +49,37 @@ class AbstractZone(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.ZoneID))
-        buffer.append(struct.pack(">f", self.MinAltitude))
-        buffer.append(struct.pack(">i", self.MinAltitudeType))
-        buffer.append(struct.pack(">f", self.MaxAltitude))
-        buffer.append(struct.pack(">i", self.MaxAltitudeType))
-        buffer.append(struct.pack(">H", len(self.AffectedAircraft) ))
+        buffer.extend(struct.pack(">q", self.ZoneID))
+        buffer.extend(struct.pack(">f", self.MinAltitude))
+        buffer.extend(struct.pack(">i", self.MinAltitudeType))
+        buffer.extend(struct.pack(">f", self.MaxAltitude))
+        buffer.extend(struct.pack(">i", self.MaxAltitudeType))
+        buffer.extend(struct.pack(">H", len(self.AffectedAircraft) ))
         for x in self.AffectedAircraft:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">q", self.StartTime))
-        buffer.append(struct.pack(">q", self.EndTime))
-        buffer.append(struct.pack(">f", self.Padding))
-        buffer.append(struct.pack(">H", len(self.Label) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">q", self.StartTime))
+        buffer.extend(struct.pack(">q", self.EndTime))
+        buffer.extend(struct.pack(">f", self.Padding))
+        buffer.extend(struct.pack(">H", len(self.Label) ))
         if len(self.Label) > 0:
-            buffer.append(struct.pack( `len(self.Label)` + "s", str(self.Label)))
-        buffer.append(struct.pack("B", self.Boundary != None ))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.Label)) + "s", bytearray(self.Label,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.Label)) + "s", self.Label))
+        buffer.extend(struct.pack("B", self.Boundary != None ))
         if self.Boundary != None:
-            buffer.append(struct.pack(">q", self.Boundary.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Boundary.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Boundary.SERIES_VERSION))
-            buffer.append(self.Boundary.pack())
+            buffer.extend(struct.pack(">q", self.Boundary.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Boundary.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Boundary.SERIES_VERSION))
+            buffer.extend(self.Boundary.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.ZoneID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -90,11 +93,10 @@ class AbstractZone(LMCPObject.LMCPObject):
         self.MaxAltitudeType = struct.unpack_from(">i", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AffectedAircraft = [None] * _arraylen
         _pos += 2
+        self.AffectedAircraft = [None] * _arraylen
         if _arraylen > 0:
-            self.AffectedAircraft = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.AffectedAircraft = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         self.StartTime = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
@@ -105,7 +107,7 @@ class AbstractZone(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.Label = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.Label = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.Label = ""

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -45,34 +45,34 @@ class TaskOption(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.TaskID))
-        buffer.append(struct.pack(">q", self.OptionID))
-        buffer.append(struct.pack(">H", len(self.EligibleEntities) ))
+        buffer.extend(struct.pack(">q", self.TaskID))
+        buffer.extend(struct.pack(">q", self.OptionID))
+        buffer.extend(struct.pack(">H", len(self.EligibleEntities) ))
         for x in self.EligibleEntities:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">q", self.Cost))
-        buffer.append(struct.pack("B", self.StartLocation != None ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">q", self.Cost))
+        buffer.extend(struct.pack("B", self.StartLocation != None ))
         if self.StartLocation != None:
-            buffer.append(struct.pack(">q", self.StartLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.StartLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.StartLocation.SERIES_VERSION))
-            buffer.append(self.StartLocation.pack())
-        buffer.append(struct.pack(">f", self.StartHeading))
-        buffer.append(struct.pack("B", self.EndLocation != None ))
+            buffer.extend(struct.pack(">q", self.StartLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.StartLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.StartLocation.SERIES_VERSION))
+            buffer.extend(self.StartLocation.pack())
+        buffer.extend(struct.pack(">f", self.StartHeading))
+        buffer.extend(struct.pack("B", self.EndLocation != None ))
         if self.EndLocation != None:
-            buffer.append(struct.pack(">q", self.EndLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.EndLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.EndLocation.SERIES_VERSION))
-            buffer.append(self.EndLocation.pack())
-        buffer.append(struct.pack(">f", self.EndHeading))
+            buffer.extend(struct.pack(">q", self.EndLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.EndLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.EndLocation.SERIES_VERSION))
+            buffer.extend(self.EndLocation.pack())
+        buffer.extend(struct.pack(">f", self.EndHeading))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.TaskID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -80,11 +80,10 @@ class TaskOption(LMCPObject.LMCPObject):
         self.OptionID = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.EligibleEntities = [None] * _arraylen
         _pos += 2
+        self.EligibleEntities = [None] * _arraylen
         if _arraylen > 0:
-            self.EligibleEntities = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.EligibleEntities = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         self.Cost = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8

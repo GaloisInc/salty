@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -49,40 +49,40 @@ class EntityPerception(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">I", self.PerceivedEntityID))
-        buffer.append(struct.pack(">I", self.PerceiverID))
-        buffer.append(struct.pack(">H", len(self.PerceiverPayloads) ))
+        buffer.extend(struct.pack(">I", self.PerceivedEntityID))
+        buffer.extend(struct.pack(">I", self.PerceiverID))
+        buffer.extend(struct.pack(">H", len(self.PerceiverPayloads) ))
         for x in self.PerceiverPayloads:
-            buffer.append(struct.pack(">I", x ))
+            buffer.extend(struct.pack(">I", x ))
         for x in self.Velocity:
-            buffer.append(struct.pack(">f", x ))
+            buffer.extend(struct.pack(">f", x ))
         for x in self.VelocityError:
-            buffer.append(struct.pack(">f", x ))
+            buffer.extend(struct.pack(">f", x ))
         boolChar = 1 if self.VelocityValid == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
         for x in self.Attitude:
-            buffer.append(struct.pack(">f", x ))
+            buffer.extend(struct.pack(">f", x ))
         for x in self.AttitudeError:
-            buffer.append(struct.pack(">f", x ))
+            buffer.extend(struct.pack(">f", x ))
         boolChar = 1 if self.AttitudeValid == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack("B", self.Location != None ))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack("B", self.Location != None ))
         if self.Location != None:
-            buffer.append(struct.pack(">q", self.Location.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Location.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Location.SERIES_VERSION))
-            buffer.append(self.Location.pack())
+            buffer.extend(struct.pack(">q", self.Location.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Location.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Location.SERIES_VERSION))
+            buffer.extend(self.Location.pack())
         for x in self.LocationError:
-            buffer.append(struct.pack(">f", x ))
-        buffer.append(struct.pack(">q", self.TimeLastSeen))
+            buffer.extend(struct.pack(">f", x ))
+        buffer.extend(struct.pack(">q", self.TimeLastSeen))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.PerceivedEntityID = struct.unpack_from(">I", buffer, _pos)[0]
@@ -90,21 +90,20 @@ class EntityPerception(LMCPObject.LMCPObject):
         self.PerceiverID = struct.unpack_from(">I", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.PerceiverPayloads = [None] * _arraylen
         _pos += 2
+        self.PerceiverPayloads = [None] * _arraylen
         if _arraylen > 0:
-            self.PerceiverPayloads = struct.unpack_from(">" + `_arraylen` + "I", buffer, _pos )
+            self.PerceiverPayloads = struct.unpack_from(">" + repr(_arraylen) + "I", buffer, _pos )
             _pos += 4 * _arraylen
         self.Velocity = [None] * 3
         _arraylen = 3
         if _arraylen > 0:
-            self.Velocity = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.Velocity = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         self.VelocityError = [None] * 3
         _arraylen = 3
         if _arraylen > 0:
-            self.VelocityError = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.VelocityError = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         boolChar = struct.unpack_from(">B", buffer, _pos)[0]
         self.VelocityValid = True if boolChar == 1 else False
@@ -112,12 +111,12 @@ class EntityPerception(LMCPObject.LMCPObject):
         self.Attitude = [None] * 3
         _arraylen = 3
         if _arraylen > 0:
-            self.Attitude = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.Attitude = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         self.AttitudeError = [None] * 3
         _arraylen = 3
         if _arraylen > 0:
-            self.AttitudeError = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.AttitudeError = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         boolChar = struct.unpack_from(">B", buffer, _pos)[0]
         self.AttitudeValid = True if boolChar == 1 else False
@@ -139,7 +138,7 @@ class EntityPerception(LMCPObject.LMCPObject):
         self.LocationError = [None] * 3
         _arraylen = 3
         if _arraylen > 0:
-            self.LocationError = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.LocationError = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         self.TimeLastSeen = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8

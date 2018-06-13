@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -42,30 +42,30 @@ class CameraState(GimballedPayloadState.GimballedPayloadState):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(GimballedPayloadState.GimballedPayloadState.pack(self))
-        buffer.append(struct.pack(">f", self.HorizontalFieldOfView))
-        buffer.append(struct.pack(">f", self.VerticalFieldOfView))
-        buffer.append(struct.pack(">H", len(self.Footprint) ))
+        buffer.extend(struct.pack(">f", self.HorizontalFieldOfView))
+        buffer.extend(struct.pack(">f", self.VerticalFieldOfView))
+        buffer.extend(struct.pack(">H", len(self.Footprint) ))
         for x in self.Footprint:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack("B", self.Centerpoint != None ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack("B", self.Centerpoint != None ))
         if self.Centerpoint != None:
-            buffer.append(struct.pack(">q", self.Centerpoint.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Centerpoint.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Centerpoint.SERIES_VERSION))
-            buffer.append(self.Centerpoint.pack())
+            buffer.extend(struct.pack(">q", self.Centerpoint.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Centerpoint.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Centerpoint.SERIES_VERSION))
+            buffer.extend(self.Centerpoint.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = GimballedPayloadState.GimballedPayloadState.unpack(self, buffer, _pos)
         self.HorizontalFieldOfView = struct.unpack_from(">f", buffer, _pos)[0]
@@ -73,9 +73,8 @@ class CameraState(GimballedPayloadState.GimballedPayloadState):
         self.VerticalFieldOfView = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Footprint = [None] * _arraylen
         _pos += 2
+        self.Footprint = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

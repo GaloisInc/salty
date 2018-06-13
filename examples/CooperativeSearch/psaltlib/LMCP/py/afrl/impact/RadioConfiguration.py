@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,22 +41,22 @@ class RadioConfiguration(PayloadConfiguration.PayloadConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadConfiguration.PayloadConfiguration.pack(self))
-        buffer.append(struct.pack(">f", self.Range))
-        buffer.append(struct.pack("B", self.RallyPoint != None ))
+        buffer.extend(struct.pack(">f", self.Range))
+        buffer.extend(struct.pack("B", self.RallyPoint != None ))
         if self.RallyPoint != None:
-            buffer.append(struct.pack(">q", self.RallyPoint.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.RallyPoint.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.RallyPoint.SERIES_VERSION))
-            buffer.append(self.RallyPoint.pack())
-        buffer.append(struct.pack(">q", self.Timeout))
+            buffer.extend(struct.pack(">q", self.RallyPoint.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.RallyPoint.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.RallyPoint.SERIES_VERSION))
+            buffer.extend(self.RallyPoint.pack())
+        buffer.extend(struct.pack(">q", self.Timeout))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadConfiguration.PayloadConfiguration.unpack(self, buffer, _pos)
         self.Range = struct.unpack_from(">f", buffer, _pos)[0]

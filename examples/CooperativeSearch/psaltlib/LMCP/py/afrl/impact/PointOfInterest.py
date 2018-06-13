@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,27 +43,30 @@ class PointOfInterest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.PointID))
-        buffer.append(struct.pack("B", self.Location != None ))
+        buffer.extend(struct.pack(">q", self.PointID))
+        buffer.extend(struct.pack("B", self.Location != None ))
         if self.Location != None:
-            buffer.append(struct.pack(">q", self.Location.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Location.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Location.SERIES_VERSION))
-            buffer.append(self.Location.pack())
-        buffer.append(struct.pack(">i", self.PointAction))
-        buffer.append(struct.pack(">H", len(self.PointLabel) ))
+            buffer.extend(struct.pack(">q", self.Location.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Location.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Location.SERIES_VERSION))
+            buffer.extend(self.Location.pack())
+        buffer.extend(struct.pack(">i", self.PointAction))
+        buffer.extend(struct.pack(">H", len(self.PointLabel) ))
         if len(self.PointLabel) > 0:
-            buffer.append(struct.pack( `len(self.PointLabel)` + "s", str(self.PointLabel)))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.PointLabel)) + "s", bytearray(self.PointLabel,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.PointLabel)) + "s", self.PointLabel))
         boolChar = 1 if self.BackgroundBehaviorPoint == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.PointID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -87,7 +90,7 @@ class PointOfInterest(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.PointLabel = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.PointLabel = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.PointLabel = ""

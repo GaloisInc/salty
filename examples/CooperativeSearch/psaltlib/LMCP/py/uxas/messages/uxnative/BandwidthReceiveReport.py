@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -22,12 +22,12 @@ class BandwidthReceiveReport(LMCPObject.LMCPObject):
 
     def __init__(self):
 
-        self.LMCP_TYPE = 8
+        self.LMCP_TYPE = 9
         self.SERIES_NAME = "UXNATIVE"
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.uxnative.BandwidthReceiveReport"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 6149751333668345413
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.EntitySender = EntityLocation.EntityLocation()   #EntityLocation
@@ -40,27 +40,27 @@ class BandwidthReceiveReport(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack("B", self.EntitySender != None ))
+        buffer.extend(struct.pack("B", self.EntitySender != None ))
         if self.EntitySender != None:
-            buffer.append(struct.pack(">q", self.EntitySender.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.EntitySender.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.EntitySender.SERIES_VERSION))
-            buffer.append(self.EntitySender.pack())
-        buffer.append(struct.pack("B", self.EntityReceiver != None ))
+            buffer.extend(struct.pack(">q", self.EntitySender.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.EntitySender.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.EntitySender.SERIES_VERSION))
+            buffer.extend(self.EntitySender.pack())
+        buffer.extend(struct.pack("B", self.EntityReceiver != None ))
         if self.EntityReceiver != None:
-            buffer.append(struct.pack(">q", self.EntityReceiver.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.EntityReceiver.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.EntityReceiver.SERIES_VERSION))
-            buffer.append(self.EntityReceiver.pack())
-        buffer.append(struct.pack(">I", self.TransferPayloadSize))
+            buffer.extend(struct.pack(">q", self.EntityReceiver.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.EntityReceiver.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.EntityReceiver.SERIES_VERSION))
+            buffer.extend(self.EntityReceiver.pack())
+        buffer.extend(struct.pack(">I", self.TransferPayloadSize))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

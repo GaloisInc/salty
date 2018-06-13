@@ -11,66 +11,66 @@ from lmcp.LMCPObject import *
 
 ## This file was auto-created by LmcpGen. Modifications will be overwritten.
 
-import AbstractGeometry
-import KeyValuePair
-import Location3D
-import PayloadAction
-import PayloadConfiguration
-import PayloadState
-import VehicleAction
-import Task
-import SearchTask
-import AbstractZone
-import EntityConfiguration
-import FlightProfile
-import AirVehicleConfiguration
-import EntityState
-import AirVehicleState
-import Wedge
-import AreaSearchTask
-import CameraAction
-import CameraConfiguration
-import GimballedPayloadState
-import CameraState
-import Circle
-import GimbalAngleAction
-import GimbalConfiguration
-import GimbalScanAction
-import GimbalStareAction
-import GimbalState
-import GoToWaypointAction
-import KeepInZone
-import KeepOutZone
-import LineSearchTask
-import NavigationAction
-import LoiterAction
-import LoiterTask
-import Waypoint
-import MissionCommand
-import MustFlyTask
-import OperatorSignal
-import OperatingRegion
-import AutomationRequest
-import PointSearchTask
-import Polygon
-import Rectangle
-import RemoveTasks
-import ServiceStatus
-import SessionStatus
-import VehicleActionCommand
-import VideoStreamAction
-import VideoStreamConfiguration
-import VideoStreamState
-import AutomationResponse
-import RemoveZones
-import RemoveEntities
-import FlightDirectorAction
-import WeatherReport
-import FollowPathCommand
-import PathWaypoint
-import StopMovementAction
-import WaypointTransfer
-import PayloadStowAction
+from afrl.cmasi import AbstractGeometry
+from afrl.cmasi import KeyValuePair
+from afrl.cmasi import Location3D
+from afrl.cmasi import PayloadAction
+from afrl.cmasi import PayloadConfiguration
+from afrl.cmasi import PayloadState
+from afrl.cmasi import VehicleAction
+from afrl.cmasi import Task
+from afrl.cmasi import SearchTask
+from afrl.cmasi import AbstractZone
+from afrl.cmasi import EntityConfiguration
+from afrl.cmasi import FlightProfile
+from afrl.cmasi import AirVehicleConfiguration
+from afrl.cmasi import EntityState
+from afrl.cmasi import AirVehicleState
+from afrl.cmasi import Wedge
+from afrl.cmasi import AreaSearchTask
+from afrl.cmasi import CameraAction
+from afrl.cmasi import CameraConfiguration
+from afrl.cmasi import GimballedPayloadState
+from afrl.cmasi import CameraState
+from afrl.cmasi import Circle
+from afrl.cmasi import GimbalAngleAction
+from afrl.cmasi import GimbalConfiguration
+from afrl.cmasi import GimbalScanAction
+from afrl.cmasi import GimbalStareAction
+from afrl.cmasi import GimbalState
+from afrl.cmasi import GoToWaypointAction
+from afrl.cmasi import KeepInZone
+from afrl.cmasi import KeepOutZone
+from afrl.cmasi import LineSearchTask
+from afrl.cmasi import NavigationAction
+from afrl.cmasi import LoiterAction
+from afrl.cmasi import LoiterTask
+from afrl.cmasi import Waypoint
+from afrl.cmasi import MissionCommand
+from afrl.cmasi import MustFlyTask
+from afrl.cmasi import OperatorSignal
+from afrl.cmasi import OperatingRegion
+from afrl.cmasi import AutomationRequest
+from afrl.cmasi import PointSearchTask
+from afrl.cmasi import Polygon
+from afrl.cmasi import Rectangle
+from afrl.cmasi import RemoveTasks
+from afrl.cmasi import ServiceStatus
+from afrl.cmasi import SessionStatus
+from afrl.cmasi import VehicleActionCommand
+from afrl.cmasi import VideoStreamAction
+from afrl.cmasi import VideoStreamConfiguration
+from afrl.cmasi import VideoStreamState
+from afrl.cmasi import AutomationResponse
+from afrl.cmasi import RemoveZones
+from afrl.cmasi import RemoveEntities
+from afrl.cmasi import FlightDirectorAction
+from afrl.cmasi import WeatherReport
+from afrl.cmasi import FollowPathCommand
+from afrl.cmasi import PathWaypoint
+from afrl.cmasi import StopMovementAction
+from afrl.cmasi import WaypointTransfer
+from afrl.cmasi import PayloadStowAction
 
 
 SERIES_NAME = "CMASI"
@@ -81,67 +81,67 @@ SERIES_VERSION = 3
 
 class SeriesEnum:
 
-    def getName(self, type):
-        if(type ==  1): return "AbstractGeometry"
-        if(type ==  2): return "KeyValuePair"
-        if(type ==  3): return "Location3D"
-        if(type ==  4): return "PayloadAction"
-        if(type ==  5): return "PayloadConfiguration"
-        if(type ==  6): return "PayloadState"
-        if(type ==  7): return "VehicleAction"
-        if(type ==  8): return "Task"
-        if(type ==  9): return "SearchTask"
-        if(type ==  10): return "AbstractZone"
-        if(type ==  11): return "EntityConfiguration"
-        if(type ==  12): return "FlightProfile"
-        if(type ==  13): return "AirVehicleConfiguration"
-        if(type ==  14): return "EntityState"
-        if(type ==  15): return "AirVehicleState"
-        if(type ==  16): return "Wedge"
-        if(type ==  17): return "AreaSearchTask"
-        if(type ==  18): return "CameraAction"
-        if(type ==  19): return "CameraConfiguration"
-        if(type ==  20): return "GimballedPayloadState"
-        if(type ==  21): return "CameraState"
-        if(type ==  22): return "Circle"
-        if(type ==  23): return "GimbalAngleAction"
-        if(type ==  24): return "GimbalConfiguration"
-        if(type ==  25): return "GimbalScanAction"
-        if(type ==  26): return "GimbalStareAction"
-        if(type ==  27): return "GimbalState"
-        if(type ==  28): return "GoToWaypointAction"
-        if(type ==  29): return "KeepInZone"
-        if(type ==  30): return "KeepOutZone"
-        if(type ==  31): return "LineSearchTask"
-        if(type ==  32): return "NavigationAction"
-        if(type ==  33): return "LoiterAction"
-        if(type ==  34): return "LoiterTask"
-        if(type ==  35): return "Waypoint"
-        if(type ==  36): return "MissionCommand"
-        if(type ==  37): return "MustFlyTask"
-        if(type ==  38): return "OperatorSignal"
-        if(type ==  39): return "OperatingRegion"
-        if(type ==  40): return "AutomationRequest"
-        if(type ==  41): return "PointSearchTask"
-        if(type ==  42): return "Polygon"
-        if(type ==  43): return "Rectangle"
-        if(type ==  44): return "RemoveTasks"
-        if(type ==  45): return "ServiceStatus"
-        if(type ==  46): return "SessionStatus"
-        if(type ==  47): return "VehicleActionCommand"
-        if(type ==  48): return "VideoStreamAction"
-        if(type ==  49): return "VideoStreamConfiguration"
-        if(type ==  50): return "VideoStreamState"
-        if(type ==  51): return "AutomationResponse"
-        if(type ==  52): return "RemoveZones"
-        if(type ==  53): return "RemoveEntities"
-        if(type ==  54): return "FlightDirectorAction"
-        if(type ==  55): return "WeatherReport"
-        if(type ==  56): return "FollowPathCommand"
-        if(type ==  57): return "PathWaypoint"
-        if(type ==  58): return "StopMovementAction"
-        if(type ==  59): return "WaypointTransfer"
-        if(type ==  60): return "PayloadStowAction"
+    def getName(self, type_):
+        if(type_ ==  1): return "AbstractGeometry"
+        if(type_ ==  2): return "KeyValuePair"
+        if(type_ ==  3): return "Location3D"
+        if(type_ ==  4): return "PayloadAction"
+        if(type_ ==  5): return "PayloadConfiguration"
+        if(type_ ==  6): return "PayloadState"
+        if(type_ ==  7): return "VehicleAction"
+        if(type_ ==  8): return "Task"
+        if(type_ ==  9): return "SearchTask"
+        if(type_ ==  10): return "AbstractZone"
+        if(type_ ==  11): return "EntityConfiguration"
+        if(type_ ==  12): return "FlightProfile"
+        if(type_ ==  13): return "AirVehicleConfiguration"
+        if(type_ ==  14): return "EntityState"
+        if(type_ ==  15): return "AirVehicleState"
+        if(type_ ==  16): return "Wedge"
+        if(type_ ==  17): return "AreaSearchTask"
+        if(type_ ==  18): return "CameraAction"
+        if(type_ ==  19): return "CameraConfiguration"
+        if(type_ ==  20): return "GimballedPayloadState"
+        if(type_ ==  21): return "CameraState"
+        if(type_ ==  22): return "Circle"
+        if(type_ ==  23): return "GimbalAngleAction"
+        if(type_ ==  24): return "GimbalConfiguration"
+        if(type_ ==  25): return "GimbalScanAction"
+        if(type_ ==  26): return "GimbalStareAction"
+        if(type_ ==  27): return "GimbalState"
+        if(type_ ==  28): return "GoToWaypointAction"
+        if(type_ ==  29): return "KeepInZone"
+        if(type_ ==  30): return "KeepOutZone"
+        if(type_ ==  31): return "LineSearchTask"
+        if(type_ ==  32): return "NavigationAction"
+        if(type_ ==  33): return "LoiterAction"
+        if(type_ ==  34): return "LoiterTask"
+        if(type_ ==  35): return "Waypoint"
+        if(type_ ==  36): return "MissionCommand"
+        if(type_ ==  37): return "MustFlyTask"
+        if(type_ ==  38): return "OperatorSignal"
+        if(type_ ==  39): return "OperatingRegion"
+        if(type_ ==  40): return "AutomationRequest"
+        if(type_ ==  41): return "PointSearchTask"
+        if(type_ ==  42): return "Polygon"
+        if(type_ ==  43): return "Rectangle"
+        if(type_ ==  44): return "RemoveTasks"
+        if(type_ ==  45): return "ServiceStatus"
+        if(type_ ==  46): return "SessionStatus"
+        if(type_ ==  47): return "VehicleActionCommand"
+        if(type_ ==  48): return "VideoStreamAction"
+        if(type_ ==  49): return "VideoStreamConfiguration"
+        if(type_ ==  50): return "VideoStreamState"
+        if(type_ ==  51): return "AutomationResponse"
+        if(type_ ==  52): return "RemoveZones"
+        if(type_ ==  53): return "RemoveEntities"
+        if(type_ ==  54): return "FlightDirectorAction"
+        if(type_ ==  55): return "WeatherReport"
+        if(type_ ==  56): return "FollowPathCommand"
+        if(type_ ==  57): return "PathWaypoint"
+        if(type_ ==  58): return "StopMovementAction"
+        if(type_ ==  59): return "WaypointTransfer"
+        if(type_ ==  60): return "PayloadStowAction"
 
 
     def getType(self, name):
@@ -208,66 +208,66 @@ class SeriesEnum:
 
         return -1
 
-    def getInstance(self, type):
-        if(type ==  1): return AbstractGeometry.AbstractGeometry()
-        if(type ==  2): return KeyValuePair.KeyValuePair()
-        if(type ==  3): return Location3D.Location3D()
-        if(type ==  4): return PayloadAction.PayloadAction()
-        if(type ==  5): return PayloadConfiguration.PayloadConfiguration()
-        if(type ==  6): return PayloadState.PayloadState()
-        if(type ==  7): return VehicleAction.VehicleAction()
-        if(type ==  8): return Task.Task()
-        if(type ==  9): return SearchTask.SearchTask()
-        if(type ==  10): return AbstractZone.AbstractZone()
-        if(type ==  11): return EntityConfiguration.EntityConfiguration()
-        if(type ==  12): return FlightProfile.FlightProfile()
-        if(type ==  13): return AirVehicleConfiguration.AirVehicleConfiguration()
-        if(type ==  14): return EntityState.EntityState()
-        if(type ==  15): return AirVehicleState.AirVehicleState()
-        if(type ==  16): return Wedge.Wedge()
-        if(type ==  17): return AreaSearchTask.AreaSearchTask()
-        if(type ==  18): return CameraAction.CameraAction()
-        if(type ==  19): return CameraConfiguration.CameraConfiguration()
-        if(type ==  20): return GimballedPayloadState.GimballedPayloadState()
-        if(type ==  21): return CameraState.CameraState()
-        if(type ==  22): return Circle.Circle()
-        if(type ==  23): return GimbalAngleAction.GimbalAngleAction()
-        if(type ==  24): return GimbalConfiguration.GimbalConfiguration()
-        if(type ==  25): return GimbalScanAction.GimbalScanAction()
-        if(type ==  26): return GimbalStareAction.GimbalStareAction()
-        if(type ==  27): return GimbalState.GimbalState()
-        if(type ==  28): return GoToWaypointAction.GoToWaypointAction()
-        if(type ==  29): return KeepInZone.KeepInZone()
-        if(type ==  30): return KeepOutZone.KeepOutZone()
-        if(type ==  31): return LineSearchTask.LineSearchTask()
-        if(type ==  32): return NavigationAction.NavigationAction()
-        if(type ==  33): return LoiterAction.LoiterAction()
-        if(type ==  34): return LoiterTask.LoiterTask()
-        if(type ==  35): return Waypoint.Waypoint()
-        if(type ==  36): return MissionCommand.MissionCommand()
-        if(type ==  37): return MustFlyTask.MustFlyTask()
-        if(type ==  38): return OperatorSignal.OperatorSignal()
-        if(type ==  39): return OperatingRegion.OperatingRegion()
-        if(type ==  40): return AutomationRequest.AutomationRequest()
-        if(type ==  41): return PointSearchTask.PointSearchTask()
-        if(type ==  42): return Polygon.Polygon()
-        if(type ==  43): return Rectangle.Rectangle()
-        if(type ==  44): return RemoveTasks.RemoveTasks()
-        if(type ==  45): return ServiceStatus.ServiceStatus()
-        if(type ==  46): return SessionStatus.SessionStatus()
-        if(type ==  47): return VehicleActionCommand.VehicleActionCommand()
-        if(type ==  48): return VideoStreamAction.VideoStreamAction()
-        if(type ==  49): return VideoStreamConfiguration.VideoStreamConfiguration()
-        if(type ==  50): return VideoStreamState.VideoStreamState()
-        if(type ==  51): return AutomationResponse.AutomationResponse()
-        if(type ==  52): return RemoveZones.RemoveZones()
-        if(type ==  53): return RemoveEntities.RemoveEntities()
-        if(type ==  54): return FlightDirectorAction.FlightDirectorAction()
-        if(type ==  55): return WeatherReport.WeatherReport()
-        if(type ==  56): return FollowPathCommand.FollowPathCommand()
-        if(type ==  57): return PathWaypoint.PathWaypoint()
-        if(type ==  58): return StopMovementAction.StopMovementAction()
-        if(type ==  59): return WaypointTransfer.WaypointTransfer()
-        if(type ==  60): return PayloadStowAction.PayloadStowAction()
+    def getInstance(self, type_):
+        if(type_ ==  1): return AbstractGeometry.AbstractGeometry()
+        if(type_ ==  2): return KeyValuePair.KeyValuePair()
+        if(type_ ==  3): return Location3D.Location3D()
+        if(type_ ==  4): return PayloadAction.PayloadAction()
+        if(type_ ==  5): return PayloadConfiguration.PayloadConfiguration()
+        if(type_ ==  6): return PayloadState.PayloadState()
+        if(type_ ==  7): return VehicleAction.VehicleAction()
+        if(type_ ==  8): return Task.Task()
+        if(type_ ==  9): return SearchTask.SearchTask()
+        if(type_ ==  10): return AbstractZone.AbstractZone()
+        if(type_ ==  11): return EntityConfiguration.EntityConfiguration()
+        if(type_ ==  12): return FlightProfile.FlightProfile()
+        if(type_ ==  13): return AirVehicleConfiguration.AirVehicleConfiguration()
+        if(type_ ==  14): return EntityState.EntityState()
+        if(type_ ==  15): return AirVehicleState.AirVehicleState()
+        if(type_ ==  16): return Wedge.Wedge()
+        if(type_ ==  17): return AreaSearchTask.AreaSearchTask()
+        if(type_ ==  18): return CameraAction.CameraAction()
+        if(type_ ==  19): return CameraConfiguration.CameraConfiguration()
+        if(type_ ==  20): return GimballedPayloadState.GimballedPayloadState()
+        if(type_ ==  21): return CameraState.CameraState()
+        if(type_ ==  22): return Circle.Circle()
+        if(type_ ==  23): return GimbalAngleAction.GimbalAngleAction()
+        if(type_ ==  24): return GimbalConfiguration.GimbalConfiguration()
+        if(type_ ==  25): return GimbalScanAction.GimbalScanAction()
+        if(type_ ==  26): return GimbalStareAction.GimbalStareAction()
+        if(type_ ==  27): return GimbalState.GimbalState()
+        if(type_ ==  28): return GoToWaypointAction.GoToWaypointAction()
+        if(type_ ==  29): return KeepInZone.KeepInZone()
+        if(type_ ==  30): return KeepOutZone.KeepOutZone()
+        if(type_ ==  31): return LineSearchTask.LineSearchTask()
+        if(type_ ==  32): return NavigationAction.NavigationAction()
+        if(type_ ==  33): return LoiterAction.LoiterAction()
+        if(type_ ==  34): return LoiterTask.LoiterTask()
+        if(type_ ==  35): return Waypoint.Waypoint()
+        if(type_ ==  36): return MissionCommand.MissionCommand()
+        if(type_ ==  37): return MustFlyTask.MustFlyTask()
+        if(type_ ==  38): return OperatorSignal.OperatorSignal()
+        if(type_ ==  39): return OperatingRegion.OperatingRegion()
+        if(type_ ==  40): return AutomationRequest.AutomationRequest()
+        if(type_ ==  41): return PointSearchTask.PointSearchTask()
+        if(type_ ==  42): return Polygon.Polygon()
+        if(type_ ==  43): return Rectangle.Rectangle()
+        if(type_ ==  44): return RemoveTasks.RemoveTasks()
+        if(type_ ==  45): return ServiceStatus.ServiceStatus()
+        if(type_ ==  46): return SessionStatus.SessionStatus()
+        if(type_ ==  47): return VehicleActionCommand.VehicleActionCommand()
+        if(type_ ==  48): return VideoStreamAction.VideoStreamAction()
+        if(type_ ==  49): return VideoStreamConfiguration.VideoStreamConfiguration()
+        if(type_ ==  50): return VideoStreamState.VideoStreamState()
+        if(type_ ==  51): return AutomationResponse.AutomationResponse()
+        if(type_ ==  52): return RemoveZones.RemoveZones()
+        if(type_ ==  53): return RemoveEntities.RemoveEntities()
+        if(type_ ==  54): return FlightDirectorAction.FlightDirectorAction()
+        if(type_ ==  55): return WeatherReport.WeatherReport()
+        if(type_ ==  56): return FollowPathCommand.FollowPathCommand()
+        if(type_ ==  57): return PathWaypoint.PathWaypoint()
+        if(type_ ==  58): return StopMovementAction.StopMovementAction()
+        if(type_ ==  59): return WaypointTransfer.WaypointTransfer()
+        if(type_ ==  60): return PayloadStowAction.PayloadStowAction()
 
         return None

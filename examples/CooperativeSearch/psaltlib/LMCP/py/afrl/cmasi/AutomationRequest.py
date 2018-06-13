@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,46 +41,47 @@ class AutomationRequest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">H", len(self.EntityList) ))
+        buffer.extend(struct.pack(">H", len(self.EntityList) ))
         for x in self.EntityList:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">H", len(self.TaskList) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">H", len(self.TaskList) ))
         for x in self.TaskList:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">H", len(self.TaskRelationships) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">H", len(self.TaskRelationships) ))
         if len(self.TaskRelationships) > 0:
-            buffer.append(struct.pack( `len(self.TaskRelationships)` + "s", str(self.TaskRelationships)))
-        buffer.append(struct.pack(">q", self.OperatingRegion))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.TaskRelationships)) + "s", bytearray(self.TaskRelationships,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.TaskRelationships)) + "s", self.TaskRelationships))
+        buffer.extend(struct.pack(">q", self.OperatingRegion))
         boolChar = 1 if self.RedoAllTasks == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.EntityList = [None] * _arraylen
         _pos += 2
+        self.EntityList = [None] * _arraylen
         if _arraylen > 0:
-            self.EntityList = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.EntityList = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.TaskList = [None] * _arraylen
         _pos += 2
+        self.TaskList = [None] * _arraylen
         if _arraylen > 0:
-            self.TaskList = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.TaskList = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.TaskRelationships = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.TaskRelationships = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.TaskRelationships = ""

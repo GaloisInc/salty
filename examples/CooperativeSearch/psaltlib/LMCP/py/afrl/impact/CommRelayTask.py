@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,22 +41,22 @@ class CommRelayTask(Task.Task):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Task.Task.pack(self))
-        buffer.append(struct.pack(">q", self.SupportedEntityID))
-        buffer.append(struct.pack("B", self.DestinationLocation != None ))
+        buffer.extend(struct.pack(">q", self.SupportedEntityID))
+        buffer.extend(struct.pack("B", self.DestinationLocation != None ))
         if self.DestinationLocation != None:
-            buffer.append(struct.pack(">q", self.DestinationLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.DestinationLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.DestinationLocation.SERIES_VERSION))
-            buffer.append(self.DestinationLocation.pack())
-        buffer.append(struct.pack(">q", self.TowerID))
+            buffer.extend(struct.pack(">q", self.DestinationLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.DestinationLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.DestinationLocation.SERIES_VERSION))
+            buffer.extend(self.DestinationLocation.pack())
+        buffer.extend(struct.pack(">q", self.TowerID))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Task.Task.unpack(self, buffer, _pos)
         self.SupportedEntityID = struct.unpack_from(">q", buffer, _pos)[0]

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,20 +43,20 @@ class SurfaceVehicleConfiguration(EntityConfiguration.EntityConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(EntityConfiguration.EntityConfiguration.pack(self))
-        buffer.append(struct.pack(">q", self.WaterArea))
-        buffer.append(struct.pack(">f", self.MinimumSpeed))
-        buffer.append(struct.pack(">f", self.MaximumSpeed))
-        buffer.append(struct.pack(">f", self.EnergyRate))
-        buffer.append(struct.pack(">f", self.MaxBankAngle))
-        buffer.append(struct.pack(">f", self.MaxBankRate))
+        buffer.extend(struct.pack(">q", self.WaterArea))
+        buffer.extend(struct.pack(">f", self.MinimumSpeed))
+        buffer.extend(struct.pack(">f", self.MaximumSpeed))
+        buffer.extend(struct.pack(">f", self.EnergyRate))
+        buffer.extend(struct.pack(">f", self.MaxBankAngle))
+        buffer.extend(struct.pack(">f", self.MaxBankRate))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = EntityConfiguration.EntityConfiguration.unpack(self, buffer, _pos)
         self.WaterArea = struct.unpack_from(">q", buffer, _pos)[0]

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -22,12 +22,12 @@ class EntityLocation(LMCPObject.LMCPObject):
 
     def __init__(self):
 
-        self.LMCP_TYPE = 6
+        self.LMCP_TYPE = 7
         self.SERIES_NAME = "UXNATIVE"
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.uxnative.EntityLocation"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 6149751333668345413
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.EntityID = 0   #int64
@@ -40,22 +40,22 @@ class EntityLocation(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.EntityID))
-        buffer.append(struct.pack("B", self.Position != None ))
+        buffer.extend(struct.pack(">q", self.EntityID))
+        buffer.extend(struct.pack("B", self.Position != None ))
         if self.Position != None:
-            buffer.append(struct.pack(">q", self.Position.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Position.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Position.SERIES_VERSION))
-            buffer.append(self.Position.pack())
-        buffer.append(struct.pack(">q", self.Time))
+            buffer.extend(struct.pack(">q", self.Position.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Position.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Position.SERIES_VERSION))
+            buffer.extend(self.Position.pack())
+        buffer.extend(struct.pack(">q", self.Time))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.EntityID = struct.unpack_from(">q", buffer, _pos)[0]

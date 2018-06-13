@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -50,38 +50,38 @@ class TaskImplementationRequest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.RequestID))
-        buffer.append(struct.pack(">q", self.CorrespondingAutomationRequestID))
-        buffer.append(struct.pack(">q", self.StartingWaypointID))
-        buffer.append(struct.pack(">q", self.VehicleID))
-        buffer.append(struct.pack("B", self.StartPosition != None ))
+        buffer.extend(struct.pack(">q", self.RequestID))
+        buffer.extend(struct.pack(">q", self.CorrespondingAutomationRequestID))
+        buffer.extend(struct.pack(">q", self.StartingWaypointID))
+        buffer.extend(struct.pack(">q", self.VehicleID))
+        buffer.extend(struct.pack("B", self.StartPosition != None ))
         if self.StartPosition != None:
-            buffer.append(struct.pack(">q", self.StartPosition.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.StartPosition.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.StartPosition.SERIES_VERSION))
-            buffer.append(self.StartPosition.pack())
-        buffer.append(struct.pack(">f", self.StartHeading))
-        buffer.append(struct.pack(">q", self.StartTime))
-        buffer.append(struct.pack(">q", self.RegionID))
-        buffer.append(struct.pack(">q", self.TaskID))
-        buffer.append(struct.pack(">q", self.OptionID))
-        buffer.append(struct.pack(">q", self.TimeThreshold))
-        buffer.append(struct.pack(">H", len(self.NeighborLocations) ))
+            buffer.extend(struct.pack(">q", self.StartPosition.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.StartPosition.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.StartPosition.SERIES_VERSION))
+            buffer.extend(self.StartPosition.pack())
+        buffer.extend(struct.pack(">f", self.StartHeading))
+        buffer.extend(struct.pack(">q", self.StartTime))
+        buffer.extend(struct.pack(">q", self.RegionID))
+        buffer.extend(struct.pack(">q", self.TaskID))
+        buffer.extend(struct.pack(">q", self.OptionID))
+        buffer.extend(struct.pack(">q", self.TimeThreshold))
+        buffer.extend(struct.pack(">H", len(self.NeighborLocations) ))
         for x in self.NeighborLocations:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.RequestID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -119,9 +119,8 @@ class TaskImplementationRequest(LMCPObject.LMCPObject):
         self.TimeThreshold = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.NeighborLocations = [None] * _arraylen
         _pos += 2
+        self.NeighborLocations = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

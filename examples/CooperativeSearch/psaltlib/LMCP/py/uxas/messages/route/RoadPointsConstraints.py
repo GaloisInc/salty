@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -27,7 +27,7 @@ class RoadPointsConstraints(LMCPObject.LMCPObject):
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.route.RoadPointsConstraints"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 5931053054693474304
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.RoadPointsID = 0   #int64
@@ -40,27 +40,27 @@ class RoadPointsConstraints(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.RoadPointsID))
-        buffer.append(struct.pack("B", self.StartLocation != None ))
+        buffer.extend(struct.pack(">q", self.RoadPointsID))
+        buffer.extend(struct.pack("B", self.StartLocation != None ))
         if self.StartLocation != None:
-            buffer.append(struct.pack(">q", self.StartLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.StartLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.StartLocation.SERIES_VERSION))
-            buffer.append(self.StartLocation.pack())
-        buffer.append(struct.pack("B", self.EndLocation != None ))
+            buffer.extend(struct.pack(">q", self.StartLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.StartLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.StartLocation.SERIES_VERSION))
+            buffer.extend(self.StartLocation.pack())
+        buffer.extend(struct.pack("B", self.EndLocation != None ))
         if self.EndLocation != None:
-            buffer.append(struct.pack(">q", self.EndLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.EndLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.EndLocation.SERIES_VERSION))
-            buffer.append(self.EndLocation.pack())
+            buffer.extend(struct.pack(">q", self.EndLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.EndLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.EndLocation.SERIES_VERSION))
+            buffer.extend(self.EndLocation.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.RoadPointsID = struct.unpack_from(">q", buffer, _pos)[0]

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,20 +40,20 @@ class TaskProgress(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.ResponseID))
-        buffer.append(struct.pack(">q", self.TaskID))
-        buffer.append(struct.pack(">f", self.PercentComplete))
-        buffer.append(struct.pack(">H", len(self.EntitiesEngaged) ))
+        buffer.extend(struct.pack(">q", self.ResponseID))
+        buffer.extend(struct.pack(">q", self.TaskID))
+        buffer.extend(struct.pack(">f", self.PercentComplete))
+        buffer.extend(struct.pack(">H", len(self.EntitiesEngaged) ))
         for x in self.EntitiesEngaged:
-            buffer.append(struct.pack(">q", x ))
+            buffer.extend(struct.pack(">q", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.ResponseID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -63,11 +63,10 @@ class TaskProgress(LMCPObject.LMCPObject):
         self.PercentComplete = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.EntitiesEngaged = [None] * _arraylen
         _pos += 2
+        self.EntitiesEngaged = [None] * _arraylen
         if _arraylen > 0:
-            self.EntitiesEngaged = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.EntitiesEngaged = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         return _pos
 

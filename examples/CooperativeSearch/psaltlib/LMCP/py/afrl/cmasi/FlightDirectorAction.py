@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -45,20 +45,20 @@ class FlightDirectorAction(NavigationAction.NavigationAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(NavigationAction.NavigationAction.pack(self))
-        buffer.append(struct.pack(">f", self.Speed))
-        buffer.append(struct.pack(">i", self.SpeedType))
-        buffer.append(struct.pack(">f", self.Heading))
-        buffer.append(struct.pack(">f", self.Altitude))
-        buffer.append(struct.pack(">i", self.AltitudeType))
-        buffer.append(struct.pack(">f", self.ClimbRate))
+        buffer.extend(struct.pack(">f", self.Speed))
+        buffer.extend(struct.pack(">i", self.SpeedType))
+        buffer.extend(struct.pack(">f", self.Heading))
+        buffer.extend(struct.pack(">f", self.Altitude))
+        buffer.extend(struct.pack(">i", self.AltitudeType))
+        buffer.extend(struct.pack(">f", self.ClimbRate))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = NavigationAction.NavigationAction.unpack(self, buffer, _pos)
         self.Speed = struct.unpack_from(">f", buffer, _pos)[0]

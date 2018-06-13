@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -37,23 +37,26 @@ class ImpactComponentLeave(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">H", len(self.ComponentLabel) ))
+        buffer.extend(struct.pack(">H", len(self.ComponentLabel) ))
         if len(self.ComponentLabel) > 0:
-            buffer.append(struct.pack( `len(self.ComponentLabel)` + "s", str(self.ComponentLabel)))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.ComponentLabel)) + "s", bytearray(self.ComponentLabel,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.ComponentLabel)) + "s", self.ComponentLabel))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.ComponentLabel = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.ComponentLabel = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.ComponentLabel = ""

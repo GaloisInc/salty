@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,19 +41,19 @@ class TaskTimingPair(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.VehicleID))
-        buffer.append(struct.pack(">q", self.InitialTaskID))
-        buffer.append(struct.pack(">f", self.InitialTaskPercentage))
-        buffer.append(struct.pack(">q", self.DestinationTaskID))
-        buffer.append(struct.pack(">q", self.TimeToGo))
+        buffer.extend(struct.pack(">q", self.VehicleID))
+        buffer.extend(struct.pack(">q", self.InitialTaskID))
+        buffer.extend(struct.pack(">f", self.InitialTaskPercentage))
+        buffer.extend(struct.pack(">q", self.DestinationTaskID))
+        buffer.extend(struct.pack(">q", self.TimeToGo))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.VehicleID = struct.unpack_from(">q", buffer, _pos)[0]

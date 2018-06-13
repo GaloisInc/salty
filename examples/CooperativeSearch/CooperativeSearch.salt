@@ -60,7 +60,7 @@ def search(myReg, theirReg, imInRange, theyreInRange, imRecalled, theyreRecalled
   (all{theirReg', ((!imInRange' /\ !theyreInRange') \/ (theyreInRange' /\ !theyreRecalled')), !imRecalled'} <-> myBehavior' == searchTheirReg)
 --This last condition is redundant if all the other conditions are correct, but putting it in helps validate that
 --the other conditions are indeed correct (since a contradictory condition will lead to an unrealizble specification)
---(all{(imInRange' \/ theyInRange'), (myReg' \/ (theirReg' /\ (theyreRecalled' \/ !theyInRange'))), !imRecalled'} <-> myBehavior' == track)
+-- (all{(imInRange' \/ theyreInRange'), (myReg' \/ (theirReg' /\ (theyreRecalled' \/ !theyreInRange'))), !imRecalled'} <-> myBehavior' == track)
 
 
 

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,23 +41,23 @@ class RadioTowerConfiguration(EntityConfiguration.EntityConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(EntityConfiguration.EntityConfiguration.pack(self))
-        buffer.append(struct.pack("B", self.Position != None ))
+        buffer.extend(struct.pack("B", self.Position != None ))
         if self.Position != None:
-            buffer.append(struct.pack(">q", self.Position.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Position.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Position.SERIES_VERSION))
-            buffer.append(self.Position.pack())
-        buffer.append(struct.pack(">f", self.Range))
+            buffer.extend(struct.pack(">q", self.Position.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Position.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Position.SERIES_VERSION))
+            buffer.extend(self.Position.pack())
+        buffer.extend(struct.pack(">f", self.Range))
         boolChar = 1 if self.Enabled == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = EntityConfiguration.EntityConfiguration.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

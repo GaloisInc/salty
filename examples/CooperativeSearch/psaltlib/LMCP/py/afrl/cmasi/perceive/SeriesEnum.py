@@ -11,9 +11,9 @@ from lmcp.LMCPObject import *
 
 ## This file was auto-created by LmcpGen. Modifications will be overwritten.
 
-import EntityPerception
-import TrackEntityAction
-import TrackEntityTask
+from afrl.cmasi.perceive import EntityPerception
+from afrl.cmasi.perceive import TrackEntityAction
+from afrl.cmasi.perceive import TrackEntityTask
 
 
 SERIES_NAME = "PERCEIVE"
@@ -24,10 +24,10 @@ SERIES_VERSION = 1
 
 class SeriesEnum:
 
-    def getName(self, type):
-        if(type ==  1): return "EntityPerception"
-        if(type ==  2): return "TrackEntityAction"
-        if(type ==  3): return "TrackEntityTask"
+    def getName(self, type_):
+        if(type_ ==  1): return "EntityPerception"
+        if(type_ ==  2): return "TrackEntityAction"
+        if(type_ ==  3): return "TrackEntityTask"
 
 
     def getType(self, name):
@@ -37,9 +37,9 @@ class SeriesEnum:
 
         return -1
 
-    def getInstance(self, type):
-        if(type ==  1): return EntityPerception.EntityPerception()
-        if(type ==  2): return TrackEntityAction.TrackEntityAction()
-        if(type ==  3): return TrackEntityTask.TrackEntityTask()
+    def getInstance(self, type_):
+        if(type_ ==  1): return EntityPerception.EntityPerception()
+        if(type_ ==  2): return TrackEntityAction.TrackEntityAction()
+        if(type_ ==  3): return TrackEntityTask.TrackEntityTask()
 
         return None

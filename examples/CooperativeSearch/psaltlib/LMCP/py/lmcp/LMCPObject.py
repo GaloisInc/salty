@@ -17,7 +17,7 @@ class LMCPObject:
     FULL_LMCP_TYPE_NAME = "avtas.lmcp.Object"
 
     def pack(self):
-        return []
+        return bytearray()
 
     def unpack(self, buffer, _pos):
         return _pos

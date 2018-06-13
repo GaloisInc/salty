@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -39,16 +39,16 @@ class VideoStreamAction(VehicleAction.VehicleAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(VehicleAction.VehicleAction.pack(self))
-        buffer.append(struct.pack(">i", self.VideoStreamID))
-        buffer.append(struct.pack(">i", self.ActiveSensor))
+        buffer.extend(struct.pack(">i", self.VideoStreamID))
+        buffer.extend(struct.pack(">i", self.ActiveSensor))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = VehicleAction.VehicleAction.unpack(self, buffer, _pos)
         self.VideoStreamID = struct.unpack_from(">i", buffer, _pos)[0]

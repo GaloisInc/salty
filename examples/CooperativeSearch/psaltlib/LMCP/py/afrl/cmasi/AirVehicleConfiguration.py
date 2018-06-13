@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -51,40 +51,40 @@ class AirVehicleConfiguration(EntityConfiguration.EntityConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(EntityConfiguration.EntityConfiguration.pack(self))
-        buffer.append(struct.pack(">f", self.MinimumSpeed))
-        buffer.append(struct.pack(">f", self.MaximumSpeed))
-        buffer.append(struct.pack("B", self.NominalFlightProfile != None ))
+        buffer.extend(struct.pack(">f", self.MinimumSpeed))
+        buffer.extend(struct.pack(">f", self.MaximumSpeed))
+        buffer.extend(struct.pack("B", self.NominalFlightProfile != None ))
         if self.NominalFlightProfile != None:
-            buffer.append(struct.pack(">q", self.NominalFlightProfile.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.NominalFlightProfile.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.NominalFlightProfile.SERIES_VERSION))
-            buffer.append(self.NominalFlightProfile.pack())
-        buffer.append(struct.pack(">H", len(self.AlternateFlightProfiles) ))
+            buffer.extend(struct.pack(">q", self.NominalFlightProfile.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.NominalFlightProfile.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.NominalFlightProfile.SERIES_VERSION))
+            buffer.extend(self.NominalFlightProfile.pack())
+        buffer.extend(struct.pack(">H", len(self.AlternateFlightProfiles) ))
         for x in self.AlternateFlightProfiles:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">H", len(self.AvailableLoiterTypes) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">H", len(self.AvailableLoiterTypes) ))
         for x in self.AvailableLoiterTypes:
-            buffer.append(struct.pack(">i", x ))
-        buffer.append(struct.pack(">H", len(self.AvailableTurnTypes) ))
+            buffer.extend(struct.pack(">i", x ))
+        buffer.extend(struct.pack(">H", len(self.AvailableTurnTypes) ))
         for x in self.AvailableTurnTypes:
-            buffer.append(struct.pack(">i", x ))
-        buffer.append(struct.pack(">f", self.MinimumAltitude))
-        buffer.append(struct.pack(">i", self.MinAltitudeType))
-        buffer.append(struct.pack(">f", self.MaximumAltitude))
-        buffer.append(struct.pack(">i", self.MaxAltitudeType))
+            buffer.extend(struct.pack(">i", x ))
+        buffer.extend(struct.pack(">f", self.MinimumAltitude))
+        buffer.extend(struct.pack(">i", self.MinAltitudeType))
+        buffer.extend(struct.pack(">f", self.MaximumAltitude))
+        buffer.extend(struct.pack(">i", self.MaxAltitudeType))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = EntityConfiguration.EntityConfiguration.unpack(self, buffer, _pos)
         self.MinimumSpeed = struct.unpack_from(">f", buffer, _pos)[0]
@@ -106,9 +106,8 @@ class AirVehicleConfiguration(EntityConfiguration.EntityConfiguration):
         else:
             self.NominalFlightProfile = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AlternateFlightProfiles = [None] * _arraylen
         _pos += 2
+        self.AlternateFlightProfiles = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -125,18 +124,16 @@ class AirVehicleConfiguration(EntityConfiguration.EntityConfiguration):
             else:
                 self.AlternateFlightProfiles[x] = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AvailableLoiterTypes = [None] * _arraylen
         _pos += 2
+        self.AvailableLoiterTypes = [None] * _arraylen
         if _arraylen > 0:
-            self.AvailableLoiterTypes = struct.unpack_from(">" + `_arraylen` + "i", buffer, _pos )
+            self.AvailableLoiterTypes = struct.unpack_from(">" + repr(_arraylen) + "i", buffer, _pos )
             _pos += 4 * _arraylen
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AvailableTurnTypes = [None] * _arraylen
         _pos += 2
+        self.AvailableTurnTypes = [None] * _arraylen
         if _arraylen > 0:
-            self.AvailableTurnTypes = struct.unpack_from(">" + `_arraylen` + "i", buffer, _pos )
+            self.AvailableTurnTypes = struct.unpack_from(">" + repr(_arraylen) + "i", buffer, _pos )
             _pos += 4 * _arraylen
         self.MinimumAltitude = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4

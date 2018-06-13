@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,17 +41,17 @@ class TrackEntityTask(Task.Task):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Task.Task.pack(self))
-        buffer.append(struct.pack(">I", self.EntityID))
-        buffer.append(struct.pack(">i", self.SensorModality))
-        buffer.append(struct.pack(">f", self.GroundSampleDistance))
+        buffer.extend(struct.pack(">I", self.EntityID))
+        buffer.extend(struct.pack(">i", self.SensorModality))
+        buffer.extend(struct.pack(">f", self.GroundSampleDistance))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Task.Task.unpack(self, buffer, _pos)
         self.EntityID = struct.unpack_from(">I", buffer, _pos)[0]

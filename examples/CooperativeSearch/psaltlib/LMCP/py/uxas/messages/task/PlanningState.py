@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,22 +40,22 @@ class PlanningState(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.EntityID))
-        buffer.append(struct.pack("B", self.PlanningPosition != None ))
+        buffer.extend(struct.pack(">q", self.EntityID))
+        buffer.extend(struct.pack("B", self.PlanningPosition != None ))
         if self.PlanningPosition != None:
-            buffer.append(struct.pack(">q", self.PlanningPosition.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.PlanningPosition.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.PlanningPosition.SERIES_VERSION))
-            buffer.append(self.PlanningPosition.pack())
-        buffer.append(struct.pack(">f", self.PlanningHeading))
+            buffer.extend(struct.pack(">q", self.PlanningPosition.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.PlanningPosition.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.PlanningPosition.SERIES_VERSION))
+            buffer.extend(self.PlanningPosition.pack())
+        buffer.extend(struct.pack(">f", self.PlanningHeading))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.EntityID = struct.unpack_from(">q", buffer, _pos)[0]

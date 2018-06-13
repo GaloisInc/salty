@@ -12,22 +12,22 @@ import sys
 
 def recalled(av_state_1, socket_send):
     # On the first loop, tell the user they can enter the vehicle's ID to recall the vehicle
-    if not av_state_1.internal_state.has_key('is_first_recall_loop'):
-        print '\nEnter ' + str(av_state_1.ID) + ' in console at any time to recall AirVehicle ' + \
-              str(av_state_1.ID) + '\n'
+    if 'is_first_recall_loop' not in av_state_1.internal_state:
+        print('\nEnter ' + str(av_state_1.ID) + ' in console at any time to recall AirVehicle ' +
+              str(av_state_1.ID) + '\n')
         av_state_1.internal_state['is_first_recall_loop'] = True
 
     # If not defined, create storage in the vehicle's internal state for the vehicle's 'behavior'
-    if not av_state_1.internal_state.has_key('behavior'):
+    if 'behavior' not in av_state_1.internal_state:
         av_state_1.internal_state['behavior'] = 'undefined'
 
     # If not defined, create storage in the vehicle's internal state for the truth value of 'recalled'
-    if not av_state_1.internal_state.has_key('is_recalled'):
+    if 'is_recalled' not in av_state_1.internal_state:
         av_state_1.internal_state['is_recalled'] = 'undefined'
 
     # If not defined, create storage in all vehicle's shared state for the last keyboard input
     # and what vehicles have seen it
-    if not av_state_1.shared_state.has_key('keyboard_input'):
+    if 'keyboard_input' not in av_state_1.shared_state:
         av_state_1.shared_state['keyboard_input'] = None
         av_state_1.shared_state['avs_that_have_seen_keyboard_input'] = set()
 
@@ -49,12 +49,12 @@ def recalled(av_state_1, socket_send):
             av_state_1.shared_state['avs_that_have_seen_keyboard_input'] = set()
             if av_state_1.internal_state['is_recalled'] is not True:
                 av_state_1.internal_state['is_recalled'] = True
-                print 'recalled_' + str(av_state_1.ID) + ': True'
+                print('recalled_' + str(av_state_1.ID) + ': True')
             return True
         else:
             if av_state_1.internal_state['is_recalled'] is not False:
                 av_state_1.internal_state['is_recalled'] = False
-                print 'recalled_' + str(av_state_1.ID) + ': False'
+                print('recalled_' + str(av_state_1.ID) + ': False')
             return False
 
     # If the vehicle is currently recalled, check to see whether it's reached the recall point (within a threshold),
@@ -68,18 +68,17 @@ def recalled(av_state_1, socket_send):
         if dist < 500:
             if av_state_1.internal_state['is_recalled'] is not False:
                 av_state_1.internal_state['is_recalled'] = False
-                print 'recalled_' + str(av_state_1.ID) + ': False'
+                print('recalled_' + str(av_state_1.ID) + ': False')
             return False
         else:
             if av_state_1.internal_state['is_recalled'] is not True:
                 av_state_1.internal_state['is_recalled'] = True
-                print 'recalled_' + str(av_state_1.ID) + ': True'
+                print('recalled_' + str(av_state_1.ID) + ': True')
             return True
 
 
-            # User defined non-blocking function to get a line of text from the keyboard
-            # Probably only works in *nix systems.
-
+# User defined non-blocking function to get a line of text from the keyboard
+# Probably only works in *nix systems.
 
 def get_line_from_keyboard():
     i, o, e = select.select([sys.stdin], [], [], 0.001)

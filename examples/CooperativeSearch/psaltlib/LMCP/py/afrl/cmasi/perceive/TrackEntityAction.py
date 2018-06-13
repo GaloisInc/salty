@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,17 +40,17 @@ class TrackEntityAction(VehicleAction.VehicleAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(VehicleAction.VehicleAction.pack(self))
-        buffer.append(struct.pack(">I", self.EntityID))
-        buffer.append(struct.pack(">I", self.SensorID))
-        buffer.append(struct.pack(">I", self.ReturnToWaypoint))
+        buffer.extend(struct.pack(">I", self.EntityID))
+        buffer.extend(struct.pack(">I", self.SensorID))
+        buffer.extend(struct.pack(">I", self.ReturnToWaypoint))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = VehicleAction.VehicleAction.unpack(self, buffer, _pos)
         self.EntityID = struct.unpack_from(">I", buffer, _pos)[0]

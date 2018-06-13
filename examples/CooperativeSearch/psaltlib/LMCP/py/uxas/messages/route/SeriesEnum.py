@@ -11,45 +11,45 @@ from lmcp.LMCPObject import *
 
 ## This file was auto-created by LmcpGen. Modifications will be overwritten.
 
-import GraphNode
-import GraphEdge
-import GraphRegion
-import RouteConstraints
-import RouteRequest
-import RoutePlanRequest
-import RoutePlan
-import RoutePlanResponse
-import RouteResponse
-import EgressRouteRequest
-import EgressRouteResponse
-import RoadPointsConstraints
-import RoadPointsRequest
-import RoadPointsResponse
+from uxas.messages.route import GraphNode
+from uxas.messages.route import GraphEdge
+from uxas.messages.route import GraphRegion
+from uxas.messages.route import RouteConstraints
+from uxas.messages.route import RouteRequest
+from uxas.messages.route import RoutePlanRequest
+from uxas.messages.route import RoutePlan
+from uxas.messages.route import RoutePlanResponse
+from uxas.messages.route import RouteResponse
+from uxas.messages.route import EgressRouteRequest
+from uxas.messages.route import EgressRouteResponse
+from uxas.messages.route import RoadPointsConstraints
+from uxas.messages.route import RoadPointsRequest
+from uxas.messages.route import RoadPointsResponse
 
 
 SERIES_NAME = "ROUTE"
 #Series Name turned into a long for quick comparisons.
 SERIES_NAME_ID = 5931053054693474304
-SERIES_VERSION = 3
+SERIES_VERSION = 4
 
 
 class SeriesEnum:
 
-    def getName(self, type):
-        if(type ==  1): return "GraphNode"
-        if(type ==  2): return "GraphEdge"
-        if(type ==  3): return "GraphRegion"
-        if(type ==  4): return "RouteConstraints"
-        if(type ==  5): return "RouteRequest"
-        if(type ==  6): return "RoutePlanRequest"
-        if(type ==  7): return "RoutePlan"
-        if(type ==  8): return "RoutePlanResponse"
-        if(type ==  9): return "RouteResponse"
-        if(type ==  10): return "EgressRouteRequest"
-        if(type ==  11): return "EgressRouteResponse"
-        if(type ==  12): return "RoadPointsConstraints"
-        if(type ==  13): return "RoadPointsRequest"
-        if(type ==  14): return "RoadPointsResponse"
+    def getName(self, type_):
+        if(type_ ==  1): return "GraphNode"
+        if(type_ ==  2): return "GraphEdge"
+        if(type_ ==  3): return "GraphRegion"
+        if(type_ ==  4): return "RouteConstraints"
+        if(type_ ==  5): return "RouteRequest"
+        if(type_ ==  6): return "RoutePlanRequest"
+        if(type_ ==  7): return "RoutePlan"
+        if(type_ ==  8): return "RoutePlanResponse"
+        if(type_ ==  9): return "RouteResponse"
+        if(type_ ==  10): return "EgressRouteRequest"
+        if(type_ ==  11): return "EgressRouteResponse"
+        if(type_ ==  12): return "RoadPointsConstraints"
+        if(type_ ==  13): return "RoadPointsRequest"
+        if(type_ ==  14): return "RoadPointsResponse"
 
 
     def getType(self, name):
@@ -70,20 +70,20 @@ class SeriesEnum:
 
         return -1
 
-    def getInstance(self, type):
-        if(type ==  1): return GraphNode.GraphNode()
-        if(type ==  2): return GraphEdge.GraphEdge()
-        if(type ==  3): return GraphRegion.GraphRegion()
-        if(type ==  4): return RouteConstraints.RouteConstraints()
-        if(type ==  5): return RouteRequest.RouteRequest()
-        if(type ==  6): return RoutePlanRequest.RoutePlanRequest()
-        if(type ==  7): return RoutePlan.RoutePlan()
-        if(type ==  8): return RoutePlanResponse.RoutePlanResponse()
-        if(type ==  9): return RouteResponse.RouteResponse()
-        if(type ==  10): return EgressRouteRequest.EgressRouteRequest()
-        if(type ==  11): return EgressRouteResponse.EgressRouteResponse()
-        if(type ==  12): return RoadPointsConstraints.RoadPointsConstraints()
-        if(type ==  13): return RoadPointsRequest.RoadPointsRequest()
-        if(type ==  14): return RoadPointsResponse.RoadPointsResponse()
+    def getInstance(self, type_):
+        if(type_ ==  1): return GraphNode.GraphNode()
+        if(type_ ==  2): return GraphEdge.GraphEdge()
+        if(type_ ==  3): return GraphRegion.GraphRegion()
+        if(type_ ==  4): return RouteConstraints.RouteConstraints()
+        if(type_ ==  5): return RouteRequest.RouteRequest()
+        if(type_ ==  6): return RoutePlanRequest.RoutePlanRequest()
+        if(type_ ==  7): return RoutePlan.RoutePlan()
+        if(type_ ==  8): return RoutePlanResponse.RoutePlanResponse()
+        if(type_ ==  9): return RouteResponse.RouteResponse()
+        if(type_ ==  10): return EgressRouteRequest.EgressRouteRequest()
+        if(type_ ==  11): return EgressRouteResponse.EgressRouteResponse()
+        if(type_ ==  12): return RoadPointsConstraints.RoadPointsConstraints()
+        if(type_ ==  13): return RoadPointsRequest.RoadPointsRequest()
+        if(type_ ==  14): return RoadPointsResponse.RoadPointsResponse()
 
         return None

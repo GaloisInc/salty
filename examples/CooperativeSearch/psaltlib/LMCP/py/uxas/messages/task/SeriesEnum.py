@@ -11,35 +11,35 @@ from lmcp.LMCPObject import *
 
 ## This file was auto-created by LmcpGen. Modifications will be overwritten.
 
-import AssignmentCoordinatorTask
-import RendezvousTask
-import PlanningState
-import AssignmentCoordination
-import CoordinatedAutomationRequest
-import TaskAutomationRequest
-import TaskAutomationResponse
-import UniqueAutomationRequest
-import UniqueAutomationResponse
-import SensorFootprintRequests
-import FootprintRequest
-import SensorFootprint
-import SensorFootprintResponse
-import TaskImplementationRequest
-import TaskImplementationResponse
-import AssignmentCostMatrix
-import TaskOptionCost
-import TaskAssignment
-import TaskAssignmentSummary
-import TaskOption
-import TaskPlanOptions
-import TaskPause
-import TaskResume
-import TaskProgress
-import TaskProgressRequest
-import TaskInitialized
-import TaskActive
-import TaskComplete
-import CancelTask
+from uxas.messages.task import AssignmentCoordinatorTask
+from uxas.messages.task import RendezvousTask
+from uxas.messages.task import PlanningState
+from uxas.messages.task import AssignmentCoordination
+from uxas.messages.task import CoordinatedAutomationRequest
+from uxas.messages.task import TaskAutomationRequest
+from uxas.messages.task import TaskAutomationResponse
+from uxas.messages.task import UniqueAutomationRequest
+from uxas.messages.task import UniqueAutomationResponse
+from uxas.messages.task import SensorFootprintRequests
+from uxas.messages.task import FootprintRequest
+from uxas.messages.task import SensorFootprint
+from uxas.messages.task import SensorFootprintResponse
+from uxas.messages.task import TaskImplementationRequest
+from uxas.messages.task import TaskImplementationResponse
+from uxas.messages.task import AssignmentCostMatrix
+from uxas.messages.task import TaskOptionCost
+from uxas.messages.task import TaskAssignment
+from uxas.messages.task import TaskAssignmentSummary
+from uxas.messages.task import TaskOption
+from uxas.messages.task import TaskPlanOptions
+from uxas.messages.task import TaskPause
+from uxas.messages.task import TaskResume
+from uxas.messages.task import TaskProgress
+from uxas.messages.task import TaskProgressRequest
+from uxas.messages.task import TaskInitialized
+from uxas.messages.task import TaskActive
+from uxas.messages.task import TaskComplete
+from uxas.messages.task import CancelTask
 
 
 SERIES_NAME = "UXTASK"
@@ -50,36 +50,36 @@ SERIES_VERSION = 7
 
 class SeriesEnum:
 
-    def getName(self, type):
-        if(type ==  1): return "AssignmentCoordinatorTask"
-        if(type ==  2): return "RendezvousTask"
-        if(type ==  3): return "PlanningState"
-        if(type ==  4): return "AssignmentCoordination"
-        if(type ==  5): return "CoordinatedAutomationRequest"
-        if(type ==  6): return "TaskAutomationRequest"
-        if(type ==  7): return "TaskAutomationResponse"
-        if(type ==  8): return "UniqueAutomationRequest"
-        if(type ==  9): return "UniqueAutomationResponse"
-        if(type ==  10): return "SensorFootprintRequests"
-        if(type ==  11): return "FootprintRequest"
-        if(type ==  12): return "SensorFootprint"
-        if(type ==  13): return "SensorFootprintResponse"
-        if(type ==  14): return "TaskImplementationRequest"
-        if(type ==  15): return "TaskImplementationResponse"
-        if(type ==  16): return "AssignmentCostMatrix"
-        if(type ==  17): return "TaskOptionCost"
-        if(type ==  18): return "TaskAssignment"
-        if(type ==  19): return "TaskAssignmentSummary"
-        if(type ==  20): return "TaskOption"
-        if(type ==  21): return "TaskPlanOptions"
-        if(type ==  22): return "TaskPause"
-        if(type ==  23): return "TaskResume"
-        if(type ==  24): return "TaskProgress"
-        if(type ==  25): return "TaskProgressRequest"
-        if(type ==  26): return "TaskInitialized"
-        if(type ==  27): return "TaskActive"
-        if(type ==  28): return "TaskComplete"
-        if(type ==  29): return "CancelTask"
+    def getName(self, type_):
+        if(type_ ==  1): return "AssignmentCoordinatorTask"
+        if(type_ ==  2): return "RendezvousTask"
+        if(type_ ==  3): return "PlanningState"
+        if(type_ ==  4): return "AssignmentCoordination"
+        if(type_ ==  5): return "CoordinatedAutomationRequest"
+        if(type_ ==  6): return "TaskAutomationRequest"
+        if(type_ ==  7): return "TaskAutomationResponse"
+        if(type_ ==  8): return "UniqueAutomationRequest"
+        if(type_ ==  9): return "UniqueAutomationResponse"
+        if(type_ ==  10): return "SensorFootprintRequests"
+        if(type_ ==  11): return "FootprintRequest"
+        if(type_ ==  12): return "SensorFootprint"
+        if(type_ ==  13): return "SensorFootprintResponse"
+        if(type_ ==  14): return "TaskImplementationRequest"
+        if(type_ ==  15): return "TaskImplementationResponse"
+        if(type_ ==  16): return "AssignmentCostMatrix"
+        if(type_ ==  17): return "TaskOptionCost"
+        if(type_ ==  18): return "TaskAssignment"
+        if(type_ ==  19): return "TaskAssignmentSummary"
+        if(type_ ==  20): return "TaskOption"
+        if(type_ ==  21): return "TaskPlanOptions"
+        if(type_ ==  22): return "TaskPause"
+        if(type_ ==  23): return "TaskResume"
+        if(type_ ==  24): return "TaskProgress"
+        if(type_ ==  25): return "TaskProgressRequest"
+        if(type_ ==  26): return "TaskInitialized"
+        if(type_ ==  27): return "TaskActive"
+        if(type_ ==  28): return "TaskComplete"
+        if(type_ ==  29): return "CancelTask"
 
 
     def getType(self, name):
@@ -115,35 +115,35 @@ class SeriesEnum:
 
         return -1
 
-    def getInstance(self, type):
-        if(type ==  1): return AssignmentCoordinatorTask.AssignmentCoordinatorTask()
-        if(type ==  2): return RendezvousTask.RendezvousTask()
-        if(type ==  3): return PlanningState.PlanningState()
-        if(type ==  4): return AssignmentCoordination.AssignmentCoordination()
-        if(type ==  5): return CoordinatedAutomationRequest.CoordinatedAutomationRequest()
-        if(type ==  6): return TaskAutomationRequest.TaskAutomationRequest()
-        if(type ==  7): return TaskAutomationResponse.TaskAutomationResponse()
-        if(type ==  8): return UniqueAutomationRequest.UniqueAutomationRequest()
-        if(type ==  9): return UniqueAutomationResponse.UniqueAutomationResponse()
-        if(type ==  10): return SensorFootprintRequests.SensorFootprintRequests()
-        if(type ==  11): return FootprintRequest.FootprintRequest()
-        if(type ==  12): return SensorFootprint.SensorFootprint()
-        if(type ==  13): return SensorFootprintResponse.SensorFootprintResponse()
-        if(type ==  14): return TaskImplementationRequest.TaskImplementationRequest()
-        if(type ==  15): return TaskImplementationResponse.TaskImplementationResponse()
-        if(type ==  16): return AssignmentCostMatrix.AssignmentCostMatrix()
-        if(type ==  17): return TaskOptionCost.TaskOptionCost()
-        if(type ==  18): return TaskAssignment.TaskAssignment()
-        if(type ==  19): return TaskAssignmentSummary.TaskAssignmentSummary()
-        if(type ==  20): return TaskOption.TaskOption()
-        if(type ==  21): return TaskPlanOptions.TaskPlanOptions()
-        if(type ==  22): return TaskPause.TaskPause()
-        if(type ==  23): return TaskResume.TaskResume()
-        if(type ==  24): return TaskProgress.TaskProgress()
-        if(type ==  25): return TaskProgressRequest.TaskProgressRequest()
-        if(type ==  26): return TaskInitialized.TaskInitialized()
-        if(type ==  27): return TaskActive.TaskActive()
-        if(type ==  28): return TaskComplete.TaskComplete()
-        if(type ==  29): return CancelTask.CancelTask()
+    def getInstance(self, type_):
+        if(type_ ==  1): return AssignmentCoordinatorTask.AssignmentCoordinatorTask()
+        if(type_ ==  2): return RendezvousTask.RendezvousTask()
+        if(type_ ==  3): return PlanningState.PlanningState()
+        if(type_ ==  4): return AssignmentCoordination.AssignmentCoordination()
+        if(type_ ==  5): return CoordinatedAutomationRequest.CoordinatedAutomationRequest()
+        if(type_ ==  6): return TaskAutomationRequest.TaskAutomationRequest()
+        if(type_ ==  7): return TaskAutomationResponse.TaskAutomationResponse()
+        if(type_ ==  8): return UniqueAutomationRequest.UniqueAutomationRequest()
+        if(type_ ==  9): return UniqueAutomationResponse.UniqueAutomationResponse()
+        if(type_ ==  10): return SensorFootprintRequests.SensorFootprintRequests()
+        if(type_ ==  11): return FootprintRequest.FootprintRequest()
+        if(type_ ==  12): return SensorFootprint.SensorFootprint()
+        if(type_ ==  13): return SensorFootprintResponse.SensorFootprintResponse()
+        if(type_ ==  14): return TaskImplementationRequest.TaskImplementationRequest()
+        if(type_ ==  15): return TaskImplementationResponse.TaskImplementationResponse()
+        if(type_ ==  16): return AssignmentCostMatrix.AssignmentCostMatrix()
+        if(type_ ==  17): return TaskOptionCost.TaskOptionCost()
+        if(type_ ==  18): return TaskAssignment.TaskAssignment()
+        if(type_ ==  19): return TaskAssignmentSummary.TaskAssignmentSummary()
+        if(type_ ==  20): return TaskOption.TaskOption()
+        if(type_ ==  21): return TaskPlanOptions.TaskPlanOptions()
+        if(type_ ==  22): return TaskPause.TaskPause()
+        if(type_ ==  23): return TaskResume.TaskResume()
+        if(type_ ==  24): return TaskProgress.TaskProgress()
+        if(type_ ==  25): return TaskProgressRequest.TaskProgressRequest()
+        if(type_ ==  26): return TaskInitialized.TaskInitialized()
+        if(type_ ==  27): return TaskActive.TaskActive()
+        if(type_ ==  28): return TaskComplete.TaskComplete()
+        if(type_ ==  29): return CancelTask.CancelTask()
 
         return None

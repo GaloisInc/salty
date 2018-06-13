@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,17 +41,17 @@ class DeployImpactPayload(VehicleAction.VehicleAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(VehicleAction.VehicleAction.pack(self))
-        buffer.append(struct.pack(">q", self.VehicleID))
-        buffer.append(struct.pack(">i", self.DeployedPayload))
-        buffer.append(struct.pack(">q", self.TargetEntityID))
+        buffer.extend(struct.pack(">q", self.VehicleID))
+        buffer.extend(struct.pack(">i", self.DeployedPayload))
+        buffer.extend(struct.pack(">q", self.TargetEntityID))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = VehicleAction.VehicleAction.unpack(self, buffer, _pos)
         self.VehicleID = struct.unpack_from(">q", buffer, _pos)[0]

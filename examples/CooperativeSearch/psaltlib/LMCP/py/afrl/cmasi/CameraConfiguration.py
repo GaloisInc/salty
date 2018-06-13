@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -46,23 +46,23 @@ class CameraConfiguration(PayloadConfiguration.PayloadConfiguration):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadConfiguration.PayloadConfiguration.pack(self))
-        buffer.append(struct.pack(">i", self.SupportedWavelengthBand))
-        buffer.append(struct.pack(">i", self.FieldOfViewMode))
-        buffer.append(struct.pack(">f", self.MinHorizontalFieldOfView))
-        buffer.append(struct.pack(">f", self.MaxHorizontalFieldOfView))
-        buffer.append(struct.pack(">H", len(self.DiscreteHorizontalFieldOfViewList) ))
+        buffer.extend(struct.pack(">i", self.SupportedWavelengthBand))
+        buffer.extend(struct.pack(">i", self.FieldOfViewMode))
+        buffer.extend(struct.pack(">f", self.MinHorizontalFieldOfView))
+        buffer.extend(struct.pack(">f", self.MaxHorizontalFieldOfView))
+        buffer.extend(struct.pack(">H", len(self.DiscreteHorizontalFieldOfViewList) ))
         for x in self.DiscreteHorizontalFieldOfViewList:
-            buffer.append(struct.pack(">f", x ))
-        buffer.append(struct.pack(">I", self.VideoStreamHorizontalResolution))
-        buffer.append(struct.pack(">I", self.VideoStreamVerticalResolution))
+            buffer.extend(struct.pack(">f", x ))
+        buffer.extend(struct.pack(">I", self.VideoStreamHorizontalResolution))
+        buffer.extend(struct.pack(">I", self.VideoStreamVerticalResolution))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadConfiguration.PayloadConfiguration.unpack(self, buffer, _pos)
         self.SupportedWavelengthBand = struct.unpack_from(">i", buffer, _pos)[0]
@@ -74,11 +74,10 @@ class CameraConfiguration(PayloadConfiguration.PayloadConfiguration):
         self.MaxHorizontalFieldOfView = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.DiscreteHorizontalFieldOfViewList = [None] * _arraylen
         _pos += 2
+        self.DiscreteHorizontalFieldOfViewList = [None] * _arraylen
         if _arraylen > 0:
-            self.DiscreteHorizontalFieldOfViewList = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.DiscreteHorizontalFieldOfViewList = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         self.VideoStreamHorizontalResolution = struct.unpack_from(">I", buffer, _pos)[0]
         _pos += 4

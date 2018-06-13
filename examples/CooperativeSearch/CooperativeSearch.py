@@ -2,8 +2,6 @@ from enum import Enum
 
 class CooperativeSearch(object):
     
-    __slots__ = ["_state", "_table"]
-    
     def __init__(self):
         self._state = 36
     

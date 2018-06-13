@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -44,33 +44,36 @@ class Task(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.TaskID))
-        buffer.append(struct.pack(">H", len(self.Label) ))
+        buffer.extend(struct.pack(">q", self.TaskID))
+        buffer.extend(struct.pack(">H", len(self.Label) ))
         if len(self.Label) > 0:
-            buffer.append(struct.pack( `len(self.Label)` + "s", str(self.Label)))
-        buffer.append(struct.pack(">H", len(self.EligibleEntities) ))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.Label)) + "s", bytearray(self.Label,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.Label)) + "s", self.Label))
+        buffer.extend(struct.pack(">H", len(self.EligibleEntities) ))
         for x in self.EligibleEntities:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">f", self.RevisitRate))
-        buffer.append(struct.pack(">H", len(self.Parameters) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">f", self.RevisitRate))
+        buffer.extend(struct.pack(">H", len(self.Parameters) ))
         for x in self.Parameters:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">B", self.Priority))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">B", self.Priority))
         boolChar = 1 if self.Required == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.TaskID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -78,23 +81,21 @@ class Task(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.Label = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.Label = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.Label = ""
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.EligibleEntities = [None] * _arraylen
         _pos += 2
+        self.EligibleEntities = [None] * _arraylen
         if _arraylen > 0:
-            self.EligibleEntities = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.EligibleEntities = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         self.RevisitRate = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Parameters = [None] * _arraylen
         _pos += 2
+        self.Parameters = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

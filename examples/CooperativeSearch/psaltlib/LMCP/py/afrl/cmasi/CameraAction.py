@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -38,15 +38,15 @@ class CameraAction(PayloadAction.PayloadAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadAction.PayloadAction.pack(self))
-        buffer.append(struct.pack(">f", self.HorizontalFieldOfView))
+        buffer.extend(struct.pack(">f", self.HorizontalFieldOfView))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadAction.PayloadAction.unpack(self, buffer, _pos)
         self.HorizontalFieldOfView = struct.unpack_from(">f", buffer, _pos)[0]

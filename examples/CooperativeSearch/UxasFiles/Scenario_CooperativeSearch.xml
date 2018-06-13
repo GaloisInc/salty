@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AMASE>
-    <ScenarioData></ScenarioData>
+    <ScenarioData>
+        <SimulationView LongExtent="0.13" Latitude="30.4681" Longitude="-87.1600"/>
+    </ScenarioData>
     <ScenarioEventList>
         <AirVehicleConfiguration Series="CMASI" Time="1.0">
             <ID>1</ID>

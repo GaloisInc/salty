@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -42,23 +42,23 @@ class Rectangle(AbstractGeometry.AbstractGeometry):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(AbstractGeometry.AbstractGeometry.pack(self))
-        buffer.append(struct.pack("B", self.CenterPoint != None ))
+        buffer.extend(struct.pack("B", self.CenterPoint != None ))
         if self.CenterPoint != None:
-            buffer.append(struct.pack(">q", self.CenterPoint.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.CenterPoint.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.CenterPoint.SERIES_VERSION))
-            buffer.append(self.CenterPoint.pack())
-        buffer.append(struct.pack(">f", self.Width))
-        buffer.append(struct.pack(">f", self.Height))
-        buffer.append(struct.pack(">f", self.Rotation))
+            buffer.extend(struct.pack(">q", self.CenterPoint.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.CenterPoint.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.CenterPoint.SERIES_VERSION))
+            buffer.extend(self.CenterPoint.pack())
+        buffer.extend(struct.pack(">f", self.Width))
+        buffer.extend(struct.pack(">f", self.Height))
+        buffer.extend(struct.pack(">f", self.Rotation))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = AbstractGeometry.AbstractGeometry.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

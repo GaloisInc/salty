@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -22,12 +22,12 @@ class BandwidthTest(EntityLocation.EntityLocation):
 
     def __init__(self):
         EntityLocation.EntityLocation.__init__(self)
-        self.LMCP_TYPE = 7
+        self.LMCP_TYPE = 8
         self.SERIES_NAME = "UXNATIVE"
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.uxnative.BandwidthTest"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 6149751333668345413
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.MessageID = 0   #int64
@@ -39,18 +39,21 @@ class BandwidthTest(EntityLocation.EntityLocation):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(EntityLocation.EntityLocation.pack(self))
-        buffer.append(struct.pack(">q", self.MessageID))
-        buffer.append(struct.pack(">H", len(self.Payload) ))
+        buffer.extend(struct.pack(">q", self.MessageID))
+        buffer.extend(struct.pack(">H", len(self.Payload) ))
         if len(self.Payload) > 0:
-            buffer.append(struct.pack( `len(self.Payload)` + "s", str(self.Payload)))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.Payload)) + "s", bytearray(self.Payload,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.Payload)) + "s", self.Payload))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = EntityLocation.EntityLocation.unpack(self, buffer, _pos)
         self.MessageID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -58,7 +61,7 @@ class BandwidthTest(EntityLocation.EntityLocation):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.Payload = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.Payload = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.Payload = ""

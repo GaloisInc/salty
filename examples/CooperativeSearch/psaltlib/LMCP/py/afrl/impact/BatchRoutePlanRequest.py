@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,46 +43,44 @@ class BatchRoutePlanRequest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.RequestID))
-        buffer.append(struct.pack(">H", len(self.Vehicles) ))
+        buffer.extend(struct.pack(">q", self.RequestID))
+        buffer.extend(struct.pack(">H", len(self.Vehicles) ))
         for x in self.Vehicles:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">H", len(self.TaskList) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">H", len(self.TaskList) ))
         for x in self.TaskList:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">q", self.OperatingRegion))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">q", self.OperatingRegion))
         boolChar = 1 if self.ComputeTaskToTaskTiming == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
         boolChar = 1 if self.ComputeInterTaskToTaskTiming == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">H", len(self.InterTaskPercentage) ))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">H", len(self.InterTaskPercentage) ))
         for x in self.InterTaskPercentage:
-            buffer.append(struct.pack(">f", x ))
+            buffer.extend(struct.pack(">f", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.RequestID = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Vehicles = [None] * _arraylen
         _pos += 2
+        self.Vehicles = [None] * _arraylen
         if _arraylen > 0:
-            self.Vehicles = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.Vehicles = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.TaskList = [None] * _arraylen
         _pos += 2
+        self.TaskList = [None] * _arraylen
         if _arraylen > 0:
-            self.TaskList = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.TaskList = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         self.OperatingRegion = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
@@ -93,11 +91,10 @@ class BatchRoutePlanRequest(LMCPObject.LMCPObject):
         self.ComputeInterTaskToTaskTiming = True if boolChar == 1 else False
         _pos += 1
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.InterTaskPercentage = [None] * _arraylen
         _pos += 2
+        self.InterTaskPercentage = [None] * _arraylen
         if _arraylen > 0:
-            self.InterTaskPercentage = struct.unpack_from(">" + `_arraylen` + "f", buffer, _pos )
+            self.InterTaskPercentage = struct.unpack_from(">" + repr(_arraylen) + "f", buffer, _pos )
             _pos += 4 * _arraylen
         return _pos
 

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -38,35 +38,33 @@ class CancelTask(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">H", len(self.Vehicles) ))
+        buffer.extend(struct.pack(">H", len(self.Vehicles) ))
         for x in self.Vehicles:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">H", len(self.CanceledTasks) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">H", len(self.CanceledTasks) ))
         for x in self.CanceledTasks:
-            buffer.append(struct.pack(">q", x ))
+            buffer.extend(struct.pack(">q", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Vehicles = [None] * _arraylen
         _pos += 2
+        self.Vehicles = [None] * _arraylen
         if _arraylen > 0:
-            self.Vehicles = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.Vehicles = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.CanceledTasks = [None] * _arraylen
         _pos += 2
+        self.CanceledTasks = [None] * _arraylen
         if _arraylen > 0:
-            self.CanceledTasks = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.CanceledTasks = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         return _pos
 

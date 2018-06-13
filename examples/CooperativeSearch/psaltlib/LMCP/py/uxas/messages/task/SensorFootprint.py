@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -52,29 +52,29 @@ class SensorFootprint(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.FootprintResponseID))
-        buffer.append(struct.pack(">q", self.VehicleID))
-        buffer.append(struct.pack(">q", self.CameraID))
-        buffer.append(struct.pack(">q", self.GimbalID))
-        buffer.append(struct.pack(">f", self.HorizontalFOV))
-        buffer.append(struct.pack(">f", self.AglAltitude))
-        buffer.append(struct.pack(">f", self.GimbalElevation))
-        buffer.append(struct.pack(">f", self.AspectRatio))
-        buffer.append(struct.pack(">f", self.AchievedGSD))
-        buffer.append(struct.pack(">i", self.CameraWavelength))
-        buffer.append(struct.pack(">f", self.HorizontalToLeadingEdge))
-        buffer.append(struct.pack(">f", self.HorizontalToTrailingEdge))
-        buffer.append(struct.pack(">f", self.HorizontalToCenter))
-        buffer.append(struct.pack(">f", self.WidthCenter))
-        buffer.append(struct.pack(">f", self.SlantRangeToCenter))
+        buffer.extend(struct.pack(">q", self.FootprintResponseID))
+        buffer.extend(struct.pack(">q", self.VehicleID))
+        buffer.extend(struct.pack(">q", self.CameraID))
+        buffer.extend(struct.pack(">q", self.GimbalID))
+        buffer.extend(struct.pack(">f", self.HorizontalFOV))
+        buffer.extend(struct.pack(">f", self.AglAltitude))
+        buffer.extend(struct.pack(">f", self.GimbalElevation))
+        buffer.extend(struct.pack(">f", self.AspectRatio))
+        buffer.extend(struct.pack(">f", self.AchievedGSD))
+        buffer.extend(struct.pack(">i", self.CameraWavelength))
+        buffer.extend(struct.pack(">f", self.HorizontalToLeadingEdge))
+        buffer.extend(struct.pack(">f", self.HorizontalToTrailingEdge))
+        buffer.extend(struct.pack(">f", self.HorizontalToCenter))
+        buffer.extend(struct.pack(">f", self.WidthCenter))
+        buffer.extend(struct.pack(">f", self.SlantRangeToCenter))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.FootprintResponseID = struct.unpack_from(">q", buffer, _pos)[0]

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,23 +40,23 @@ class TaskResume(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.TaskID))
+        buffer.extend(struct.pack(">q", self.TaskID))
         boolChar = 1 if self.RestartCompletely == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack("B", self.ReAssign != None ))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack("B", self.ReAssign != None ))
         if self.ReAssign != None:
-            buffer.append(struct.pack(">q", self.ReAssign.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.ReAssign.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.ReAssign.SERIES_VERSION))
-            buffer.append(self.ReAssign.pack())
+            buffer.extend(struct.pack(">q", self.ReAssign.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.ReAssign.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.ReAssign.SERIES_VERSION))
+            buffer.extend(self.ReAssign.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.TaskID = struct.unpack_from(">q", buffer, _pos)[0]

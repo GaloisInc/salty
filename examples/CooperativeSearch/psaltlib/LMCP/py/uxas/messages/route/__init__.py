@@ -16,7 +16,7 @@ __all__ = [ "SeriesEnum", "GraphNode", "GraphEdge", "GraphRegion", "RouteConstra
 SERIES_NAME = "ROUTE"
 #Series Name turned into a long for quick comparisons.
 SERIES_NAME_ID = 5931053054693474304
-SERIES_VERSION = 3
+SERIES_VERSION = 4
 
 
 

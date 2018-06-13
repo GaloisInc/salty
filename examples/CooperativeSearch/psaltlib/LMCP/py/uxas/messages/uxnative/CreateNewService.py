@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -32,7 +32,7 @@ class CreateNewService(LMCPObject.LMCPObject):
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.uxnative.CreateNewService"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 6149751333668345413
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.ServiceID = 0   #int64
@@ -50,66 +50,69 @@ class CreateNewService(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.ServiceID))
-        buffer.append(struct.pack(">H", len(self.XmlConfiguration) ))
+        buffer.extend(struct.pack(">q", self.ServiceID))
+        buffer.extend(struct.pack(">H", len(self.XmlConfiguration) ))
         if len(self.XmlConfiguration) > 0:
-            buffer.append(struct.pack( `len(self.XmlConfiguration)` + "s", str(self.XmlConfiguration)))
-        buffer.append(struct.pack(">H", len(self.EntityConfigurations) ))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.XmlConfiguration)) + "s", bytearray(self.XmlConfiguration,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.XmlConfiguration)) + "s", self.XmlConfiguration))
+        buffer.extend(struct.pack(">H", len(self.EntityConfigurations) ))
         for x in self.EntityConfigurations:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">H", len(self.EntityStates) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">H", len(self.EntityStates) ))
         for x in self.EntityStates:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">H", len(self.MissionCommands) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">H", len(self.MissionCommands) ))
         for x in self.MissionCommands:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">H", len(self.Areas) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">H", len(self.Areas) ))
         for x in self.Areas:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">H", len(self.Lines) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">H", len(self.Lines) ))
         for x in self.Lines:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">H", len(self.Points) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">H", len(self.Points) ))
         for x in self.Points:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.ServiceID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -117,14 +120,13 @@ class CreateNewService(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.XmlConfiguration = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.XmlConfiguration = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.XmlConfiguration = ""
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.EntityConfigurations = [None] * _arraylen
         _pos += 2
+        self.EntityConfigurations = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -141,9 +143,8 @@ class CreateNewService(LMCPObject.LMCPObject):
             else:
                 self.EntityConfigurations[x] = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.EntityStates = [None] * _arraylen
         _pos += 2
+        self.EntityStates = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -160,9 +161,8 @@ class CreateNewService(LMCPObject.LMCPObject):
             else:
                 self.EntityStates[x] = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.MissionCommands = [None] * _arraylen
         _pos += 2
+        self.MissionCommands = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -179,9 +179,8 @@ class CreateNewService(LMCPObject.LMCPObject):
             else:
                 self.MissionCommands[x] = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Areas = [None] * _arraylen
         _pos += 2
+        self.Areas = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -198,9 +197,8 @@ class CreateNewService(LMCPObject.LMCPObject):
             else:
                 self.Areas[x] = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Lines = [None] * _arraylen
         _pos += 2
+        self.Lines = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -217,9 +215,8 @@ class CreateNewService(LMCPObject.LMCPObject):
             else:
                 self.Lines[x] = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Points = [None] * _arraylen
         _pos += 2
+        self.Points = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

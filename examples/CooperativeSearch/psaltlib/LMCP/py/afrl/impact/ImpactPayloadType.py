@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 ## ===============================================================================
 ## Authors: AFRL/RQQA
 ## Organization: Air Force Research Laboratory, Aerospace Systems Directorate, Power and Control Division

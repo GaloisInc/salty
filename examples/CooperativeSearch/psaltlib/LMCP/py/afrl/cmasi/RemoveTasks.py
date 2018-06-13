@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -37,25 +37,24 @@ class RemoveTasks(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">H", len(self.TaskList) ))
+        buffer.extend(struct.pack(">H", len(self.TaskList) ))
         for x in self.TaskList:
-            buffer.append(struct.pack(">q", x ))
+            buffer.extend(struct.pack(">q", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.TaskList = [None] * _arraylen
         _pos += 2
+        self.TaskList = [None] * _arraylen
         if _arraylen > 0:
-            self.TaskList = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.TaskList = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         return _pos
 

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -50,33 +50,33 @@ class Waypoint(Location3D.Location3D):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Location3D.Location3D.pack(self))
-        buffer.append(struct.pack(">q", self.Number))
-        buffer.append(struct.pack(">q", self.NextWaypoint))
-        buffer.append(struct.pack(">f", self.Speed))
-        buffer.append(struct.pack(">i", self.SpeedType))
-        buffer.append(struct.pack(">f", self.ClimbRate))
-        buffer.append(struct.pack(">i", self.TurnType))
-        buffer.append(struct.pack(">H", len(self.VehicleActionList) ))
+        buffer.extend(struct.pack(">q", self.Number))
+        buffer.extend(struct.pack(">q", self.NextWaypoint))
+        buffer.extend(struct.pack(">f", self.Speed))
+        buffer.extend(struct.pack(">i", self.SpeedType))
+        buffer.extend(struct.pack(">f", self.ClimbRate))
+        buffer.extend(struct.pack(">i", self.TurnType))
+        buffer.extend(struct.pack(">H", len(self.VehicleActionList) ))
         for x in self.VehicleActionList:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">q", self.ContingencyWaypointA))
-        buffer.append(struct.pack(">q", self.ContingencyWaypointB))
-        buffer.append(struct.pack(">H", len(self.AssociatedTasks) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">q", self.ContingencyWaypointA))
+        buffer.extend(struct.pack(">q", self.ContingencyWaypointB))
+        buffer.extend(struct.pack(">H", len(self.AssociatedTasks) ))
         for x in self.AssociatedTasks:
-            buffer.append(struct.pack(">q", x ))
+            buffer.extend(struct.pack(">q", x ))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Location3D.Location3D.unpack(self, buffer, _pos)
         self.Number = struct.unpack_from(">q", buffer, _pos)[0]
@@ -92,9 +92,8 @@ class Waypoint(Location3D.Location3D):
         self.TurnType = struct.unpack_from(">i", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.VehicleActionList = [None] * _arraylen
         _pos += 2
+        self.VehicleActionList = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -115,11 +114,10 @@ class Waypoint(Location3D.Location3D):
         self.ContingencyWaypointB = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AssociatedTasks = [None] * _arraylen
         _pos += 2
+        self.AssociatedTasks = [None] * _arraylen
         if _arraylen > 0:
-            self.AssociatedTasks = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.AssociatedTasks = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         return _pos
 

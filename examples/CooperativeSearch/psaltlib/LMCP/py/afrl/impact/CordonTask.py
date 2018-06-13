@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,21 +40,21 @@ class CordonTask(Task.Task):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Task.Task.pack(self))
-        buffer.append(struct.pack("B", self.CordonLocation != None ))
+        buffer.extend(struct.pack("B", self.CordonLocation != None ))
         if self.CordonLocation != None:
-            buffer.append(struct.pack(">q", self.CordonLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.CordonLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.CordonLocation.SERIES_VERSION))
-            buffer.append(self.CordonLocation.pack())
-        buffer.append(struct.pack(">f", self.StandoffDistance))
+            buffer.extend(struct.pack(">q", self.CordonLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.CordonLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.CordonLocation.SERIES_VERSION))
+            buffer.extend(self.CordonLocation.pack())
+        buffer.extend(struct.pack(">f", self.StandoffDistance))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Task.Task.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

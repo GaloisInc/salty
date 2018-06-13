@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -50,38 +50,38 @@ class VehicleSummary(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.VehicleID))
-        buffer.append(struct.pack(">q", self.DestinationTaskID))
-        buffer.append(struct.pack(">q", self.InitialTaskID))
-        buffer.append(struct.pack(">f", self.InitialTaskPercentage))
-        buffer.append(struct.pack(">q", self.EstimateTimeToTaskPercentage))
-        buffer.append(struct.pack(">q", self.TimeToArrive))
-        buffer.append(struct.pack(">q", self.TimeOnTask))
-        buffer.append(struct.pack(">f", self.EnergyRemaining))
+        buffer.extend(struct.pack(">q", self.VehicleID))
+        buffer.extend(struct.pack(">q", self.DestinationTaskID))
+        buffer.extend(struct.pack(">q", self.InitialTaskID))
+        buffer.extend(struct.pack(">f", self.InitialTaskPercentage))
+        buffer.extend(struct.pack(">q", self.EstimateTimeToTaskPercentage))
+        buffer.extend(struct.pack(">q", self.TimeToArrive))
+        buffer.extend(struct.pack(">q", self.TimeOnTask))
+        buffer.extend(struct.pack(">f", self.EnergyRemaining))
         boolChar = 1 if self.BeyondCommRange == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
         boolChar = 1 if self.ConflictsWithROZ == True else 0
-        buffer.append(struct.pack(">B",boolChar))
-        buffer.append(struct.pack(">H", len(self.ROZIDs) ))
+        buffer.extend(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">H", len(self.ROZIDs) ))
         for x in self.ROZIDs:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">H", len(self.WaypointList) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">H", len(self.WaypointList) ))
         for x in self.WaypointList:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">q", self.FirstWaypoint))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">q", self.FirstWaypoint))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.VehicleID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -107,16 +107,14 @@ class VehicleSummary(LMCPObject.LMCPObject):
         self.ConflictsWithROZ = True if boolChar == 1 else False
         _pos += 1
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.ROZIDs = [None] * _arraylen
         _pos += 2
+        self.ROZIDs = [None] * _arraylen
         if _arraylen > 0:
-            self.ROZIDs = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.ROZIDs = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.WaypointList = [None] * _arraylen
         _pos += 2
+        self.WaypointList = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

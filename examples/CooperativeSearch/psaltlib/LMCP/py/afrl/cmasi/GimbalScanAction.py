@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -44,21 +44,21 @@ class GimbalScanAction(PayloadAction.PayloadAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadAction.PayloadAction.pack(self))
-        buffer.append(struct.pack(">f", self.AzimuthSlewRate))
-        buffer.append(struct.pack(">f", self.ElevationSlewRate))
-        buffer.append(struct.pack(">f", self.StartAzimuth))
-        buffer.append(struct.pack(">f", self.EndAzimuth))
-        buffer.append(struct.pack(">f", self.StartElevation))
-        buffer.append(struct.pack(">f", self.EndElevation))
-        buffer.append(struct.pack(">I", self.Cycles))
+        buffer.extend(struct.pack(">f", self.AzimuthSlewRate))
+        buffer.extend(struct.pack(">f", self.ElevationSlewRate))
+        buffer.extend(struct.pack(">f", self.StartAzimuth))
+        buffer.extend(struct.pack(">f", self.EndAzimuth))
+        buffer.extend(struct.pack(">f", self.StartElevation))
+        buffer.extend(struct.pack(">f", self.EndElevation))
+        buffer.extend(struct.pack(">I", self.Cycles))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadAction.PayloadAction.unpack(self, buffer, _pos)
         self.AzimuthSlewRate = struct.unpack_from(">f", buffer, _pos)[0]

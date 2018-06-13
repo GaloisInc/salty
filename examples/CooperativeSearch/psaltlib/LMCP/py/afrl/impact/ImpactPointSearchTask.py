@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -45,36 +45,36 @@ class ImpactPointSearchTask(SearchTask.SearchTask):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(SearchTask.SearchTask.pack(self))
-        buffer.append(struct.pack(">q", self.SearchLocationID))
-        buffer.append(struct.pack("B", self.SearchLocation != None ))
+        buffer.extend(struct.pack(">q", self.SearchLocationID))
+        buffer.extend(struct.pack("B", self.SearchLocation != None ))
         if self.SearchLocation != None:
-            buffer.append(struct.pack(">q", self.SearchLocation.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.SearchLocation.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.SearchLocation.SERIES_VERSION))
-            buffer.append(self.SearchLocation.pack())
-        buffer.append(struct.pack(">f", self.StandoffDistance))
-        buffer.append(struct.pack(">H", len(self.ViewAngleList) ))
+            buffer.extend(struct.pack(">q", self.SearchLocation.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.SearchLocation.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.SearchLocation.SERIES_VERSION))
+            buffer.extend(self.SearchLocation.pack())
+        buffer.extend(struct.pack(">f", self.StandoffDistance))
+        buffer.extend(struct.pack(">H", len(self.ViewAngleList) ))
         for x in self.ViewAngleList:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack("B", self.DesiredAction != None ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack("B", self.DesiredAction != None ))
         if self.DesiredAction != None:
-            buffer.append(struct.pack(">q", self.DesiredAction.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.DesiredAction.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.DesiredAction.SERIES_VERSION))
-            buffer.append(self.DesiredAction.pack())
+            buffer.extend(struct.pack(">q", self.DesiredAction.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.DesiredAction.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.DesiredAction.SERIES_VERSION))
+            buffer.extend(self.DesiredAction.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = SearchTask.SearchTask.unpack(self, buffer, _pos)
         self.SearchLocationID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -96,9 +96,8 @@ class ImpactPointSearchTask(SearchTask.SearchTask):
         self.StandoffDistance = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.ViewAngleList = [None] * _arraylen
         _pos += 2
+        self.ViewAngleList = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

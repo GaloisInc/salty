@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -39,20 +39,20 @@ class LoiterTask(Task.Task):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(Task.Task.pack(self))
-        buffer.append(struct.pack("B", self.DesiredAction != None ))
+        buffer.extend(struct.pack("B", self.DesiredAction != None ))
         if self.DesiredAction != None:
-            buffer.append(struct.pack(">q", self.DesiredAction.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.DesiredAction.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.DesiredAction.SERIES_VERSION))
-            buffer.append(self.DesiredAction.pack())
+            buffer.extend(struct.pack(">q", self.DesiredAction.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.DesiredAction.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.DesiredAction.SERIES_VERSION))
+            buffer.extend(self.DesiredAction.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = Task.Task.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

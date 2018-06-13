@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,27 +43,30 @@ class AreaOfInterest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.AreaID))
-        buffer.append(struct.pack("B", self.Area != None ))
+        buffer.extend(struct.pack(">q", self.AreaID))
+        buffer.extend(struct.pack("B", self.Area != None ))
         if self.Area != None:
-            buffer.append(struct.pack(">q", self.Area.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Area.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Area.SERIES_VERSION))
-            buffer.append(self.Area.pack())
-        buffer.append(struct.pack(">i", self.AreaAction))
-        buffer.append(struct.pack(">H", len(self.AreaLabel) ))
+            buffer.extend(struct.pack(">q", self.Area.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Area.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Area.SERIES_VERSION))
+            buffer.extend(self.Area.pack())
+        buffer.extend(struct.pack(">i", self.AreaAction))
+        buffer.extend(struct.pack(">H", len(self.AreaLabel) ))
         if len(self.AreaLabel) > 0:
-            buffer.append(struct.pack( `len(self.AreaLabel)` + "s", str(self.AreaLabel)))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.AreaLabel)) + "s", bytearray(self.AreaLabel,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.AreaLabel)) + "s", self.AreaLabel))
         boolChar = 1 if self.BackgroundBehaviorArea == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.AreaID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -87,7 +90,7 @@ class AreaOfInterest(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.AreaLabel = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.AreaLabel = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.AreaLabel = ""

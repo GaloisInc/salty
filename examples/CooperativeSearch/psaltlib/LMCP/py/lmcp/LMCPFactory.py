@@ -1,5 +1,5 @@
 import struct
-import LMCPObject;
+import lmcp.LMCPObject;
 import xml.dom.minidom
 
 ## ===============================================================================
@@ -54,12 +54,12 @@ class LMCPFactory:
 
     def getObject(self, buffer):
         if len(buffer) < HEADER_SIZE:
-            print  "getObject() : buffer too small for message"
+            print("getObject() : buffer too small for message")
             return None
-        type = getLMCPType(buffer)
+        type_ = getLMCPType(buffer)
         series = getLMCPSeries(buffer)
         version = getLMCPVersion(buffer)
-        obj = self.createObject(series, version, type)
+        obj = self.createObject(series, version, type_)
         if obj != None:
            obj.unpack(buffer, HEADER_SIZE + 15)
         return obj
@@ -72,7 +72,7 @@ class LMCPFactory:
         msgSize = getSize(header)
         msgBody = fileobj.read(msgSize + CHECKSUM_SIZE)
         if  validate(header + msgBody) != True:
-            print "LMCPFactory : bad checksum. "
+            print("LMCPFactory : bad checksum. ")
             return None
         return self.getObject(header + msgBody)
 
@@ -108,7 +108,7 @@ class LMCPFactory:
         return objs
 
     def unpackFromDict(self, d):
-        if type(d) is not dict:
+        if not isinstance(d, dict):
             return None
 
         if ("datatype" in d.keys() and "datastring" in d.keys()):
@@ -119,7 +119,7 @@ class LMCPFactory:
         
         obj = None
         for key in d:
-            if type(d[key]) is dict:
+            if isinstance(d[key], dict):
                 name_parts = key.split("/")
                 if len(name_parts) == 2:
                    series_name = name_parts[0]
@@ -157,34 +157,32 @@ internalFactory = LMCPFactory()
 
 def packMessage(lmcpObject, calcChecksum):
     """
-    packs a buffer (string) object and returns it
+    packs a bytearray object and returns it
     """
 
     if lmcpObject == None:
-        return None
+        return bytebuffer()
     # pack the header
-    hdr_buffer = []
-    obj_buffer = []
-    cks_buffer = []
-    total_buffer = []
-    hdr_buffer.append(struct.pack(">I", LMCP_CONTROL_STR))
-    obj_tmp = lmcpObject.pack()
-    obj_buffer.append(struct.pack(">B", lmcpObject != None))
-    obj_buffer.append(struct.pack(">q", lmcpObject.SERIES_NAME_ID))
-    obj_buffer.append(struct.pack(">I", lmcpObject.LMCP_TYPE))
-    obj_buffer.append(struct.pack(">H", lmcpObject.SERIES_VERSION))
-    obj_buffer.append(obj_tmp)
-    hdr_buffer.append(struct.pack(">I", len("".join(obj_buffer))))
+    hdr_buffer = bytearray()
+    obj_buffer = bytearray()
+    total_buffer = bytearray()
+    hdr_buffer.extend(struct.pack(">I", LMCP_CONTROL_STR))
+    obj_buffer.extend(struct.pack(">B", lmcpObject != None))
+    obj_buffer.extend(struct.pack(">q", lmcpObject.SERIES_NAME_ID))
+    obj_buffer.extend(struct.pack(">I", lmcpObject.LMCP_TYPE))
+    obj_buffer.extend(struct.pack(">H", lmcpObject.SERIES_VERSION))
+    obj_buffer.extend(lmcpObject.pack())
+    hdr_buffer.extend(struct.pack(">I", len(obj_buffer)))
     total_buffer.extend(hdr_buffer)
     total_buffer.extend(obj_buffer)
 
     #pack the checksum
     if calcChecksum:
-        total_buffer.append(struct.pack(">I", calculateChecksum("".join(total_buffer), 0)))
+        total_buffer.extend(struct.pack(">I", calculateChecksum(total_buffer, 0)))
     else:
-        total_buffer.append(struct.pack(">I", 0))
+        total_buffer.extend(struct.pack(">I", 0))
 
-    return "".join(total_buffer)
+    return total_buffer
 
 def getSize(buffer):
     return struct.unpack_from(">I", buffer, 4)[0]
@@ -209,7 +207,7 @@ def calculateChecksum(buffer, offset):
     """
     sum = 0
     for x in range(len(buffer)-offset):
-        sum += struct.unpack_from("b", buffer, x)[0] & 0xFF
+        sum += buffer[x] & 0xFF
     return sum
 
 def validate(buffer):

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -65,60 +65,60 @@ class EntityState(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.ID))
-        buffer.append(struct.pack(">f", self.u))
-        buffer.append(struct.pack(">f", self.v))
-        buffer.append(struct.pack(">f", self.w))
-        buffer.append(struct.pack(">f", self.udot))
-        buffer.append(struct.pack(">f", self.vdot))
-        buffer.append(struct.pack(">f", self.wdot))
-        buffer.append(struct.pack(">f", self.Heading))
-        buffer.append(struct.pack(">f", self.Pitch))
-        buffer.append(struct.pack(">f", self.Roll))
-        buffer.append(struct.pack(">f", self.p))
-        buffer.append(struct.pack(">f", self.q))
-        buffer.append(struct.pack(">f", self.r))
-        buffer.append(struct.pack(">f", self.Course))
-        buffer.append(struct.pack(">f", self.Groundspeed))
-        buffer.append(struct.pack("B", self.Location != None ))
+        buffer.extend(struct.pack(">q", self.ID))
+        buffer.extend(struct.pack(">f", self.u))
+        buffer.extend(struct.pack(">f", self.v))
+        buffer.extend(struct.pack(">f", self.w))
+        buffer.extend(struct.pack(">f", self.udot))
+        buffer.extend(struct.pack(">f", self.vdot))
+        buffer.extend(struct.pack(">f", self.wdot))
+        buffer.extend(struct.pack(">f", self.Heading))
+        buffer.extend(struct.pack(">f", self.Pitch))
+        buffer.extend(struct.pack(">f", self.Roll))
+        buffer.extend(struct.pack(">f", self.p))
+        buffer.extend(struct.pack(">f", self.q))
+        buffer.extend(struct.pack(">f", self.r))
+        buffer.extend(struct.pack(">f", self.Course))
+        buffer.extend(struct.pack(">f", self.Groundspeed))
+        buffer.extend(struct.pack("B", self.Location != None ))
         if self.Location != None:
-            buffer.append(struct.pack(">q", self.Location.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Location.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Location.SERIES_VERSION))
-            buffer.append(self.Location.pack())
-        buffer.append(struct.pack(">f", self.EnergyAvailable))
-        buffer.append(struct.pack(">f", self.ActualEnergyRate))
-        buffer.append(struct.pack(">H", len(self.PayloadStateList) ))
+            buffer.extend(struct.pack(">q", self.Location.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Location.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Location.SERIES_VERSION))
+            buffer.extend(self.Location.pack())
+        buffer.extend(struct.pack(">f", self.EnergyAvailable))
+        buffer.extend(struct.pack(">f", self.ActualEnergyRate))
+        buffer.extend(struct.pack(">H", len(self.PayloadStateList) ))
         for x in self.PayloadStateList:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">q", self.CurrentWaypoint))
-        buffer.append(struct.pack(">q", self.CurrentCommand))
-        buffer.append(struct.pack(">i", self.Mode))
-        buffer.append(struct.pack(">H", len(self.AssociatedTasks) ))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">q", self.CurrentWaypoint))
+        buffer.extend(struct.pack(">q", self.CurrentCommand))
+        buffer.extend(struct.pack(">i", self.Mode))
+        buffer.extend(struct.pack(">H", len(self.AssociatedTasks) ))
         for x in self.AssociatedTasks:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">q", self.Time))
-        buffer.append(struct.pack(">H", len(self.Info) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">q", self.Time))
+        buffer.extend(struct.pack(">H", len(self.Info) ))
         for x in self.Info:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.ID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -170,9 +170,8 @@ class EntityState(LMCPObject.LMCPObject):
         self.ActualEnergyRate = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.PayloadStateList = [None] * _arraylen
         _pos += 2
+        self.PayloadStateList = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
@@ -195,18 +194,16 @@ class EntityState(LMCPObject.LMCPObject):
         self.Mode = struct.unpack_from(">i", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.AssociatedTasks = [None] * _arraylen
         _pos += 2
+        self.AssociatedTasks = [None] * _arraylen
         if _arraylen > 0:
-            self.AssociatedTasks = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.AssociatedTasks = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         self.Time = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Info = [None] * _arraylen
         _pos += 2
+        self.Info = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -42,24 +42,24 @@ class WaterReport(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack("B", self.Area != None ))
+        buffer.extend(struct.pack("B", self.Area != None ))
         if self.Area != None:
-            buffer.append(struct.pack(">q", self.Area.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Area.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Area.SERIES_VERSION))
-            buffer.append(self.Area.pack())
-        buffer.append(struct.pack(">f", self.CurrentSpeed))
-        buffer.append(struct.pack(">f", self.CurrentDirection))
-        buffer.append(struct.pack(">f", self.WaveDirection))
-        buffer.append(struct.pack(">f", self.WaveHeight))
+            buffer.extend(struct.pack(">q", self.Area.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Area.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Area.SERIES_VERSION))
+            buffer.extend(self.Area.pack())
+        buffer.extend(struct.pack(">f", self.CurrentSpeed))
+        buffer.extend(struct.pack(">f", self.CurrentDirection))
+        buffer.extend(struct.pack(">f", self.WaveDirection))
+        buffer.extend(struct.pack(">f", self.WaveHeight))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         _valid = struct.unpack_from("B", buffer, _pos )[0]

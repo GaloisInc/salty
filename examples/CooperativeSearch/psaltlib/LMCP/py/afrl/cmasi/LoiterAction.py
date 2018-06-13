@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -48,27 +48,27 @@ class LoiterAction(NavigationAction.NavigationAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(NavigationAction.NavigationAction.pack(self))
-        buffer.append(struct.pack(">i", self.LoiterType))
-        buffer.append(struct.pack(">f", self.Radius))
-        buffer.append(struct.pack(">f", self.Axis))
-        buffer.append(struct.pack(">f", self.Length))
-        buffer.append(struct.pack(">i", self.Direction))
-        buffer.append(struct.pack(">q", self.Duration))
-        buffer.append(struct.pack(">f", self.Airspeed))
-        buffer.append(struct.pack("B", self.Location != None ))
+        buffer.extend(struct.pack(">i", self.LoiterType))
+        buffer.extend(struct.pack(">f", self.Radius))
+        buffer.extend(struct.pack(">f", self.Axis))
+        buffer.extend(struct.pack(">f", self.Length))
+        buffer.extend(struct.pack(">i", self.Direction))
+        buffer.extend(struct.pack(">q", self.Duration))
+        buffer.extend(struct.pack(">f", self.Airspeed))
+        buffer.extend(struct.pack("B", self.Location != None ))
         if self.Location != None:
-            buffer.append(struct.pack(">q", self.Location.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.Location.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.Location.SERIES_VERSION))
-            buffer.append(self.Location.pack())
+            buffer.extend(struct.pack(">q", self.Location.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.Location.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.Location.SERIES_VERSION))
+            buffer.extend(self.Location.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = NavigationAction.NavigationAction.unpack(self, buffer, _pos)
         self.LoiterType = struct.unpack_from(">i", buffer, _pos)[0]

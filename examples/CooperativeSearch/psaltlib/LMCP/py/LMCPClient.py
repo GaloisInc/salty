@@ -131,6 +131,7 @@ from uxas.messages.uxnative import StartupComplete
 from uxas.messages.uxnative import CreateNewService
 from uxas.messages.uxnative import KillService
 from uxas.messages.uxnative import IncrementWaypoint
+from uxas.messages.uxnative import SafeHeadingAction
 from uxas.messages.uxnative import EntityLocation
 from uxas.messages.uxnative import BandwidthTest
 from uxas.messages.uxnative import BandwidthReceiveReport
@@ -181,499 +182,502 @@ s = socket.socket()
 host = socket.gethostname()
 port = 11041
 s.connect((host, port))
-buf = []
+buf = bytearray()
 
 #Pack AbstractGeometry
 obj = AbstractGeometry.AbstractGeometry()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack KeyValuePair
 obj = KeyValuePair.KeyValuePair()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Location3D
 obj = Location3D.Location3D()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PayloadAction
 obj = PayloadAction.PayloadAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PayloadConfiguration
 obj = PayloadConfiguration.PayloadConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PayloadState
 obj = PayloadState.PayloadState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VehicleAction
 obj = VehicleAction.VehicleAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Task
 obj = Task.Task()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SearchTask
 obj = SearchTask.SearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AbstractZone
 obj = AbstractZone.AbstractZone()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EntityConfiguration
 obj = EntityConfiguration.EntityConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack FlightProfile
 obj = FlightProfile.FlightProfile()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AirVehicleConfiguration
 obj = AirVehicleConfiguration.AirVehicleConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EntityState
 obj = EntityState.EntityState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AirVehicleState
 obj = AirVehicleState.AirVehicleState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Wedge
 obj = Wedge.Wedge()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AreaSearchTask
 obj = AreaSearchTask.AreaSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CameraAction
 obj = CameraAction.CameraAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CameraConfiguration
 obj = CameraConfiguration.CameraConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GimballedPayloadState
 obj = GimballedPayloadState.GimballedPayloadState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CameraState
 obj = CameraState.CameraState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Circle
 obj = Circle.Circle()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GimbalAngleAction
 obj = GimbalAngleAction.GimbalAngleAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GimbalConfiguration
 obj = GimbalConfiguration.GimbalConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GimbalScanAction
 obj = GimbalScanAction.GimbalScanAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GimbalStareAction
 obj = GimbalStareAction.GimbalStareAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GimbalState
 obj = GimbalState.GimbalState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GoToWaypointAction
 obj = GoToWaypointAction.GoToWaypointAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack KeepInZone
 obj = KeepInZone.KeepInZone()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack KeepOutZone
 obj = KeepOutZone.KeepOutZone()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack LineSearchTask
 obj = LineSearchTask.LineSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack NavigationAction
 obj = NavigationAction.NavigationAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack LoiterAction
 obj = LoiterAction.LoiterAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack LoiterTask
 obj = LoiterTask.LoiterTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Waypoint
 obj = Waypoint.Waypoint()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack MissionCommand
 obj = MissionCommand.MissionCommand()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack MustFlyTask
 obj = MustFlyTask.MustFlyTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack OperatorSignal
 obj = OperatorSignal.OperatorSignal()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack OperatingRegion
 obj = OperatingRegion.OperatingRegion()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AutomationRequest
 obj = AutomationRequest.AutomationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PointSearchTask
 obj = PointSearchTask.PointSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Polygon
 obj = Polygon.Polygon()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack Rectangle
 obj = Rectangle.Rectangle()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RemoveTasks
 obj = RemoveTasks.RemoveTasks()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ServiceStatus
 obj = ServiceStatus.ServiceStatus()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SessionStatus
 obj = SessionStatus.SessionStatus()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VehicleActionCommand
 obj = VehicleActionCommand.VehicleActionCommand()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VideoStreamAction
 obj = VideoStreamAction.VideoStreamAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VideoStreamConfiguration
 obj = VideoStreamConfiguration.VideoStreamConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VideoStreamState
 obj = VideoStreamState.VideoStreamState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AutomationResponse
 obj = AutomationResponse.AutomationResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RemoveZones
 obj = RemoveZones.RemoveZones()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RemoveEntities
 obj = RemoveEntities.RemoveEntities()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack FlightDirectorAction
 obj = FlightDirectorAction.FlightDirectorAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack WeatherReport
 obj = WeatherReport.WeatherReport()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack FollowPathCommand
 obj = FollowPathCommand.FollowPathCommand()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PathWaypoint
 obj = PathWaypoint.PathWaypoint()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack StopMovementAction
 obj = StopMovementAction.StopMovementAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack WaypointTransfer
 obj = WaypointTransfer.WaypointTransfer()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PayloadStowAction
 obj = PayloadStowAction.PayloadStowAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PowerConfiguration
 obj = PowerConfiguration.PowerConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RadioConfiguration
 obj = RadioConfiguration.RadioConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RadioTowerConfiguration
 obj = RadioTowerConfiguration.RadioTowerConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RadioState
 obj = RadioState.RadioState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RadioTowerState
 obj = RadioTowerState.RadioTowerState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactPayloadConfiguration
 obj = ImpactPayloadConfiguration.ImpactPayloadConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack DeployImpactPayload
 obj = DeployImpactPayload.DeployImpactPayload()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PowerPlantState
 obj = PowerPlantState.PowerPlantState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BatchRoutePlanRequest
 obj = BatchRoutePlanRequest.BatchRoutePlanRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BatchRoutePlanResponse
 obj = BatchRoutePlanResponse.BatchRoutePlanResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskTimingPair
 obj = TaskTimingPair.TaskTimingPair()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BatchSummaryRequest
 obj = BatchSummaryRequest.BatchSummaryRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BatchSummaryResponse
 obj = BatchSummaryResponse.BatchSummaryResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskSummary
 obj = TaskSummary.TaskSummary()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VehicleSummary
 obj = VehicleSummary.VehicleSummary()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactHeartbeat
 obj = ImpactHeartbeat.ImpactHeartbeat()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactComponentJoin
 obj = ImpactComponentJoin.ImpactComponentJoin()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactComponentLeave
 obj = ImpactComponentLeave.ImpactComponentLeave()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SpeedAltPair
 obj = SpeedAltPair.SpeedAltPair()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactAutomationRequest
 obj = ImpactAutomationRequest.ImpactAutomationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactAutomationResponse
 obj = ImpactAutomationResponse.ImpactAutomationResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PointOfInterest
 obj = PointOfInterest.PointOfInterest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack LineOfInterest
 obj = LineOfInterest.LineOfInterest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AreaOfInterest
 obj = AreaOfInterest.AreaOfInterest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactPointSearchTask
 obj = ImpactPointSearchTask.ImpactPointSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PatternSearchTask
 obj = PatternSearchTask.PatternSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AngledAreaSearchTask
 obj = AngledAreaSearchTask.AngledAreaSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ImpactLineSearchTask
 obj = ImpactLineSearchTask.ImpactLineSearchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack WatchTask
 obj = WatchTask.WatchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack MultiVehicleWatchTask
 obj = MultiVehicleWatchTask.MultiVehicleWatchTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CommRelayTask
 obj = CommRelayTask.CommRelayTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CordonTask
 obj = CordonTask.CordonTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BlockadeTask
 obj = BlockadeTask.BlockadeTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EscortTask
 obj = EscortTask.EscortTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack ConfigurationRequest
 obj = ConfigurationRequest.ConfigurationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack WaterReport
 obj = WaterReport.WaterReport()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack WaterZone
 obj = WaterZone.WaterZone()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EntityPerception
 obj = EntityPerception.EntityPerception()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TrackEntityAction
 obj = TrackEntityAction.TrackEntityAction()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TrackEntityTask
 obj = TrackEntityTask.TrackEntityTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GraphNode
 obj = GraphNode.GraphNode()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GraphEdge
 obj = GraphEdge.GraphEdge()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GraphRegion
 obj = GraphRegion.GraphRegion()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RouteConstraints
 obj = RouteConstraints.RouteConstraints()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RouteRequest
 obj = RouteRequest.RouteRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RoutePlanRequest
 obj = RoutePlanRequest.RoutePlanRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RoutePlan
 obj = RoutePlan.RoutePlan()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RoutePlanResponse
 obj = RoutePlanResponse.RoutePlanResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RouteResponse
 obj = RouteResponse.RouteResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EgressRouteRequest
 obj = EgressRouteRequest.EgressRouteRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EgressRouteResponse
 obj = EgressRouteResponse.EgressRouteResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RoadPointsConstraints
 obj = RoadPointsConstraints.RoadPointsConstraints()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RoadPointsRequest
 obj = RoadPointsRequest.RoadPointsRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RoadPointsResponse
 obj = RoadPointsResponse.RoadPointsResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack VideoRecord
 obj = VideoRecord.VideoRecord()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack StartupComplete
 obj = StartupComplete.StartupComplete()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CreateNewService
 obj = CreateNewService.CreateNewService()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack KillService
 obj = KillService.KillService()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack IncrementWaypoint
 obj = IncrementWaypoint.IncrementWaypoint()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
+#Pack SafeHeadingAction
+obj = SafeHeadingAction.SafeHeadingAction()
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EntityLocation
 obj = EntityLocation.EntityLocation()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BandwidthTest
 obj = BandwidthTest.BandwidthTest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack BandwidthReceiveReport
 obj = BandwidthReceiveReport.BandwidthReceiveReport()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SubTaskExecution
 obj = SubTaskExecution.SubTaskExecution()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SubTaskAssignment
 obj = SubTaskAssignment.SubTaskAssignment()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AutopilotKeepAlive
 obj = AutopilotKeepAlive.AutopilotKeepAlive()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack OnboardProcessorIsAlive
 obj = OnboardProcessorIsAlive.OnboardProcessorIsAlive()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EntityJoin
 obj = EntityJoin.EntityJoin()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack EntityExit
 obj = EntityExit.EntityExit()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AssignmentCoordinatorTask
 obj = AssignmentCoordinatorTask.AssignmentCoordinatorTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack RendezvousTask
 obj = RendezvousTask.RendezvousTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack PlanningState
 obj = PlanningState.PlanningState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AssignmentCoordination
 obj = AssignmentCoordination.AssignmentCoordination()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CoordinatedAutomationRequest
 obj = CoordinatedAutomationRequest.CoordinatedAutomationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskAutomationRequest
 obj = TaskAutomationRequest.TaskAutomationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskAutomationResponse
 obj = TaskAutomationResponse.TaskAutomationResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack UniqueAutomationRequest
 obj = UniqueAutomationRequest.UniqueAutomationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack UniqueAutomationResponse
 obj = UniqueAutomationResponse.UniqueAutomationResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SensorFootprintRequests
 obj = SensorFootprintRequests.SensorFootprintRequests()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack FootprintRequest
 obj = FootprintRequest.FootprintRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SensorFootprint
 obj = SensorFootprint.SensorFootprint()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SensorFootprintResponse
 obj = SensorFootprintResponse.SensorFootprintResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskImplementationRequest
 obj = TaskImplementationRequest.TaskImplementationRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskImplementationResponse
 obj = TaskImplementationResponse.TaskImplementationResponse()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack AssignmentCostMatrix
 obj = AssignmentCostMatrix.AssignmentCostMatrix()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskOptionCost
 obj = TaskOptionCost.TaskOptionCost()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskAssignment
 obj = TaskAssignment.TaskAssignment()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskAssignmentSummary
 obj = TaskAssignmentSummary.TaskAssignmentSummary()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskOption
 obj = TaskOption.TaskOption()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskPlanOptions
 obj = TaskPlanOptions.TaskPlanOptions()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskPause
 obj = TaskPause.TaskPause()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskResume
 obj = TaskResume.TaskResume()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskProgress
 obj = TaskProgress.TaskProgress()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskProgressRequest
 obj = TaskProgressRequest.TaskProgressRequest()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskInitialized
 obj = TaskInitialized.TaskInitialized()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskActive
 obj = TaskActive.TaskActive()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack TaskComplete
 obj = TaskComplete.TaskComplete()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack CancelTask
 obj = CancelTask.CancelTask()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GroundVehicleConfiguration
 obj = GroundVehicleConfiguration.GroundVehicleConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack GroundVehicleState
 obj = GroundVehicleState.GroundVehicleState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SurfaceVehicleConfiguration
 obj = SurfaceVehicleConfiguration.SurfaceVehicleConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack SurfaceVehicleState
 obj = SurfaceVehicleState.SurfaceVehicleState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack StationarySensorConfiguration
 obj = StationarySensorConfiguration.StationarySensorConfiguration()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 #Pack StationarySensorState
 obj = StationarySensorState.StationarySensorState()
-buf.append(LMCPFactory.packMessage(obj, True))
+buf.extend(LMCPFactory.packMessage(obj, True))
 
 
-s.send("".join(buf))
+s.send(buf)
 
 

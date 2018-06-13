@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -41,18 +41,18 @@ class Location3D(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">d", self.Latitude))
-        buffer.append(struct.pack(">d", self.Longitude))
-        buffer.append(struct.pack(">f", self.Altitude))
-        buffer.append(struct.pack(">i", self.AltitudeType))
+        buffer.extend(struct.pack(">d", self.Latitude))
+        buffer.extend(struct.pack(">d", self.Longitude))
+        buffer.extend(struct.pack(">f", self.Altitude))
+        buffer.extend(struct.pack(">i", self.AltitudeType))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.Latitude = struct.unpack_from(">d", buffer, _pos)[0]

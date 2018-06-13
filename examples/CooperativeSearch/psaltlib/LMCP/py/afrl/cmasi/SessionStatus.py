@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -43,26 +43,26 @@ class SessionStatus(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">i", self.State))
-        buffer.append(struct.pack(">q", self.StartTime))
-        buffer.append(struct.pack(">q", self.ScenarioTime))
-        buffer.append(struct.pack(">f", self.RealTimeMultiple))
-        buffer.append(struct.pack(">H", len(self.Parameters) ))
+        buffer.extend(struct.pack(">i", self.State))
+        buffer.extend(struct.pack(">q", self.StartTime))
+        buffer.extend(struct.pack(">q", self.ScenarioTime))
+        buffer.extend(struct.pack(">f", self.RealTimeMultiple))
+        buffer.extend(struct.pack(">H", len(self.Parameters) ))
         for x in self.Parameters:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.State = struct.unpack_from(">i", buffer, _pos)[0]
@@ -74,9 +74,8 @@ class SessionStatus(LMCPObject.LMCPObject):
         self.RealTimeMultiple = struct.unpack_from(">f", buffer, _pos)[0]
         _pos += 4
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Parameters = [None] * _arraylen
         _pos += 2
+        self.Parameters = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

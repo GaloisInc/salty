@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -42,19 +42,19 @@ class SpeedAltPair(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.VehicleID))
-        buffer.append(struct.pack(">q", self.TaskID))
-        buffer.append(struct.pack(">f", self.Speed))
-        buffer.append(struct.pack(">f", self.Altitude))
-        buffer.append(struct.pack(">i", self.AltitudeType))
+        buffer.extend(struct.pack(">q", self.VehicleID))
+        buffer.extend(struct.pack(">q", self.TaskID))
+        buffer.extend(struct.pack(">f", self.Speed))
+        buffer.extend(struct.pack(">f", self.Altitude))
+        buffer.extend(struct.pack(">i", self.AltitudeType))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.VehicleID = struct.unpack_from(">q", buffer, _pos)[0]

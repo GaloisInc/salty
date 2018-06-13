@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,17 +40,17 @@ class GimbalAngleAction(PayloadAction.PayloadAction):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(PayloadAction.PayloadAction.pack(self))
-        buffer.append(struct.pack(">f", self.Azimuth))
-        buffer.append(struct.pack(">f", self.Elevation))
-        buffer.append(struct.pack(">f", self.Rotation))
+        buffer.extend(struct.pack(">f", self.Azimuth))
+        buffer.extend(struct.pack(">f", self.Elevation))
+        buffer.extend(struct.pack(">f", self.Rotation))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = PayloadAction.PayloadAction.unpack(self, buffer, _pos)
         self.Azimuth = struct.unpack_from(">f", buffer, _pos)[0]

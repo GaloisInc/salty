@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -27,7 +27,7 @@ class RouteRequest(LMCPObject.LMCPObject):
         self.FULL_LMCP_TYPE_NAME = "uxas.messages.route.RouteRequest"
         #Series Name turned into a long for quick comparisons.
         self.SERIES_NAME_ID = 5931053054693474304
-        self.SERIES_VERSION = 3
+        self.SERIES_VERSION = 4
 
         #Define message fields
         self.RequestID = 0   #int64
@@ -43,30 +43,30 @@ class RouteRequest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.RequestID))
-        buffer.append(struct.pack(">q", self.AssociatedTaskID))
-        buffer.append(struct.pack(">H", len(self.VehicleID) ))
+        buffer.extend(struct.pack(">q", self.RequestID))
+        buffer.extend(struct.pack(">q", self.AssociatedTaskID))
+        buffer.extend(struct.pack(">H", len(self.VehicleID) ))
         for x in self.VehicleID:
-            buffer.append(struct.pack(">q", x ))
-        buffer.append(struct.pack(">q", self.OperatingRegion))
-        buffer.append(struct.pack(">H", len(self.RouteRequests) ))
+            buffer.extend(struct.pack(">q", x ))
+        buffer.extend(struct.pack(">q", self.OperatingRegion))
+        buffer.extend(struct.pack(">H", len(self.RouteRequests) ))
         for x in self.RouteRequests:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
         boolChar = 1 if self.IsCostOnlyRequest == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.RequestID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -74,18 +74,16 @@ class RouteRequest(LMCPObject.LMCPObject):
         self.AssociatedTaskID = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.VehicleID = [None] * _arraylen
         _pos += 2
+        self.VehicleID = [None] * _arraylen
         if _arraylen > 0:
-            self.VehicleID = struct.unpack_from(">" + `_arraylen` + "q", buffer, _pos )
+            self.VehicleID = struct.unpack_from(">" + repr(_arraylen) + "q", buffer, _pos )
             _pos += 8 * _arraylen
         self.OperatingRegion = struct.unpack_from(">q", buffer, _pos)[0]
         _pos += 8
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.RouteRequests = [None] * _arraylen
         _pos += 2
+        self.RouteRequests = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

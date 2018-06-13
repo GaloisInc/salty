@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -40,26 +40,29 @@ class PayloadConfiguration(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.PayloadID))
-        buffer.append(struct.pack(">H", len(self.PayloadKind) ))
+        buffer.extend(struct.pack(">q", self.PayloadID))
+        buffer.extend(struct.pack(">H", len(self.PayloadKind) ))
         if len(self.PayloadKind) > 0:
-            buffer.append(struct.pack( `len(self.PayloadKind)` + "s", str(self.PayloadKind)))
-        buffer.append(struct.pack(">H", len(self.Parameters) ))
+            if (sys.version_info > (3, 0)):
+                buffer.extend(struct.pack( repr(len(self.PayloadKind)) + "s", bytearray(self.PayloadKind,'ascii')))
+            else:
+                buffer.extend(struct.pack( repr(len(self.PayloadKind)) + "s", self.PayloadKind))
+        buffer.extend(struct.pack(">H", len(self.Parameters) ))
         for x in self.Parameters:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.PayloadID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -67,14 +70,13 @@ class PayloadConfiguration(LMCPObject.LMCPObject):
         _strlen = struct.unpack_from(">H", buffer, _pos )[0]
         _pos += 2
         if _strlen > 0:
-            self.PayloadKind = struct.unpack_from( `_strlen` + "s", buffer, _pos )[0]
+            self.PayloadKind = struct.unpack_from( repr(_strlen) + "s", buffer, _pos )[0]
             _pos += _strlen
         else:
              self.PayloadKind = ""
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.Parameters = [None] * _arraylen
         _pos += 2
+        self.Parameters = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1

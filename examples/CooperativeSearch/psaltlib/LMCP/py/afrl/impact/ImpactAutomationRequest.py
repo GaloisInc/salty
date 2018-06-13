@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import struct
+import sys, struct
 import xml.dom.minidom
 from lmcp import LMCPObject
 
@@ -44,33 +44,33 @@ class ImpactAutomationRequest(LMCPObject.LMCPObject):
         Packs the object data and returns a string that contains all of the serialized
         members.
         """
-        buffer = []
+        buffer = bytearray()
         buffer.extend(LMCPObject.LMCPObject.pack(self))
-        buffer.append(struct.pack(">q", self.RequestID))
-        buffer.append(struct.pack("B", self.TrialRequest != None ))
+        buffer.extend(struct.pack(">q", self.RequestID))
+        buffer.extend(struct.pack("B", self.TrialRequest != None ))
         if self.TrialRequest != None:
-            buffer.append(struct.pack(">q", self.TrialRequest.SERIES_NAME_ID))
-            buffer.append(struct.pack(">I", self.TrialRequest.LMCP_TYPE))
-            buffer.append(struct.pack(">H", self.TrialRequest.SERIES_VERSION))
-            buffer.append(self.TrialRequest.pack())
-        buffer.append(struct.pack(">H", len(self.OverridePlanningConditions) ))
+            buffer.extend(struct.pack(">q", self.TrialRequest.SERIES_NAME_ID))
+            buffer.extend(struct.pack(">I", self.TrialRequest.LMCP_TYPE))
+            buffer.extend(struct.pack(">H", self.TrialRequest.SERIES_VERSION))
+            buffer.extend(self.TrialRequest.pack())
+        buffer.extend(struct.pack(">H", len(self.OverridePlanningConditions) ))
         for x in self.OverridePlanningConditions:
-           buffer.append(struct.pack("B", x != None ))
+           buffer.extend(struct.pack("B", x != None ))
            if x != None:
-               buffer.append(struct.pack(">q", x.SERIES_NAME_ID))
-               buffer.append(struct.pack(">I", x.LMCP_TYPE))
-               buffer.append(struct.pack(">H", x.SERIES_VERSION))
-               buffer.append(x.pack())
-        buffer.append(struct.pack(">q", self.PlayID))
-        buffer.append(struct.pack(">q", self.SolutionID))
+               buffer.extend(struct.pack(">q", x.SERIES_NAME_ID))
+               buffer.extend(struct.pack(">I", x.LMCP_TYPE))
+               buffer.extend(struct.pack(">H", x.SERIES_VERSION))
+               buffer.extend(x.pack())
+        buffer.extend(struct.pack(">q", self.PlayID))
+        buffer.extend(struct.pack(">q", self.SolutionID))
         boolChar = 1 if self.Sandbox == True else 0
-        buffer.append(struct.pack(">B",boolChar))
+        buffer.extend(struct.pack(">B",boolChar))
 
-        return "".join(buffer)
+        return buffer
 
     def unpack(self, buffer, _pos):
         """
-        Unpacks data from a string buffer and sets class members
+        Unpacks data from a bytearray and sets class members
         """
         _pos = LMCPObject.LMCPObject.unpack(self, buffer, _pos)
         self.RequestID = struct.unpack_from(">q", buffer, _pos)[0]
@@ -90,9 +90,8 @@ class ImpactAutomationRequest(LMCPObject.LMCPObject):
         else:
             self.TrialRequest = None
         _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        _arraylen = struct.unpack_from(">H", buffer, _pos )[0]
-        self.OverridePlanningConditions = [None] * _arraylen
         _pos += 2
+        self.OverridePlanningConditions = [None] * _arraylen
         for x in range(_arraylen):
             _valid = struct.unpack_from("B", buffer, _pos )[0]
             _pos += 1
