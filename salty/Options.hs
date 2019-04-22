@@ -17,6 +17,7 @@ data Options = Options { optHelp         :: !Bool
                        , optCpp          :: !(Maybe [String])
                        , optPython       :: !Bool
                        , optDot          :: !Bool
+                       , optSPARK        :: !Bool
                        , optInput        :: !(Maybe Input)
                        , optInputLen     :: !(Maybe Int)
                        , optOutDir       :: !(Maybe FilePath)
@@ -51,6 +52,7 @@ defaultOptions  =
           , optCpp          = Nothing
           , optPython       = False
           , optDot          = False
+          , optSPARK        = False
           , optInput        = Nothing
           , optInputLen     = Nothing
           , optOutDir       = Nothing
@@ -97,6 +99,9 @@ options  =
 
   , Option "d" ["dot"] (NoArg setDot)
     "Output a graphviz representation of the controller"
+
+  , Option "k" ["spark"] (NoArg setSPARK)
+    "Output a SPARK Ada implementation of the controller"
 
   , Option "o" ["output"] (ReqArg setOutDir "PATH")
     "Optional output directory for artifacts"
@@ -215,6 +220,9 @@ setPython  = OK (\opts -> opts { optPython = True })
 
 setDot :: Parser
 setDot  = OK (\opts -> opts { optDot = True })
+
+setSPARK :: Parser
+setSPARK  = OK (\opts -> opts { optSPARK = True })
 
 parseCppNs :: String -> Maybe [String]
 parseCppNs  = go []

@@ -39,6 +39,8 @@ module PP (
     Pr.semi,
     isEmpty,
     Pr.indent,
+    Pr.align,
+    Pr.hardline,
 
     ppNameWithOrigin,
     ppOrigin,

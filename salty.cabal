@@ -23,6 +23,7 @@ library
                        CodeGen.Dot
                        CodeGen.Java
                        CodeGen.Python
+                       CodeGen.SPARK
                        Message
                        Opt
                        Opt.HashCons

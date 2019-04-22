@@ -7,6 +7,7 @@ import           CodeGen.Cpp (cppFSM)
 import           CodeGen.Dot (dotFSM)
 import           CodeGen.Java (Package,javaFSM)
 import           CodeGen.Python (pythonFSM)
+import           CodeGen.SPARK (sparkFSM)
 import           Message (ppError)
 import           Opt (opt)
 import           Opt.Simpl (simp)
@@ -58,6 +59,8 @@ main  =
        Nothing -> return ()
 
      when (optDot opts) (writePackage opts (dotFSM fsm))
+
+     when (optSPARK opts) (writePackage opts (sparkFSM fsm))
 
 genFSM :: Options -> Input -> IO FSM
 

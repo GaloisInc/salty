@@ -23,7 +23,7 @@ ifeq ($(SALTY),)
   endif
 endif
 
-salty = $(SALTY) -s $(SLUGS) $(EXTRA) --dot --python --java=$1 --cpp -o build $2
+salty = $(SALTY) -s $(SLUGS) $(EXTRA) --dot --python --spark --java=$1 --cpp -o build $2
 
 ifeq ($(V),)
   Q := @
