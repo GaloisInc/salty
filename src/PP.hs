@@ -41,6 +41,9 @@ module PP (
     Pr.indent,
     Pr.align,
     Pr.hardline,
+    Pr.line,
+    Pr.concatWith,
+    Pr.surround,
 
     ppNameWithOrigin,
     ppOrigin,
