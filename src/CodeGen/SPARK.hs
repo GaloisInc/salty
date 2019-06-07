@@ -5,7 +5,7 @@ module CodeGen.SPARK ( sparkFSM ) where
 import           PP
 import           Scope.Name
 import           Slugs.FSM
-import           TypeCheck.AST
+import qualified TypeCheck.AST as TC
 
 import qualified Data.Map.Strict as Map
 import           Data.Maybe      (fromMaybe)
@@ -21,8 +21,8 @@ data Annotation = Pre Doc
                 | CC [(Doc,Doc)]
                 | Ghost
 
-sparkFSM :: FSM -> Package
-sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } =
+sparkFSM :: FSM -> TC.Controller -> Package
+sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } cont =
   Map.fromList [ (render pkgName ++ ".ads", spec), (render pkgName ++ ".adb", body) ]
   where
   pkgName = sparkName fsmName
@@ -40,15 +40,15 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
       , optRecordTyDecl fsmInputs envType
       , optRecordTyDecl fsmOutputs sysType
       , statement $ function (text "Is_Init") [ declVar cntlrName cntlrType ] (sparkType VTBool)
-      , expFunction (text "Env_Init")
+      , exprFunction (text "Env_Init")
           [ declVar envName (optRecordTy fsmInputs envType) ]
           (sparkType VTBool)
-          (parens $ text "expression") -- TODO
+          (parens $ sparkExpr (fsmInputs, fsmOutputs) envPre sysPre nextPost $ map snd (TC.sEnvInit $ TC.cSpec cont))
           []
-      , expFunction (text "Sys_Init")
+      , exprFunction (text "Sys_Init")
           [ declVar sysName (optRecordTy fsmOutputs sysType) ]
           (sparkType VTBool)
-          (parens $ text "expression") -- TODO
+          (parens $ sparkExpr (fsmInputs, fsmOutputs) envPre sysPre nextPost $ map snd (TC.sSysInit $ TC.cSpec cont))
           [Ghost]
       , statement $ vcat $ function (text "Env_Trans")
                              [ declVar cntlrName cntlrType
@@ -89,6 +89,8 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
 
   envName = optRecordName fsmInputs (text "E")
 
+  envPre = if Map.size fsmInputs > 1 then Just envName else Nothing
+
   stType = text "State_Num"
 
   stName = text "State"
@@ -96,6 +98,10 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
   sysType = text "System"
 
   sysName = optRecordName fsmOutputs (text "S")
+
+  sysPre = if Map.size fsmOutputs > 1 then Just sysName else Nothing
+
+  nextPost = text "_Next"
 
   body =
     vcat [ text "package body" <+> pkgName <+> text "with SPARK_Mode is"
@@ -109,7 +115,7 @@ sparkName n = pp $ fromMaybe (nameText n) (nameOutText n)
 sparkType :: VType -> Doc
 sparkType VTBool      = text "Boolean"
 sparkType (VTInt l h) = text "Integer range" <+> pp l <+> text ".." <+> pp h
-sparkType (VTEnum e)  = sparkName $ eName e
+sparkType (VTEnum e)  = sparkName $ TC.eName e
 
 sparkValue :: Value -> Doc
 sparkValue (VBool True)  = text "True"
@@ -127,11 +133,11 @@ declType n t = text "type" <+> n <+> text "is" <+> t <> semi
 declSubtype :: Doc -> Doc -> Doc
 declSubtype n t = text "sub" <> declType n t
 
-declEnums :: [EnumDef] -> [Doc]
+declEnums :: [TC.EnumDef] -> [Doc]
 declEnums [] = []
 declEnums es = punctuate hardline [ declEnum e | e <- es ]
   where
-  declEnum EnumDef { eName, eCons } =
+  declEnum TC.EnumDef { TC.eName, TC.eCons } =
     declType (sparkName eName) (parens . align . hcat $ punctuate (comma <> space) (map sparkName eCons))
 
 optRecordTyDecl :: StateVars -> Doc -> Doc
@@ -197,8 +203,8 @@ function :: Doc -> [Doc] -> Doc -> Doc
 function name ps ret =
   text "function" <+> name <+> (parens . fsep $ punctuate semi ps) <+> text "return" <+> ret
 
-expFunction :: Doc -> [Doc] -> Doc -> Doc -> [Annotation] -> Doc
-expFunction name ps ret e as =
+exprFunction :: Doc -> [Doc] -> Doc -> Doc -> [Annotation] -> Doc
+exprFunction name ps ret e as =
   statement . vcat $
     vcat [ function name ps ret
          , text "is"
@@ -208,6 +214,45 @@ expFunction name ps ret e as =
 procedure :: Doc -> [Doc] -> Doc
 procedure name ps =
   text "procedure" <+> name <+> (parens . fsep $ punctuate semi ps)
+
+-------------------------------------------------------------------------------
+-- TODO: verify correct precedence
+sparkExpr :: (StateVars,StateVars) -> Maybe Doc -> Maybe Doc -> Doc -> [TC.Expr] -> Doc
+sparkExpr (fsmInputs,_) env sys next es =
+  conj $ map mkExpr es
+  where
+  conj []  = parens $ text "empty"
+  conj [d] = d
+  conj ds  = foldr1 (\l r -> l <+> text "and" <+> r) ds
+
+  unaryOp op a = op <+> parens (mkExpr a)
+
+  binaryOp op a b = parens $ mkExpr a <+> op <+> mkExpr b
+
+  mkExpr TC.ETrue = sparkValue (VBool True)
+  mkExpr TC.EFalse = sparkValue (VBool False)
+  -- TODO: more idiomatic simplifications
+  mkExpr (TC.EEq _ a TC.ETrue) = mkExpr a
+  mkExpr (TC.EEq _ a TC.EFalse) = mkExpr (TC.ENot a)
+  mkExpr (TC.EEq _ a b) = binaryOp (text "=") a b
+
+  mkExpr (TC.ENot a) = unaryOp (text "not") a
+  mkExpr (TC.EAnd a b) = binaryOp (text "and") a b
+  mkExpr (TC.EOr a b) = binaryOp (text "or") a b
+  mkExpr (TC.EXor a b) = binaryOp (text "xor") a b
+
+  mkExpr (TC.EVar _ v) =
+    case pre of
+      Just p  -> p <> text "." <> sparkName v
+      Nothing -> sparkName v
+    where
+    pre = if Map.member v fsmInputs then env else sys
+
+  mkExpr (TC.ENext _ (TC.EVar _ v)) = text "UND"
+
+  mkExpr (TC.ENum i) = pp i
+  mkExpr _ = text "UNDEFINED"
+-------------------------------------------------------------------------------
 
 mkTable :: Map.Map Int Node -> Doc
 mkTable ts = nest 2 $ vcat [text "", table]
