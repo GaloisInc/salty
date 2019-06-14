@@ -21,11 +21,29 @@ data Annotation = Pre Doc
                 | CC [(Doc,Doc)]
                 | Ghost
 
+data SpecVar = SpecVar { svName  :: Doc
+                       , svType  :: Doc
+                       , svIsRec :: Bool
+                       } deriving (Show)
+
 sparkFSM :: FSM -> TC.Controller -> Package
 sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } cont =
   Map.fromList [ (render pkgName ++ ".ads", spec), (render pkgName ++ ".adb", body) ]
   where
   pkgName = sparkName fsmName
+
+  cntlrType = text "Controller"
+  cntlrName = text "C"
+
+  env = mkSpecVar fsmInputs "E" "Environment"
+  sys = mkSpecVar fsmOutputs "S" "System"
+
+  stType = text "State_Num"
+  stName = text "State"
+
+  outType = text "Output"
+
+  nextPost = text "_Next"
 
   spec =
     vcat [ text "package" <+> pkgName <+> text "with SPARK_Mode is"
@@ -37,77 +55,174 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
     pub =
       [ declType cntlrType $ text "private"
       , vcat $ declEnums fsmEnums
-      , optRecordTyDecl fsmInputs envType
-      , optRecordTyDecl fsmOutputs sysType
-      , statement $ function (text "Is_Init") [ declVar cntlrName cntlrType ] (sparkType VTBool)
-      , exprFunction (text "Env_Init")
-          [ declVar envName (optRecordTy fsmInputs envType) ]
+      , optIOTypeDecl fsmInputs env
+      , optIOTypeDecl fsmOutputs sys
+      , statement $ func (text "Is_Init") [ declVar cntlrName cntlrType ] (sparkType VTBool)
+      , eFunc (text "Env_Init")
+          [ declVar (svName env) (svType env) ]
           (sparkType VTBool)
-          (parens $ sparkExpr (fsmInputs, fsmOutputs) envPre sysPre nextPost $ map snd (TC.sEnvInit $ TC.cSpec cont))
+          (sparkExpr (fsmInputs, fsmOutputs) env sys nextPost $ map snd (TC.sEnvInit $ TC.cSpec cont))
           []
-      , exprFunction (text "Sys_Init")
-          [ declVar sysName (optRecordTy fsmOutputs sysType) ]
+      , eFunc (text "Sys_Init")
+          [ declVar (svName sys) (svType sys) ]
           (sparkType VTBool)
-          (parens $ sparkExpr (fsmInputs, fsmOutputs) envPre sysPre nextPost $ map snd (TC.sSysInit $ TC.cSpec cont))
+          (sparkExpr (fsmInputs, fsmOutputs) env sys nextPost $ map snd (TC.sSysInit $ TC.cSpec cont))
           [Ghost]
-      , statement $ vcat $ function (text "Env_Trans")
+      , statement $ vcat $ func (text "Env_Trans")
                              [ declVar cntlrName cntlrType
-                             , declVar envName (optRecordTy fsmInputs envType)]
+                             , declVar (svName env) (svType env)]
                              (sparkType VTBool)
                            : annotate [ Pre $ text "not Is_Init" <+> parens cntlrName ]
-      , statement $ vcat $ function (text "Sys_Trans")
+      , statement $ vcat $ func (text "Sys_Trans")
                              [ declVar cntlrName cntlrType
-                             , declVar envName (optRecordTy fsmInputs envType)
-                             , declVar sysName (optRecordTy fsmOutputs sysType) ]
+                             , declVar (svName env) (svType env)
+                             , declVar (svName sys) (svType sys) ]
                              (sparkType VTBool)
                            : annotate [ Pre $ text "not Is_Init" <+> parens cntlrName
                                       , Ghost ]
       , statement $ vcat $
-          procedure (text "Move")
+          proc (text "Move")
             [ declParam cntlrName InOut cntlrType
-            , declParam envName In (optRecordTy fsmInputs envType)
-            , declParam sysName Out (optRecordTy fsmOutputs sysType) ]
+            , declParam (svName env) In (svType env)
+            , declParam (svName sys) Out (svType sys) ]
           : annotate [ CC [ (text "Is_Init" <+> parens cntlrName,
-                               parens $ text "if Env_Init" <+> parens envName <+> text "then Sys_Init"
-                               <+> parens sysName <+> text "and" <+> parens (text "not Is_Init" <+> parens cntlrName))
+                               parens $ text "if Env_Init" <+> parens (svName env) <+> text "then Sys_Init"
+                               <+> parens (svName sys) <+> text "and" <+> parens (text "not Is_Init" <+> parens cntlrName))
                           , (text "others",
-                               parens $ text "if Env_Trans" <+> parens (cntlrName <> text "'Old" <> comma <+> envName)
-                               <+> text "then Sys_Trans" <+> parens (cntlrName <> text "'Old" <> comma <+> envName
-                               <> comma <+> sysName) <+> text "and" <+> parens (text "not Is_Init" <+> parens cntlrName)) ] ] ]
+                               parens $ text "if Env_Trans" <+> parens (cntlrName <> text "'Old" <> comma <+> svName env)
+                               <+> text "then Sys_Trans" <+> parens (cntlrName <> text "'Old" <> comma <+> svName env
+                               <> comma <+> svName sys) <+> text "and" <+> parens (text "not Is_Init" <+> parens cntlrName)) ] ] ]
 
     priv =
       [ declSubtype stType (text "Integer range 1.." <> pp (fsmInitial + 1))
       , declRecord cntlrType [ assign (declVar stName stType) (stType <> text "'Last")
-                             , statement $ declVar envName envType
-                             , statement $ declVar sysName sysType ] ]
-
-  cntlrType = text "Controller"
-
-  cntlrName = text "C"
-
-  envType = text "Environment"
-
-  envName = optRecordName fsmInputs (text "E")
-
-  envPre = if Map.size fsmInputs > 1 then Just envName else Nothing
-
-  stType = text "State_Num"
-
-  stName = text "State"
-
-  sysType = text "System"
-
-  sysName = optRecordName fsmOutputs (text "S")
-
-  sysPre = if Map.size fsmOutputs > 1 then Just sysName else Nothing
-
-  nextPost = text "_Next"
+                             , statement $ declVar (svName env) (svType env)
+                             , statement $ declVar (svName sys) (svType sys) ] ]
 
   body =
-    vcat [ text "package body" <+> pkgName <+> text "with SPARK_Mode is"
-         , nest 2 $ text "-- generated"
-         , mkTable fsmNodes
+    vcat [ text "with Ada.Containers; use Ada.Containers;"
+         , text "with Ada.Containers.Formal_Hashed_Maps;"
+         , text ""
+         , text "package body" <+> pkgName <+> text "with SPARK_Mode is"
+         , indent 2 $ doubleSpace defs
          , text "end" <+> pkgName <> semi ]
+    where
+    defs = [ declRecord outType [ statement $ declVar stName stType
+                                , statement $ declVar (svName sys) (svType sys) ]
+           , vcat [ func (text "Hash") [ declVar (svName env) (svType env) ] (text "Ada.Containers.Hash_Type")
+                  , subBody (text "Hash")
+                      [ assign (declVar (text "Hash") (text "Hash_Type")) (text "17") ]
+                      [ vcat [ assign (text "Hash")
+                                 (text "Hash * 31 + Hash_Type" <+> parens (sparkRootType viType <> text "'Pos" <+>
+                                    parens (qualify (if Map.size fsmInputs > 1 then Just (svName env) else Nothing) (sparkName n))))
+                                 | (n, VarInfo { viType }) <- Map.toList fsmInputs ]
+                      , text "return Hash;" ] ]
+           , let comp | Map.size fsmInputs == 1 = text "Left = Right"
+                      | otherwise               = concatWith (surround (text " and then "))
+                                                    [ parens $ qualify (Just $ text "Left") (sparkName n) <+>
+                                                        text "=" <+> qualify (Just $ text "Right") (sparkName n)
+                                                        | (n, _) <- Map.toList fsmInputs ]
+               in eFunc (text "Equivalent_Keys")
+                    [ declVars [ text "Left", text "Right" ] (svType env) ]
+                    (sparkType VTBool)
+                    comp
+                    []
+           , vcat [ text "package Transition_Maps is new Ada.Containers.Formal_Hashed_Maps"
+                  , indent 2 $ vcat [ text "(Key_Type        =>" <+> svType env <> comma
+                                    , text " Element_Type    =>" <+> outType <> comma
+                                    , text " Hash            => Hash,"
+                                    , text " Equivalent_Keys => Equivalent_Keys);" ] ]
+           , assign (declVar (text "Transition_Map_Max_Capacity") (text "constant")) (stType <> text "'Last-1")
+           , vcat [ text "subtype Transition_Map is Transition_Maps.Map"
+                  , indent 2 $ vcat [ text "(Capacity => Transition_Map_Max_Capacity,"
+                                    , text " Modulus  => Transition_Maps.Default_Modulus (Transition_Map_Max_Capacity));" ] ]
+           , declType (text "Transition_Lookup") (text "array" <+> parens stType <+> text "of Transition_Map")
+           , eFunc (text "Is_Init")
+               [ declVar cntlrName cntlrType ]
+               (sparkType VTBool)
+               (qualify (Just cntlrName) stName <+> text "=" <+> stType <> text "'Last")
+               []
+           , eFunc (text "Env_Trans")
+               [ declVars [ svName env, svName env <> nextPost ] (svType env)
+               , declVar (svName sys) (svType sys) ]
+               (sparkType VTBool)
+               (sparkExpr (fsmInputs, fsmOutputs) env sys nextPost $ map snd (TC.sEnvTrans $ TC.cSpec cont))
+               []
+           , eFunc (text "Env_Trans")
+               [ declVar cntlrName cntlrType
+               , declVar (svName env) (svType env) ]
+               (sparkType VTBool)
+               (text "Env_Trans" <+> parens (fsep $ punctuate comma
+                 [ qualify (Just cntlrName) (svName env)
+                 , svName env
+                 , qualify (Just cntlrName) (svName sys) ]))
+               []
+           , eFunc (text "Sys_Trans")
+               [ declVars [ svName env, svName env <> nextPost ] (svType env)
+               , declVars [ svName sys, svName sys <> nextPost ] (svType sys) ]
+               (sparkType VTBool)
+               (sparkExpr (fsmInputs, fsmOutputs) env sys nextPost $ map snd (TC.sSysTrans $ TC.cSpec cont))
+               []
+           , eFunc (text "Sys_Trans")
+               [ declVar cntlrName cntlrType
+               , declVar (svName env) (svType env)
+               , declVar (svName sys) (svType sys) ]
+               (sparkType VTBool)
+               (text "Sys_Trans" <+> parens (fsep $ punctuate comma
+                 [ qualify (Just cntlrName) (svName env)
+                 , svName env
+                 , qualify (Just cntlrName) (svName sys)
+                 , svName sys ]))
+               []
+           , eFunc (text "Initial_States_Valid")
+               [ declVar (text "T") (text "Transition_Lookup") ]
+               (sparkType VTBool)
+               (vcat [ text "for all K of Transition_Maps.Formal_Model.Keys (T(T'Last)) =>"
+                     , indent 2 $ text "Env_Init (K) and Sys_Init (Transition_Maps.Element (T(T'Last), K)." <> svName sys <> text ")" ] )
+               [Ghost]
+           , eFunc (text "Transitions_Valid")
+               [ declVar (text "T") (text "Transition_Lookup") ]
+               (sparkType VTBool)
+               (vcat [ text "for all I in T'Range =>"
+                     , indent 2 $
+                         vcat [ text "(for all J of Transition_Maps.Formal_Model.Keys (T(I)) =>"
+                              , indent 2 $
+                                  vcat [ text "(for all K of Transition_Maps.Formal_Model.Keys (T(Transition_Maps.Element (T(I), J)." <> stName <> text ")) =>"
+                                       , indent 2 $
+                                           vcat [ text "Env_Trans (J, K, Transition_Maps.Element (T(I), J)." <> svName sys <> text ") and"
+                                                , text "Sys_Trans (J, K, Transition_Maps.Element (T(I), J)." <> svName sys <>
+                                                    text ", Transition_Maps.Element (T(Transition_Maps.Element (T(I), J)." <> stName <>
+                                                    text "), K)." <> svName sys <> text ")))" ] ] ] ] )
+               [Ghost]
+           , vcat $
+               func (text "Init") [] (text "Transition_Lookup")
+               : annotate [ Post (vcat [ text ""
+                                       , indent 2 $
+                                           vcat [ text "Initial_States_Valid (Init'Result)"
+                                                , text "and Transitions_Valid (Init'Result)"
+                                                , text ""
+                                                , mkTablePost fsmNodes (svType env) ] ] ) ]
+               ++ [ subBody (text "Init")
+                     [ statement $ declVar (text "Transitions") (text "Transition_Lookup") ]
+                     [ mkTable fsmNodes
+                     , text ""
+                     , statement $ text "return Transitions"] ]
+           , assign (declVar (text "Transitions") (text "constant Transition_Lookup")) (text "Init")
+           , vcat [ proc (text "Move")
+                      [ declParam cntlrName InOut cntlrType
+                      , declParam (svName env) In (svType env)
+                      , declParam (svName sys) Out (svType sys) ]
+                  , subBody (text "Move")
+                      [ statement $ declVar (text "O") outType ]
+                      [ vcat [ text "if Transition_Maps.Contains (Transitions(" <> qualify (Just cntlrName) stName <> text ")" <> comma <+> svName env <> text ") then"
+                             , indent 2 $
+                                 vcat [ assign (text "O") (text "Transition_Maps.Element (Transitions(" <> qualify (Just cntlrName) stName <> text ")" <> comma <+> svName env <> text ")")
+                                      , assign (svName sys) (qualify (Just $ text "O") (svName sys))
+                                      , assign cntlrName
+                                          (parens . fsep $ punctuate comma [ stName <+> text "=>" <+> qualify (Just $ text "O") stName
+                                                                           , svName env <+> text "=>" <+> svName env
+                                                                           , svName sys <+> text "=>" <+> qualify (Just $ text "O") (svName sys) ] ) ]
+                             , text "end if;" ] ] ] ]
 
 sparkName :: Name -> Doc
 sparkName n = pp $ fromMaybe (nameText n) (nameOutText n)
@@ -116,6 +231,10 @@ sparkType :: VType -> Doc
 sparkType VTBool      = text "Boolean"
 sparkType (VTInt l h) = text "Integer range" <+> pp l <+> text ".." <+> pp h
 sparkType (VTEnum e)  = sparkName $ TC.eName e
+
+sparkRootType :: VType -> Doc
+sparkRootType (VTInt _ _) = text "Integer"
+sparkRootType t = sparkType t
 
 sparkValue :: Value -> Doc
 sparkValue (VBool True)  = text "True"
@@ -128,7 +247,7 @@ doubleSpace xs =
   concatWith (surround (PP.line <> PP.line)) (filter (not . isEmpty) xs)
 
 declType :: Doc -> Doc -> Doc
-declType n t = text "type" <+> n <+> text "is" <+> t <> semi
+declType n t = statement $ text "type" <+> n <+> text "is" <+> t
 
 declSubtype :: Doc -> Doc -> Doc
 declSubtype n t = text "sub" <> declType n t
@@ -140,22 +259,28 @@ declEnums es = punctuate hardline [ declEnum e | e <- es ]
   declEnum TC.EnumDef { TC.eName, TC.eCons } =
     declType (sparkName eName) (parens . align . hcat $ punctuate (comma <> space) (map sparkName eCons))
 
-optRecordTyDecl :: StateVars -> Doc -> Doc
-optRecordTyDecl vars t
-  | Map.size vars == 1 = PP.empty
-  | otherwise          =
-      declRecord t
+mkSpecVar :: StateVars -> String -> String -> SpecVar
+mkSpecVar v n t
+  | Map.size v > 1 =
+      SpecVar { svName = text n, svType = text t, svIsRec = True }
+  | otherwise =
+      SpecVar { svName = n', svType = t', svIsRec = False }
+        where
+        n' = sparkName . head $ Map.keys v
+        t' =
+          case viType $ head $ Map.elems v of
+            VTInt _ _ -> n' <> text "_Type" --TODO: Capitalization
+            ty        -> sparkType ty
+
+optIOTypeDecl :: StateVars -> SpecVar -> Doc
+optIOTypeDecl vars v
+  | svIsRec v =
+      declRecord (svType v)
         [ statement $ declVar (sparkName n) (sparkType viType) | (n, VarInfo { viType }) <- Map.toList vars ]
-
-optRecordTy :: StateVars -> Doc -> Doc
-optRecordTy vars t
-  | Map.size vars > 1 = t
-  | otherwise         = sparkType . viType . head $ Map.elems vars
-
-optRecordName :: StateVars -> Doc  -> Doc
-optRecordName vars name
-  | Map.size vars > 1 = name
-  | otherwise         = sparkName . head $ Map.keys vars
+  | otherwise =
+      case viType $ head $ Map.elems vars of
+        (VTInt _ _) -> declSubtype (svType v) (sparkType $ viType (head $ Map.elems vars))
+        _           -> PP.empty
 
 declRecord :: Doc -> [Doc] -> Doc
 declRecord name fs =
@@ -166,6 +291,15 @@ declRecord name fs =
 
 declVar :: Doc -> Doc -> Doc
 declVar name ty = name <> colon <+> ty
+
+declVars :: [Doc] -> Doc -> Doc
+declVars ns = declVar (fsep $ punctuate comma ns)
+
+qualify :: Maybe Doc -> Doc -> Doc
+qualify pre name =
+  case pre of
+    Just p  -> p <> text "." <> name
+    Nothing -> name
 
 statement :: Doc -> Doc
 statement e = e <> semi
@@ -183,7 +317,6 @@ mode m =
 declParam :: Doc -> Mode -> Doc -> Doc
 declParam name m t = name <> colon <+> mode m <+> t
 
--- TODO: alignment in contract cases
 annotation :: Annotation -> Doc
 annotation a =
   case a of
@@ -193,35 +326,45 @@ annotation a =
                    , indent 2 $ parens $ vcat $ punctuate comma [ pre <+> text "=>" <+> post | (pre, post) <- cs ] ]
     Ghost  -> text "Ghost" <+> text "=>" <+> sparkValue (VBool True)
 
--- TODO: alignment
 annotate :: [Annotation] -> [Doc]
 annotate [] = []
 annotate as = [ text "with"
               , indent 2 $ vcat $ punctuate comma $ map annotation as]
 
-function :: Doc -> [Doc] -> Doc -> Doc
-function name ps ret =
+func :: Doc -> [Doc] -> Doc -> Doc
+func name [] ret =
+  text "function" <+> name <+> text "return" <+> ret
+func name ps ret =
   text "function" <+> name <+> (parens . fsep $ punctuate semi ps) <+> text "return" <+> ret
 
-exprFunction :: Doc -> [Doc] -> Doc -> Doc -> [Annotation] -> Doc
-exprFunction name ps ret e as =
+eFunc :: Doc -> [Doc] -> Doc -> Doc -> [Annotation] -> Doc
+eFunc name ps ret e as =
   statement . vcat $
-    vcat [ function name ps ret
+    vcat [ func name ps ret
          , text "is"
-         , indent 2 e ]
+         , indent 2 $ parens e ]
     : annotate as
 
-procedure :: Doc -> [Doc] -> Doc
-procedure name ps =
+proc :: Doc -> [Doc] -> Doc
+proc name ps =
   text "procedure" <+> name <+> (parens . fsep $ punctuate semi ps)
 
--------------------------------------------------------------------------------
+subBody :: Doc -> [Doc] -> [Doc] -> Doc
+subBody name vs stmts =
+  vcat $ [ text "is" ] ++
+         ( case vs of
+             [] -> []
+             xs -> [ indent 2 $ vcat xs ] ) ++
+         [ text "begin"
+         , indent 2 $ vcat stmts
+         , text "end" <+> name <> semi ]
+
 -- TODO: verify correct precedence
-sparkExpr :: (StateVars,StateVars) -> Maybe Doc -> Maybe Doc -> Doc -> [TC.Expr] -> Doc
+sparkExpr :: (StateVars,StateVars) -> SpecVar -> SpecVar -> Doc -> [TC.Expr] -> Doc
 sparkExpr (fsmInputs,_) env sys next es =
   conj $ map mkExpr es
   where
-  conj []  = parens $ text "empty"
+  conj []  = sparkValue (VBool True)
   conj [d] = d
   conj ds  = foldr1 (\l r -> l <+> text "and" <+> r) ds
 
@@ -231,7 +374,7 @@ sparkExpr (fsmInputs,_) env sys next es =
 
   mkExpr TC.ETrue = sparkValue (VBool True)
   mkExpr TC.EFalse = sparkValue (VBool False)
-  -- TODO: more idiomatic simplifications
+  -- TODO: idiomatic simplifications?
   mkExpr (TC.EEq _ a TC.ETrue) = mkExpr a
   mkExpr (TC.EEq _ a TC.EFalse) = mkExpr (TC.ENot a)
   mkExpr (TC.EEq _ a b) = binaryOp (text "=") a b
@@ -241,34 +384,62 @@ sparkExpr (fsmInputs,_) env sys next es =
   mkExpr (TC.EOr a b) = binaryOp (text "or") a b
   mkExpr (TC.EXor a b) = binaryOp (text "xor") a b
 
+  mkExpr (TC.ENum i) = pp i
+  mkExpr (TC.EPlus a b) = binaryOp (text "+") a b
+
   mkExpr (TC.EVar _ v) =
-    case pre of
-      Just p  -> p <> text "." <> sparkName v
-      Nothing -> sparkName v
+    qualify (if svIsRec pre then Just (svName pre) else Nothing) $ sparkName v
     where
     pre = if Map.member v fsmInputs then env else sys
 
-  mkExpr (TC.ENext _ (TC.EVar _ v)) = text "UND"
+  mkExpr (TC.ENext _ (TC.EVar _ v)) =
+    if svIsRec pre then
+      qualify (Just $ svName pre <> next) $ sparkName v
+    else
+      sparkName v <> next
+    where
+    pre = if Map.member v fsmInputs then env else sys
 
-  mkExpr (TC.ENum i) = pp i
-  mkExpr _ = text "UNDEFINED"
--------------------------------------------------------------------------------
+  mkExpr (TC.ECon _ n) = sparkName n
+
+  mkExpr e = text "UNDEFINED" <+> pp (show e)
 
 mkTable :: Map.Map Int Node -> Doc
-mkTable ts = nest 2 $ vcat [text "", table]
+mkTable ts = vcat [ vcat $ map (mkEntry s) (nodeTrans n) | (s,n) <- Map.toList ts ]
   where
-  table = vcat [ vcat $ text "" : map (mkEntry s) (nodeTrans n) | (s,n) <- Map.toList ts ]
-
   mkEntry s i =
     let Node { nodeInputs, nodeOutputs } = ts Map.! i
-      in text "Transition_Maps.Insert"
-         <+> initializer [ text "Transitions" <> parens (pp (s + 1))
-                         , mkInit nodeInputs
-                         , initializer [ pp (i + 1), mkInit nodeOutputs ] ]
-         <> semi
+      in statement $ text "Transition_Maps.Insert" <+>
+           tuple [ text "Transitions" <> parens (pp (s + 1))
+                 , mkVal nodeInputs
+                 , tuple [ pp (i + 1), mkVal nodeOutputs ] ]
 
-  initializer ds = parens . fsep $ commas ds
+  tuple ds = parens . fsep $ commas ds
 
-  mkInit is
+  mkVal is
     | Map.size is == 1 = sparkValue . head $ Map.elems is
-    | otherwise        = initializer $ map sparkValue $ Map.elems is
+    | otherwise        = tuple $ map sparkValue $ Map.elems is
+
+mkTablePost :: Map.Map Int Node -> Doc -> Doc
+mkTablePost ts t = vcat [ vcat [ vcat $ map (mkContains s) (nodeTrans n) | (s,n) <- Map.toList ts ]
+                        , text ""
+                        , vcat [ vcat $ map (mkElement s) (nodeTrans n) | (s,n) <- Map.toList ts ] ]
+  where
+  mkContains s i =
+    let Node { nodeInputs } = ts Map.! i
+      in text "and Transition_Maps.Contains" <+>
+           tuple [ text "Init'Result" <> parens (pp (s + 1))
+                 , mkVal nodeInputs ]
+
+  mkElement s i =
+    let Node { nodeInputs, nodeOutputs } = ts Map.! i
+      in text "and" <+> parens (text "Transition_Maps.Element" <+>
+           tuple [ text "Init'Result" <> parens (pp (s + 1))
+                 , t <> text "'" <> parens (mkVal nodeInputs) ]
+           <+> text "=" <+> tuple [ pp (i + 1), mkVal nodeOutputs ])
+
+  tuple ds = parens . fsep $ commas ds
+
+  mkVal is
+    | Map.size is == 1 = sparkValue . head $ Map.elems is
+    | otherwise        = tuple $ map sparkValue $ Map.elems is
