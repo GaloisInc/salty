@@ -5,10 +5,12 @@ module CodeGen.SPARK ( sparkFSM ) where
 import           PP
 import           Scope.Name
 import           Slugs.FSM
-import qualified TypeCheck.AST as TC
+import qualified TypeCheck.AST   as TC
 
+import qualified Data.Char       as C
 import qualified Data.Map.Strict as Map
 import           Data.Maybe      (fromMaybe)
+import qualified Data.Text       as T
 
 type Package = Map.Map FilePath Doc
 
@@ -225,16 +227,32 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                              , text "end if;" ] ] ] ]
 
 sparkName :: Name -> Doc
-sparkName n = pp $ fromMaybe (nameText n) (nameOutText n)
+sparkName n = deconflict name
+  where
+  name = fromMaybe (nameText n) (nameOutText n)
+
+  reserved = ["abort", "abs", "abstract", "accept", "access", "aliased", "all", "and", "array", "at", "begin", "body",
+              "case", "constant", "declare", "delay", "delta", "digits", "do", "else", "elsif", "end", "entry",
+              "exception", "exit", "for", "function", "generic", "goto", "if", "in", "interface", "is", "limited",
+              "loop", "mod", "new", "not", "null", "of", "or", "others", "out", "overriding", "package", "pragma",
+              "private", "procedure", "protected", "raise", "range", "record", "rem", "renames", "requeue", "return",
+              "reverse", "select", "separate", "some", "subtype", "synchronized", "tagged", "task", "terminate",
+              "then", "type", "until", "use", "when", "while", "with", "xor"]
+
+  --TODO: handle clashing with boilerplate generated identifiers
+
+  deconflict n'
+    | map C.toLower (T.unpack n') `elem` reserved = pp n' <> text "_N" --TODO: Capitalization
+    | otherwise = pp n'
 
 sparkType :: VType -> Doc
 sparkType VTBool      = text "Boolean"
 sparkType (VTInt l h) = text "Integer range" <+> pp l <+> text ".." <+> pp h
-sparkType (VTEnum e)  = sparkName $ TC.eName e
+sparkType (VTEnum e)  = sparkName (TC.eName e) <> text "_Type" --TODO: Capitalization
 
 sparkRootType :: VType -> Doc
 sparkRootType (VTInt _ _) = text "Integer"
-sparkRootType t = sparkType t
+sparkRootType t           = sparkType t
 
 sparkValue :: Value -> Doc
 sparkValue (VBool True)  = text "True"
@@ -257,7 +275,7 @@ declEnums [] = []
 declEnums es = punctuate hardline [ declEnum e | e <- es ]
   where
   declEnum TC.EnumDef { TC.eName, TC.eCons } =
-    declType (sparkName eName) (parens . align . hcat $ punctuate (comma <> space) (map sparkName eCons))
+    declType (sparkName eName <> text "_Type") (parens . align . hcat $ punctuate (comma <> space) (map sparkName eCons))
 
 mkSpecVar :: StateVars -> String -> String -> SpecVar
 mkSpecVar v n t
