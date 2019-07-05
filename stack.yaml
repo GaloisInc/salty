@@ -1,13 +1,12 @@
-flags: {}
 packages:
-- location: ./
-- location:
-    git: https://github.com/GaloisInc/language-slugs
-    commit: master
+- .
 extra-deps:
     - alex-tools-0.3
     - layout-rules-0.1.0.1
-    - github: GaloisInc/language-slugs 
-      commit: 6cc8b70140061c8f05e503ce69a277b537f81d58 
-    - prettyprinter-1.2.1@sha256:69856d061c602917d578190265edb62b14f63a2e02bcc565adf31146f903a45b
-resolver: nightly-2016-07-11
+    - git: https://github.com/GaloisInc/language-slugs
+      commit: 6cc8b70140061c8f05e503ce69a277b537f81d58
+    - prettyprinter-1.2.1
+    - GraphSCC-1.0.4
+    - monadLib-3.9
+    - simple-smt-0.9.4
+resolver: lts-9.21
