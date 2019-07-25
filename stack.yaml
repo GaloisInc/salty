@@ -1,9 +1,6 @@
 flags: {}
 packages:
-- location: ./
-- location:
-    git: https://github.com/GaloisInc/language-slugs
-    commit: master
+- .
 extra-deps:
     - alex-tools-0.3
     - layout-rules-0.1.0.1
