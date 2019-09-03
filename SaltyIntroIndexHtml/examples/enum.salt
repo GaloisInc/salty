@@ -1,0 +1,11 @@
+
+controller Enum where
+
+enum Location = Field | Forest | Fence
+
+input location: Location
+
+output b: Bool
+
+sys_trans
+  b == (location == Field)

@@ -1,0 +1,24 @@
+
+controller MacroError where
+
+enum Command = None | SearchTrack
+input command : Command
+
+enum Region = Tower | Forest
+output region : Region
+
+enum Behavior = Loiter | Search | Track
+output behavior : Behavior
+
+input target : Bool = False
+
+input fuel : Bool = True
+
+sys_trans
+  if target
+     then cond_behavior(SearchTrack, { fuel }, Track, Forest)
+     else cond_behavior(True, { fuel }, Search, Forest)
+
+def cond_behavior(cmd, heath, b, r) =
+  (command == cmd /\ all heath)
+    -> (behavior == b /\ region == r)

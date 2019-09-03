@@ -1,0 +1,7 @@
+controller Example3 where
+
+input a: Bool = False
+output b: Bool = True
+
+sys_trans
+  a != b

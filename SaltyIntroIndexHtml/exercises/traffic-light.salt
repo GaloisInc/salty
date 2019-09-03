@@ -1,0 +1,23 @@
+
+
+controller TrafficLight where
+
+input tick : Bool
+
+output red    : Bool
+output yellow : Bool
+output green  : Bool
+
+
+sys_trans
+  mutex { red, yellow, green }
+  any   { red, yellow, green }
+
+sys_trans
+  -- red lights do not transition to yellow
+  -- green lights do not transition directly to red
+  -- yellow lights do not transition to green
+
+sys_liveness
+  -- always, green is eventually true
+  green
