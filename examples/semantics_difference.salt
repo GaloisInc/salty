@@ -1,17 +1,13 @@
-controller Example where
+controller Semantics_Difference where
 
--- Inputs ----------------------------------------------------------
-
+-- Based on an example in slugs (https://github.com/VerifiableRobotics/slugs)
 
 input person (P) : Bool
-
--- Outputs -------------------------------------------------------------------
 
 output bit0 (B) : Bool
 
 sys_trans
   bit0
-
 
 env_liveness
   person

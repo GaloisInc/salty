@@ -3,11 +3,10 @@ controller Init where
 input x : Bool
 input y : Bool
 
+output z : Bool
+
 env_init
   x ^ y
-
-
-output z : Bool
 
 sys_trans
   z

@@ -1,11 +1,8 @@
-controller Example where
+controller OptimisticRecoveryTest where
 
--- Inputs ----------------------------------------------------------
+-- Based on an example in slugs (https://github.com/VerifiableRobotics/slugs)
 
 input a (A) : Bool = False
-
-
--- Outputs -------------------------------------------------------------------
 
 output x (X) : Bool
 output y (Y) : Bool
@@ -23,4 +20,3 @@ sys_liveness
 
 sys_liveness
   x
-
