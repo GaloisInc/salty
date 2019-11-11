@@ -1,0 +1,55 @@
+controller LineFollower where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+-- In this example, the robot (NXT) is asked to follow a line on the ground. This example is not
+-- suitable for simulation.
+
+input white: Bool
+input black: Bool
+input touch: Bool
+
+output turnLeft: Bool
+output turnRight: Bool
+output dontMove: Bool
+output left: Bool = True
+output right: Bool = False
+output crossedBlackLeft: Bool = False
+output crossedBlackRight: Bool = False
+output stopEverything: Bool = False
+output bit0: Bool = False
+
+env_liveness
+  touch
+
+sys_trans
+  !bit0'
+  (!((white' /\ crossedBlackRight) /\ !(crossedBlackLeft /\ white')) \/ left')
+  (!(crossedBlackLeft /\ white') \/ !left')
+  (!(left /\ !(crossedBlackLeft /\ white')) \/ left')
+  (!(!left /\ !(white' /\ crossedBlackRight)) \/ !left')
+  (!((white' /\ crossedBlackLeft) /\ !(crossedBlackRight /\ white')) \/ right')
+  (!(crossedBlackRight /\ white') \/ !right')
+  (!(right /\ !(crossedBlackRight /\ white')) \/ right')
+  (!(!right /\ !(white' /\ crossedBlackLeft)) \/ !right')
+  ((!(left /\ !right) /\ !turnLeft') \/ ((left /\ !right) /\ turnLeft'))
+  ((!(right /\ !left) /\ !turnRight') \/ ((right /\ !left) /\ turnRight'))
+  (!((black' /\ left) /\ !(white' /\ left)) \/ crossedBlackLeft')
+  (!(white' /\ left) \/ !crossedBlackLeft')
+  (!(crossedBlackLeft /\ !(white' /\ left)) \/ crossedBlackLeft')
+  (!(!crossedBlackLeft /\ !(black' /\ left)) \/ !crossedBlackLeft')
+  (!((black' /\ right) /\ !(white' /\ right)) \/ crossedBlackRight')
+  (!(white' /\ right) \/ !crossedBlackRight')
+  (!(crossedBlackRight /\ !(white' /\ right)) \/ crossedBlackRight')
+  (!(!crossedBlackRight /\ !(black' /\ right)) \/ !crossedBlackRight')
+  (!((touch' /\ !stopEverything) /\ !(touch' /\ stopEverything)) \/ stopEverything')
+  (!(touch' /\ stopEverything) \/ !stopEverything')
+  (!(stopEverything /\ !(touch' /\ stopEverything)) \/ stopEverything')
+  (!(!stopEverything /\ !(touch' /\ !stopEverything)) \/ !stopEverything')
+  (!stopEverything \/ dontMove')
+  (!!bit0 \/ (!bit0' \/ bit0'))
+  (!bit0 \/ (bit0' \/ !bit0'))
+  (!bit0 \/ bit0)
+
+sys_init
+  (!bit0 \/ bit0)

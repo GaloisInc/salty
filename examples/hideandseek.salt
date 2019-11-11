@@ -1,0 +1,96 @@
+controller HideAndSeek where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+-- The robot starts in the parking lot. If it is a seeker, it will stay there and count until it hears
+-- a ready whistle. Then the robot will search all the hiding spots until it finds someone. The robot
+-- becomes a hider once it found someone. As a hider, the robot will go back to the parking lot and
+-- wait for counting to start. Once that happens, the robot will go hide somewhere and whistle.
+
+input see_player: Bool
+input hear_whistle: Bool = False
+input hear_counting: Bool = False
+
+output count: Bool = False
+output whistle: Bool = False
+output hide: Bool = False
+output say_foundyou: Bool
+output say_imfound: Bool
+output say_hider: Bool
+output say_seeker: Bool
+output seeker: Bool
+output playing: Bool = False
+output bit0: Bool = True
+output bit1: Bool = False
+output bit2: Bool = False
+output bit3: Bool = True
+output bit4: Bool = False
+
+sys_trans
+  (!((((((((seeker /\ bit0) /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) /\ hear_whistle') \/ ((((((!seeker /\ bit0) /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) /\ hear_counting')) /\ !see_player') \/ playing')
+  (!see_player' \/ !playing')
+  (!(playing /\ !see_player') \/ playing')
+  (!(!playing /\ !(((((((seeker /\ bit0) /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) /\ hear_whistle') \/ ((((((!seeker /\ bit0) /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) /\ hear_counting'))) \/ !playing')
+  (!!playing \/ (!((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) \/ ((((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))) /\ ((!bit4' /\ !bit4) \/ (bit4' /\ bit4)))))
+  (!((seeker /\ playing) /\ !playing') \/ !seeker')
+  (!((!seeker /\ playing) /\ !playing') \/ seeker')
+  (!(seeker /\ !(playing /\ !playing')) \/ seeker')
+  (!(!seeker /\ !(playing /\ !playing')) \/ !seeker')
+  ((!((((((seeker' /\ !playing') /\ bit0') /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') /\ !count') \/ (((((((seeker' /\ !playing') /\ bit0') /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') /\ count'))
+  ((!((!seeker' /\ playing') /\ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4'))) /\ !hide') \/ (((!seeker' /\ playing') /\ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4'))) /\ hide'))
+  (!hide \/ ((((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))) /\ ((!bit4' /\ !bit4) \/ (bit4' /\ bit4))))
+  ((!(!hide /\ hide') /\ !whistle') \/ ((!hide /\ hide') /\ whistle'))
+  ((!((!seeker /\ playing) /\ !playing') /\ !say_imfound') \/ (((!seeker /\ playing) /\ !playing') /\ say_imfound'))
+  ((!((seeker /\ playing) /\ !playing') /\ !say_foundyou') \/ (((seeker /\ playing) /\ !playing') /\ say_foundyou'))
+  ((!((((((!seeker' /\ !playing') /\ bit0') /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') /\ !say_hider') \/ (((((((!seeker' /\ !playing') /\ bit0') /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') /\ say_hider'))
+  ((!((((((seeker' /\ !playing') /\ bit0') /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') /\ !say_seeker') \/ (((((((seeker' /\ !playing') /\ bit0') /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') /\ say_seeker'))
+  (!(((say_imfound \/ say_foundyou) \/ say_hider) \/ say_seeker) \/ ((((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))) /\ ((!bit4' /\ !bit4) \/ (bit4' /\ bit4))))
+  (!((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ !bit4) \/ ((((((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4')) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ bit4')) \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ !bit4')))
+  (!((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ bit4) \/ ((((((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4')) \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4')) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4')))
+  (!((((!bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) \/ ((((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4')) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ !bit4')))
+  (!((((!bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ bit4) \/ ((((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ bit4')))
+  (!((((!bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ !bit4) \/ ((((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4')) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ !bit4')))
+  (!((((!bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ bit4) \/ ((((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ !bit4')))
+  (!((((!bit0 /\ !bit1) /\ bit2) /\ bit3) /\ !bit4) \/ ((((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ !bit4')) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ bit4')))
+  (!((((!bit0 /\ !bit1) /\ bit2) /\ bit3) /\ bit4) \/ (((((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4')) \/ ((((!bit0' /\ bit1') /\ bit2') /\ !bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4')))
+  (!((((!bit0 /\ bit1) /\ !bit2) /\ !bit3) /\ !bit4) \/ ((((((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4')) \/ ((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ !bit4')) \/ ((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ !bit4')) \/ ((((bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ !bit4')))
+  (!((((!bit0 /\ bit1) /\ !bit2) /\ !bit3) /\ bit4) \/ (((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ bit4') \/ ((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4')))
+  (!((((!bit0 /\ bit1) /\ !bit2) /\ bit3) /\ !bit4) \/ (((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ !bit4')))
+  (!((((!bit0 /\ bit1) /\ !bit2) /\ bit3) /\ bit4) \/ ((((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ bit4') \/ ((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ !bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4')))
+  (!((((!bit0 /\ bit1) /\ bit2) /\ !bit3) /\ !bit4) \/ (((((((!bit0' /\ bit1') /\ bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4')))
+  (!((((!bit0 /\ bit1) /\ bit2) /\ !bit3) /\ bit4) \/ (((((!bit0' /\ bit1') /\ bit2') /\ !bit3') /\ bit4') \/ ((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ bit4')))
+  (!((((!bit0 /\ bit1) /\ bit2) /\ bit3) /\ !bit4) \/ (((((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ !bit4')) \/ ((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4')))
+  (!((((!bit0 /\ bit1) /\ bit2) /\ bit3) /\ bit4) \/ ((((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4')) \/ ((((!bit0' /\ bit1') /\ bit2') /\ !bit3') /\ !bit4')))
+  (!((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ !bit4) \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ bit2') /\ bit3') /\ bit4')) \/ ((((!bit0' /\ bit1') /\ bit2') /\ !bit3') /\ !bit4')))
+  (!((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ bit4) \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ bit4')))
+  (!((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4) \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((!bit0' /\ bit1') /\ bit2') /\ !bit3') /\ !bit4')))
+  (!((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ bit4) \/ (((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4') \/ ((((!bit0' /\ bit1') /\ bit2') /\ bit3') /\ !bit4')))
+  (!((((bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ !bit4) \/ (((((bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ !bit4')))
+  ((((((((((((((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ !bit4) \/ ((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ !bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ !bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ !bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ bit3) /\ bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ !bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ bit4)) \/ ((((bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ !bit4))
+
+sys_liveness
+  (!!playing' \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !bit4'))
+
+sys_liveness
+  (!(seeker' /\ playing') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ !bit4'))
+
+sys_liveness
+  (!(seeker' /\ playing') \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4'))
+
+sys_liveness
+  (!(seeker' /\ playing') \/ ((((bit0' /\ !bit1') /\ bit2') /\ !bit3') /\ !bit4'))
+
+sys_liveness
+  (!(seeker' /\ playing') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ bit4'))
+
+sys_liveness
+  (!(seeker' /\ playing') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ bit4'))
+
+sys_liveness
+  (!(seeker' /\ playing') \/ ((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4'))
+
+sys_liveness
+  (!(!seeker' /\ playing') \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') /\ !bit4') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ bit4')) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ bit4')))
+
+sys_init
+  ((((((((((((((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ !bit4) \/ ((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ !bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ !bit1) /\ bit2) /\ bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ !bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ !bit2) /\ bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ !bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ !bit3) /\ bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ bit3) /\ !bit4)) \/ ((((!bit0 /\ bit1) /\ bit2) /\ bit3) /\ bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ !bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) /\ bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ !bit4)) \/ ((((bit0 /\ !bit1) /\ !bit2) /\ bit3) /\ bit4)) \/ ((((bit0 /\ !bit1) /\ bit2) /\ !bit3) /\ !bit4))

@@ -1,0 +1,63 @@
+controller FireFighting where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io) and
+-- slugs (https://github.com/VerifiableRobotics/slugs)
+
+-- For this example, the robot acts as a firefighter in a simple household environment. The mission of
+-- the robot is to search the whole house, and bring any detected hazardous item to the porch region.
+-- In addition, if the robot detects a person, it needs to stay in place and radio for help.
+
+input person: Bool = False
+input hazardous_item: Bool = False
+
+output pick_up: Bool = False
+output drop: Bool = False
+output radio: Bool = False
+output carrying_item: Bool = False
+output bit0: Bool = False
+output bit1: Bool = False
+output bit2: Bool = False
+
+env_trans
+  (!((!bit0 /\ !bit1) /\ !bit2) \/ !hazardous_item')
+  (!((!bit0 /\ !bit1) /\ !bit2) \/ !person')
+
+sys_trans
+  ((!(hazardous_item' /\ !carrying_item') /\ !pick_up') \/ ((hazardous_item' /\ !carrying_item') /\ pick_up'))
+  (!pick_up' \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
+  (!(pick_up /\ !drop) \/ carrying_item')
+  (!drop \/ !carrying_item')
+  (!(carrying_item /\ !drop) \/ carrying_item')
+  (!(!carrying_item /\ !pick_up) \/ !carrying_item')
+  ((!(((!bit0' /\ !bit1') /\ !bit2') /\ carrying_item') /\ !drop') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ carrying_item') /\ drop'))
+  (!!carrying_item \/ !((!bit0' /\ !bit1') /\ !bit2'))
+  ((!person' /\ !radio') \/ (person' /\ radio'))
+  (!(radio' \/ radio) \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
+  (!((!bit0 /\ !bit1) /\ !bit2) \/ ((((!bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
+  (!((!bit0 /\ !bit1) /\ bit2) \/ ((((!bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
+  (!((!bit0 /\ bit1) /\ !bit2) \/ ((((!bit0' /\ bit1') /\ !bit2') \/ ((bit0' /\ !bit1') /\ !bit2')) \/ ((bit0' /\ !bit1') /\ bit2')))
+  (!((!bit0 /\ bit1) /\ bit2) \/ (((((!bit0' /\ bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ bit2')))
+  (!((bit0 /\ !bit1) /\ !bit2) \/ (((((bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')))
+  (!((bit0 /\ !bit1) /\ bit2) \/ ((((bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ bit1') /\ !bit2')) \/ ((!bit0' /\ bit1') /\ bit2')))
+  (((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2))
+
+sys_liveness
+  (!(!carrying_item' /\ !radio') \/ ((!bit0' /\ bit1') /\ bit2'))
+
+sys_liveness
+  (!(!carrying_item' /\ !radio') \/ ((bit0' /\ !bit1') /\ bit2'))
+
+sys_liveness
+  (!(!carrying_item' /\ !radio') \/ ((!bit0' /\ bit1') /\ !bit2'))
+
+sys_liveness
+  (!(!carrying_item' /\ !radio') \/ ((bit0' /\ !bit1') /\ !bit2'))
+
+sys_liveness
+  (!(!carrying_item' /\ !radio') \/ ((!bit0' /\ !bit1') /\ bit2'))
+
+sys_liveness
+  (!(carrying_item' /\ !radio') \/ ((!bit0' /\ !bit1') /\ !bit2'))
+
+sys_init
+  (((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2))

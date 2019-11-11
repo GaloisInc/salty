@@ -1,0 +1,55 @@
+controller RobotWaiter where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+input food_ready: Bool
+input cam_order: Bool
+input jim_order: Bool
+
+output deliver: Bool = False
+output pick_up: Bool = False
+output cam_needs_food: Bool = False
+output jim_needs_food: Bool = False
+output carrying_food: Bool = False
+output bit0: Bool
+output bit1: Bool
+output bit2: Bool
+
+env_liveness
+  food_ready
+
+sys_trans
+  (!((((!bit0 /\ bit1) /\ !bit2) /\ pick_up) /\ !deliver) \/ carrying_food')
+  (!deliver \/ !carrying_food')
+  (!(carrying_food /\ !deliver) \/ carrying_food')
+  (!(!carrying_food /\ !(((!bit0 /\ bit1) /\ !bit2) /\ pick_up)) \/ !carrying_food')
+  (!!food_ready' \/ !pick_up')
+  (!carrying_food' \/ !pick_up')
+  (!!carrying_food' \/ !deliver')
+  (!(cam_order' /\ !(((bit0 /\ bit1) /\ !bit2) /\ deliver)) \/ cam_needs_food')
+  (!(((bit0 /\ bit1) /\ !bit2) /\ deliver) \/ !cam_needs_food')
+  (!(cam_needs_food /\ !(((bit0 /\ bit1) /\ !bit2) /\ deliver)) \/ cam_needs_food')
+  (!(!cam_needs_food /\ !cam_order') \/ !cam_needs_food')
+  (!(jim_order' /\ !(((bit0 /\ !bit1) /\ bit2) /\ deliver)) \/ jim_needs_food')
+  (!(((bit0 /\ !bit1) /\ bit2) /\ deliver) \/ !jim_needs_food')
+  (!(jim_needs_food /\ !(((bit0 /\ !bit1) /\ bit2) /\ deliver)) \/ jim_needs_food')
+  (!(!jim_needs_food /\ !jim_order') \/ !jim_needs_food')
+  (!(!cam_needs_food /\ cam_needs_food') \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
+  (!(!jim_needs_food /\ jim_needs_food') \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
+  (!((!bit0 /\ !bit1) /\ !bit2) \/ ((((!bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')))
+  (!((!bit0 /\ !bit1) /\ bit2) \/ ((((((((!bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')) \/ ((!bit0' /\ bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')) \/ ((bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ bit1') /\ !bit2')))
+  (!((!bit0 /\ bit1) /\ !bit2) \/ (((((!bit0' /\ bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ bit2')))
+  (!((!bit0 /\ bit1) /\ bit2) \/ ((((!bit0' /\ bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')))
+  (!((bit0 /\ !bit1) /\ !bit2) \/ (((((bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ bit1') /\ !bit2')))
+  (!((bit0 /\ !bit1) /\ bit2) \/ ((((bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
+  (!((bit0 /\ bit1) /\ !bit2) \/ ((((bit0' /\ bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
+  ((((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2)) \/ ((bit0 /\ bit1) /\ !bit2))
+
+sys_liveness
+  !cam_needs_food'
+
+sys_liveness
+  !jim_needs_food'
+
+sys_init
+  ((((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2)) \/ ((bit0 /\ bit1) /\ !bit2))
