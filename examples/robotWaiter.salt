@@ -11,45 +11,43 @@ output pick_up: Bool = False
 output cam_needs_food: Bool = False
 output jim_needs_food: Bool = False
 output carrying_food: Bool = False
-output bit0: Bool
-output bit1: Bool
-output bit2: Bool
+
+enum Region = R4 | Table | Kitchen | Cam | Others | Jim | R2
+output location: Region
 
 env_liveness
   food_ready
 
 sys_trans
-  (!((((!bit0 /\ bit1) /\ !bit2) /\ pick_up) /\ !deliver) \/ carrying_food')
-  (!deliver \/ !carrying_food')
-  (!(carrying_food /\ !deliver) \/ carrying_food')
-  (!(!carrying_food /\ !(((!bit0 /\ bit1) /\ !bit2) /\ pick_up)) \/ !carrying_food')
-  (!!food_ready' \/ !pick_up')
-  (!carrying_food' \/ !pick_up')
-  (!!carrying_food' \/ !deliver')
-  (!(cam_order' /\ !(((bit0 /\ bit1) /\ !bit2) /\ deliver)) \/ cam_needs_food')
-  (!(((bit0 /\ bit1) /\ !bit2) /\ deliver) \/ !cam_needs_food')
-  (!(cam_needs_food /\ !(((bit0 /\ bit1) /\ !bit2) /\ deliver)) \/ cam_needs_food')
-  (!(!cam_needs_food /\ !cam_order') \/ !cam_needs_food')
-  (!(jim_order' /\ !(((bit0 /\ !bit1) /\ bit2) /\ deliver)) \/ jim_needs_food')
-  (!(((bit0 /\ !bit1) /\ bit2) /\ deliver) \/ !jim_needs_food')
-  (!(jim_needs_food /\ !(((bit0 /\ !bit1) /\ bit2) /\ deliver)) \/ jim_needs_food')
-  (!(!jim_needs_food /\ !jim_order') \/ !jim_needs_food')
-  (!(!cam_needs_food /\ cam_needs_food') \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
-  (!(!jim_needs_food /\ jim_needs_food') \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
-  (!((!bit0 /\ !bit1) /\ !bit2) \/ ((((!bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')))
-  (!((!bit0 /\ !bit1) /\ bit2) \/ ((((((((!bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')) \/ ((!bit0' /\ bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')) \/ ((bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ bit1') /\ !bit2')))
-  (!((!bit0 /\ bit1) /\ !bit2) \/ (((((!bit0' /\ bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ bit2')))
-  (!((!bit0 /\ bit1) /\ bit2) \/ ((((!bit0' /\ bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')))
-  (!((bit0 /\ !bit1) /\ !bit2) \/ (((((bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ bit1') /\ !bit2')))
-  (!((bit0 /\ !bit1) /\ bit2) \/ ((((bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
-  (!((bit0 /\ bit1) /\ !bit2) \/ ((((bit0' /\ bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
-  ((((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2)) \/ ((bit0 /\ bit1) /\ !bit2))
+  -- How to get food
+  (!deliver /\ (((location == Kitchen) /\ pick_up) \/ carrying_food)) <-> carrying_food'
+  !food_ready' -> !pick_up'
+
+  -- We can only carry one thing at a time
+  carrying_food' -> !pick_up'
+
+  -- We need food to deliver
+  !carrying_food' -> !deliver'
+
+  -- Satisfy all orders
+  (!((location == Cam) /\ deliver) /\ (cam_order' \/ cam_needs_food)) <-> cam_needs_food'
+  (!((location == Jim) /\ deliver) /\ (jim_order' \/ jim_needs_food)) <-> jim_needs_food'
+
+  -- Instantaneous reaction stuff
+  (!cam_needs_food /\ cam_needs_food') -> (location' == location)
+  (!jim_needs_food /\ jim_needs_food') -> (location' == location)
+
+  -- Allowable transitions
+  (location == R4) -> any { (location' == R4), (location' == Others), (location' == Kitchen) }
+  (location == Others) -> any { (location' == Others), (location' == R4), (location' == Kitchen), (location' == R2), (location' == Table), (location' == Jim), (location' == Cam) }
+  (location == Kitchen) -> any { (location' == Kitchen), (location' == R4), (location' == Others), (location' == R2) }
+  (location == R2) -> any { (location' == R2), (location' == Others), (location' == Kitchen) }
+  (location == Table) -> any { (location' == Table), (location' == Others), (location' == Jim), (location' == Cam) }
+  (location == Jim) -> any { (location' == Jim), (location' == Others), (location' == Table) }
+  (location == Cam) -> any { (location' == Cam), (location' == Others), (location' == Table) }
 
 sys_liveness
   !cam_needs_food'
 
 sys_liveness
   !jim_needs_food'
-
-sys_init
-  ((((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2)) \/ ((bit0 /\ bit1) /\ !bit2))

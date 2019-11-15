@@ -14,50 +14,50 @@ output pick_up: Bool = False
 output drop: Bool = False
 output radio: Bool = False
 output carrying_item: Bool = False
-output bit0: Bool = False
-output bit1: Bool = False
-output bit2: Bool = False
+
+enum Region = Porch | Living | Deck | Kitchen | Dining | Bedroom
+output location: Region = Porch
 
 env_trans
-  (!((!bit0 /\ !bit1) /\ !bit2) \/ !hazardous_item')
-  (!((!bit0 /\ !bit1) /\ !bit2) \/ !person')
+  (location == Porch) -> !hazardous_item'
+  (location == Porch) -> !person'
 
 sys_trans
-  ((!(hazardous_item' /\ !carrying_item') /\ !pick_up') \/ ((hazardous_item' /\ !carrying_item') /\ pick_up'))
-  (!pick_up' \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
-  (!(pick_up /\ !drop) \/ carrying_item')
-  (!drop \/ !carrying_item')
-  (!(carrying_item /\ !drop) \/ carrying_item')
-  (!(!carrying_item /\ !pick_up) \/ !carrying_item')
-  ((!(((!bit0' /\ !bit1') /\ !bit2') /\ carrying_item') /\ !drop') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ carrying_item') /\ drop'))
-  (!!carrying_item \/ !((!bit0' /\ !bit1') /\ !bit2'))
-  ((!person' /\ !radio') \/ (person' /\ radio'))
-  (!(radio' \/ radio) \/ ((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))))
-  (!((!bit0 /\ !bit1) /\ !bit2) \/ ((((!bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
-  (!((!bit0 /\ !bit1) /\ bit2) \/ ((((!bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ !bit2')))
-  (!((!bit0 /\ bit1) /\ !bit2) \/ ((((!bit0' /\ bit1') /\ !bit2') \/ ((bit0' /\ !bit1') /\ !bit2')) \/ ((bit0' /\ !bit1') /\ bit2')))
-  (!((!bit0 /\ bit1) /\ bit2) \/ (((((!bit0' /\ bit1') /\ bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((bit0' /\ !bit1') /\ bit2')))
-  (!((bit0 /\ !bit1) /\ !bit2) \/ (((((bit0' /\ !bit1') /\ !bit2') \/ ((!bit0' /\ !bit1') /\ !bit2')) \/ ((!bit0' /\ !bit1') /\ bit2')) \/ ((!bit0' /\ bit1') /\ !bit2')))
-  (!((bit0 /\ !bit1) /\ bit2) \/ ((((bit0' /\ !bit1') /\ bit2') \/ ((!bit0' /\ bit1') /\ !bit2')) \/ ((!bit0' /\ bit1') /\ bit2')))
-  (((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2))
+  -- Define robot safety including how to pick up
+  pick_up' <-> (hazardous_item' /\ !carrying_item')
+  pick_up' -> (location' == location)
+  (!drop /\ (pick_up \/ carrying_item)) <-> carrying_item'
+  ((location' == Porch) /\ carrying_item') <-> drop'
+
+  !carrying_item -> !(location' == Porch)
+
+  -- Define when and how to radio
+  person' <-> radio'
+  (radio' \/ radio) -> (location' == location)
+
+  -- Allowable transitions
+  (location == Porch) -> any { (location' == Porch), (location' == Living), (location' == Kitchen) }
+  (location == Dining) -> any { (location' == Dining), (location' == Living), (location' == Kitchen) }
+  (location == Deck) -> any { (location' == Deck), (location' == Kitchen), (location' == Bedroom) }
+  (location == Living) -> any { (location' == Living), (location' == Porch), (location' == Dining), (location' == Bedroom) }
+  (location == Kitchen) -> any { (location' == Kitchen), (location' == Porch), (location' == Dining), (location' == Deck) }
+  (location == Bedroom) -> any { (location' == Bedroom), (location' == Deck), (location' == Living) }
+
+-- Patrol goals
+sys_liveness
+  (!carrying_item' /\ !radio') -> (location' == Living)
 
 sys_liveness
-  (!(!carrying_item' /\ !radio') \/ ((!bit0' /\ bit1') /\ bit2'))
+  (!carrying_item' /\ !radio') -> (location' == Bedroom)
 
 sys_liveness
-  (!(!carrying_item' /\ !radio') \/ ((bit0' /\ !bit1') /\ bit2'))
+  (!carrying_item' /\ !radio') -> (location' == Deck)
 
 sys_liveness
-  (!(!carrying_item' /\ !radio') \/ ((!bit0' /\ bit1') /\ !bit2'))
+  (!carrying_item' /\ !radio') -> (location' == Kitchen)
 
 sys_liveness
-  (!(!carrying_item' /\ !radio') \/ ((bit0' /\ !bit1') /\ !bit2'))
+  (!carrying_item' /\ !radio') -> (location' == Dining)
 
 sys_liveness
-  (!(!carrying_item' /\ !radio') \/ ((!bit0' /\ !bit1') /\ bit2'))
-
-sys_liveness
-  (!(carrying_item' /\ !radio') \/ ((!bit0' /\ !bit1') /\ !bit2'))
-
-sys_init
-  (((((((!bit0 /\ !bit1) /\ !bit2) \/ ((!bit0 /\ !bit1) /\ bit2)) \/ ((!bit0 /\ bit1) /\ !bit2)) \/ ((!bit0 /\ bit1) /\ bit2)) \/ ((bit0 /\ !bit1) /\ !bit2)) \/ ((bit0 /\ !bit1) /\ bit2))
+  (carrying_item' /\ !radio') -> (location' == Porch)
