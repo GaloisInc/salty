@@ -1,0 +1,10 @@
+
+controller Boolean where
+
+input a : Bool
+input b : Bool
+
+output c : Bool
+
+sys_trans
+  -- Write an expression where c is true when a and b are also true

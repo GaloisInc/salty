@@ -1,0 +1,26 @@
+
+controller EnumMacro where
+
+-- Recall this specification from the Enumerations section:
+--
+-- output field : Bool
+-- output forest: Bool
+-- output fence : Bool
+-- sys_trans
+--   mutex { field, forest, fence }
+--
+-- and its equivalent encoding using an enumeration
+
+enum Location = Field | Forest | Fence
+
+input loc: Location
+
+-- Fill out the following three macros to define an equivalent interface to the
+-- mutex-based version:
+
+def field()  = True -- fill out with an expression relating loc
+def forest() = True -- fill out with an expression relating loc
+def fence()  = True -- fill out with an expression relating loc
+
+
+output cmd : Bool

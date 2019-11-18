@@ -1,0 +1,87 @@
+controller RandGrid where
+
+enum Ec = X0c | X1c | X2c
+enum Er = X0r | X1r | X2r
+enum Sc = Y0c | Y1c | Y2c | Y3c | Y4c | Y5c | Y6c | Y7c
+enum Sr = Y0r | Y1r | Y2r | Y3r | Y4r | Y5r | Y6r | Y7r
+
+input xc : Ec = X1c
+input xr : Er = X1r
+output yc : Sc = Y2c
+output yr : Sr = Y7r
+
+env_trans
+  (xr == X0r /\ xc == X0c) -> ((xr' == X0r /\ xc' == X0c) \/ (xr' == X1r /\ xc' == X0c) \/ (xr' == X0r /\ xc' == X1c))
+  (xr == X0r /\ xc == X1c) -> ((xr' == X0r /\ xc' == X1c) \/ (xr' == X0r /\ xc' == X0c) \/ (xr' == X1r /\ xc' == X1c) \/ (xr' == X0r /\ xc' == X2c))
+  (xr == X0r /\ xc == X2c) -> ((xr' == X0r /\ xc' == X2c) \/ (xr' == X0r /\ xc' == X1c) \/ (xr' == X1r /\ xc' == X2c))
+  (xr == X1r /\ xc == X0c) -> ((xr' == X1r /\ xc' == X0c) \/ (xr' == X0r /\ xc' == X0c) \/ (xr' == X2r /\ xc' == X0c) \/ (xr' == X1r /\ xc' == X1c))
+  (xr == X1r /\ xc == X1c) -> ((xr' == X1r /\ xc' == X1c) \/ (xr' == X0r /\ xc' == X1c) \/ (xr' == X1r /\ xc' == X0c) \/ (xr' == X2r /\ xc' == X1c) \/ (xr' == X1r /\ xc' == X2c))
+  (xr == X1r /\ xc == X2c) -> ((xr' == X1r /\ xc' == X2c) \/ (xr' == X0r /\ xc' == X2c) \/ (xr' == X1r /\ xc' == X1c))
+  (xr == X2r /\ xc == X0c) -> ((xr' == X2r /\ xc' == X0c) \/ (xr' == X1r /\ xc' == X0c) \/ (xr' == X2r /\ xc' == X1c))
+  (xr == X2r /\ xc == X1c) -> ((xr' == X2r /\ xc' == X1c) \/ (xr' == X1r /\ xc' == X1c) \/ (xr' == X2r /\ xc' == X0c))
+  !((xr' == X2r /\ xc' == X2c))
+
+env_liveness
+  (xr == X1r /\ xc == X1c)
+
+sys_trans
+  (yr == Y0r /\ yc == Y0c) -> ((yr' == Y0r /\ yc' == Y0c) \/ (yr' == Y1r /\ yc' == Y0c) \/ (yr' == Y0r /\ yc' == Y1c))
+  (yr == Y0r /\ yc == Y1c) -> ((yr' == Y0r /\ yc' == Y1c) \/ (yr' == Y0r /\ yc' == Y0c) \/ (yr' == Y1r /\ yc' == Y1c) \/ (yr' == Y0r /\ yc' == Y2c))
+  (yr == Y0r /\ yc == Y2c) -> ((yr' == Y0r /\ yc' == Y2c) \/ (yr' == Y0r /\ yc' == Y1c) \/ (yr' == Y0r /\ yc' == Y3c))
+  (yr == Y0r /\ yc == Y3c) -> ((yr' == Y0r /\ yc' == Y3c) \/ (yr' == Y0r /\ yc' == Y2c) \/ (yr' == Y0r /\ yc' == Y4c))
+  (yr == Y0r /\ yc == Y4c) -> ((yr' == Y0r /\ yc' == Y4c) \/ (yr' == Y0r /\ yc' == Y3c) \/ (yr' == Y1r /\ yc' == Y4c))
+  (yr == Y0r /\ yc == Y7c) -> ((yr' == Y0r /\ yc' == Y7c))
+  (yr == Y1r /\ yc == Y0c) -> ((yr' == Y1r /\ yc' == Y0c) \/ (yr' == Y0r /\ yc' == Y0c) \/ (yr' == Y2r /\ yc' == Y0c) \/ (yr' == Y1r /\ yc' == Y1c))
+  (yr == Y1r /\ yc == Y1c) -> ((yr' == Y1r /\ yc' == Y1c) \/ (yr' == Y0r /\ yc' == Y1c) \/ (yr' == Y1r /\ yc' == Y0c) \/ (yr' == Y2r /\ yc' == Y1c))
+  (yr == Y1r /\ yc == Y4c) -> ((yr' == Y1r /\ yc' == Y4c) \/ (yr' == Y0r /\ yc' == Y4c) \/ (yr' == Y2r /\ yc' == Y4c) \/ (yr' == Y1r /\ yc' == Y5c))
+  (yr == Y1r /\ yc == Y5c) -> ((yr' == Y1r /\ yc' == Y5c) \/ (yr' == Y1r /\ yc' == Y4c))
+  (yr == Y2r /\ yc == Y0c) -> ((yr' == Y2r /\ yc' == Y0c) \/ (yr' == Y1r /\ yc' == Y0c) \/ (yr' == Y3r /\ yc' == Y0c) \/ (yr' == Y2r /\ yc' == Y1c))
+  (yr == Y2r /\ yc == Y1c) -> ((yr' == Y2r /\ yc' == Y1c) \/ (yr' == Y1r /\ yc' == Y1c) \/ (yr' == Y2r /\ yc' == Y0c) \/ (yr' == Y3r /\ yc' == Y1c) \/ (yr' == Y2r /\ yc' == Y2c))
+  (yr == Y2r /\ yc == Y2c) -> ((yr' == Y2r /\ yc' == Y2c) \/ (yr' == Y2r /\ yc' == Y1c) \/ (yr' == Y3r /\ yc' == Y2c) \/ (yr' == Y2r /\ yc' == Y3c))
+  (yr == Y2r /\ yc == Y3c) -> ((yr' == Y2r /\ yc' == Y3c) \/ (yr' == Y2r /\ yc' == Y2c) \/ (yr' == Y3r /\ yc' == Y3c) \/ (yr' == Y2r /\ yc' == Y4c))
+  (yr == Y2r /\ yc == Y4c) -> ((yr' == Y2r /\ yc' == Y4c) \/ (yr' == Y1r /\ yc' == Y4c) \/ (yr' == Y2r /\ yc' == Y3c) \/ (yr' == Y3r /\ yc' == Y4c))
+  (yr == Y2r /\ yc == Y6c) -> ((yr' == Y2r /\ yc' == Y6c) \/ (yr' == Y3r /\ yc' == Y6c) \/ (yr' == Y2r /\ yc' == Y7c))
+  (yr == Y2r /\ yc == Y7c) -> ((yr' == Y2r /\ yc' == Y7c) \/ (yr' == Y2r /\ yc' == Y6c) \/ (yr' == Y3r /\ yc' == Y7c))
+  (yr == Y3r /\ yc == Y0c) -> ((yr' == Y3r /\ yc' == Y0c) \/ (yr' == Y2r /\ yc' == Y0c) \/ (yr' == Y4r /\ yc' == Y0c) \/ (yr' == Y3r /\ yc' == Y1c))
+  (yr == Y3r /\ yc == Y1c) -> ((yr' == Y3r /\ yc' == Y1c) \/ (yr' == Y2r /\ yc' == Y1c) \/ (yr' == Y3r /\ yc' == Y0c) \/ (yr' == Y4r /\ yc' == Y1c) \/ (yr' == Y3r /\ yc' == Y2c))
+  (yr == Y3r /\ yc == Y2c) -> ((yr' == Y3r /\ yc' == Y2c) \/ (yr' == Y2r /\ yc' == Y2c) \/ (yr' == Y3r /\ yc' == Y1c) \/ (yr' == Y3r /\ yc' == Y3c))
+  (yr == Y3r /\ yc == Y3c) -> ((yr' == Y3r /\ yc' == Y3c) \/ (yr' == Y2r /\ yc' == Y3c) \/ (yr' == Y3r /\ yc' == Y2c) \/ (yr' == Y4r /\ yc' == Y3c) \/ (yr' == Y3r /\ yc' == Y4c))
+  (yr == Y3r /\ yc == Y4c) -> ((yr' == Y3r /\ yc' == Y4c) \/ (yr' == Y2r /\ yc' == Y4c) \/ (yr' == Y3r /\ yc' == Y3c) \/ (yr' == Y4r /\ yc' == Y4c) \/ (yr' == Y3r /\ yc' == Y5c))
+  (yr == Y3r /\ yc == Y5c) -> ((yr' == Y3r /\ yc' == Y5c) \/ (yr' == Y3r /\ yc' == Y4c) \/ (yr' == Y4r /\ yc' == Y5c) \/ (yr' == Y3r /\ yc' == Y6c))
+  (yr == Y3r /\ yc == Y6c) -> ((yr' == Y3r /\ yc' == Y6c) \/ (yr' == Y2r /\ yc' == Y6c) \/ (yr' == Y3r /\ yc' == Y5c) \/ (yr' == Y4r /\ yc' == Y6c) \/ (yr' == Y3r /\ yc' == Y7c))
+  (yr == Y3r /\ yc == Y7c) -> ((yr' == Y3r /\ yc' == Y7c) \/ (yr' == Y2r /\ yc' == Y7c) \/ (yr' == Y3r /\ yc' == Y6c) \/ (yr' == Y4r /\ yc' == Y7c))
+  (yr == Y4r /\ yc == Y0c) -> ((yr' == Y4r /\ yc' == Y0c) \/ (yr' == Y3r /\ yc' == Y0c) \/ (yr' == Y5r /\ yc' == Y0c) \/ (yr' == Y4r /\ yc' == Y1c))
+  (yr == Y4r /\ yc == Y1c) -> ((yr' == Y4r /\ yc' == Y1c) \/ (yr' == Y3r /\ yc' == Y1c) \/ (yr' == Y4r /\ yc' == Y0c) \/ (yr' == Y5r /\ yc' == Y1c))
+  (yr == Y4r /\ yc == Y3c) -> ((yr' == Y4r /\ yc' == Y3c) \/ (yr' == Y3r /\ yc' == Y3c) \/ (yr' == Y5r /\ yc' == Y3c) \/ (yr' == Y4r /\ yc' == Y4c))
+  (yr == Y4r /\ yc == Y4c) -> ((yr' == Y4r /\ yc' == Y4c) \/ (yr' == Y3r /\ yc' == Y4c) \/ (yr' == Y4r /\ yc' == Y3c) \/ (yr' == Y5r /\ yc' == Y4c) \/ (yr' == Y4r /\ yc' == Y5c))
+  (yr == Y4r /\ yc == Y5c) -> ((yr' == Y4r /\ yc' == Y5c) \/ (yr' == Y3r /\ yc' == Y5c) \/ (yr' == Y4r /\ yc' == Y4c) \/ (yr' == Y5r /\ yc' == Y5c) \/ (yr' == Y4r /\ yc' == Y6c))
+  (yr == Y4r /\ yc == Y6c) -> ((yr' == Y4r /\ yc' == Y6c) \/ (yr' == Y3r /\ yc' == Y6c) \/ (yr' == Y4r /\ yc' == Y5c) \/ (yr' == Y5r /\ yc' == Y6c) \/ (yr' == Y4r /\ yc' == Y7c))
+  (yr == Y4r /\ yc == Y7c) -> ((yr' == Y4r /\ yc' == Y7c) \/ (yr' == Y3r /\ yc' == Y7c) \/ (yr' == Y4r /\ yc' == Y6c))
+  (yr == Y5r /\ yc == Y0c) -> ((yr' == Y5r /\ yc' == Y0c) \/ (yr' == Y4r /\ yc' == Y0c) \/ (yr' == Y5r /\ yc' == Y1c))
+  (yr == Y5r /\ yc == Y1c) -> ((yr' == Y5r /\ yc' == Y1c) \/ (yr' == Y4r /\ yc' == Y1c) \/ (yr' == Y5r /\ yc' == Y0c))
+  (yr == Y5r /\ yc == Y3c) -> ((yr' == Y5r /\ yc' == Y3c) \/ (yr' == Y4r /\ yc' == Y3c) \/ (yr' == Y5r /\ yc' == Y4c))
+  (yr == Y5r /\ yc == Y4c) -> ((yr' == Y5r /\ yc' == Y4c) \/ (yr' == Y4r /\ yc' == Y4c) \/ (yr' == Y5r /\ yc' == Y3c) \/ (yr' == Y5r /\ yc' == Y5c))
+  (yr == Y5r /\ yc == Y5c) -> ((yr' == Y5r /\ yc' == Y5c) \/ (yr' == Y4r /\ yc' == Y5c) \/ (yr' == Y5r /\ yc' == Y4c) \/ (yr' == Y5r /\ yc' == Y6c))
+  (yr == Y5r /\ yc == Y6c) -> ((yr' == Y5r /\ yc' == Y6c) \/ (yr' == Y4r /\ yc' == Y6c) \/ (yr' == Y5r /\ yc' == Y5c))
+  !((yr' == Y0r /\ yc' == Y5c))
+  !((yr' == Y0r /\ yc' == Y6c))
+  !((yr' == Y1r /\ yc' == Y2c))
+  !((yr' == Y1r /\ yc' == Y3c))
+  !((yr' == Y1r /\ yc' == Y6c))
+  !((yr' == Y1r /\ yc' == Y7c))
+  !((yr' == Y2r /\ yc' == Y5c))
+  !((yr' == Y4r /\ yc' == Y2c))
+  !((yr' == Y5r /\ yc' == Y2c))
+  !((yr' == Y5r /\ yc' == Y7c))
+  !((yr' == Y2r /\ yc' == Y0c) /\ (xr' == X0r /\ xc' == X0c))
+  !((yr' == Y2r /\ yc' == Y1c) /\ (xr' == X0r /\ xc' == X1c))
+  !((yr' == Y2r /\ yc' == Y2c) /\ (xr' == X0r /\ xc' == X2c))
+  !((yr' == Y3r /\ yc' == Y0c) /\ (xr' == X1r /\ xc' == X0c))
+  !((yr' == Y3r /\ yc' == Y1c) /\ (xr' == X1r /\ xc' == X1c))
+  !((yr' == Y3r /\ yc' == Y2c) /\ (xr' == X1r /\ xc' == X2c))
+  !((yr' == Y4r /\ yc' == Y0c) /\ (xr' == X2r /\ xc' == X0c))
+  !((yr' == Y4r /\ yc' == Y1c) /\ (xr' == X2r /\ xc' == X1c))
+  !((yr' == Y4r /\ yc' == Y2c) /\ (xr' == X2r /\ xc' == X2c))
+
+sys_liveness
+  (yr == Y0r /\ yc == Y4c)
