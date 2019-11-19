@@ -30,7 +30,7 @@ data SpecVar = SpecVar { svName  :: Doc
 
 sparkFSM :: FSM -> TC.Controller -> Package
 sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } cont =
-  Map.fromList [ (render pkgName ++ ".ads", spec), (render pkgName ++ ".adb", body) ]
+  Map.fromList [ (map C.toLower $ render pkgName ++ ".ads", spec), (map C.toLower $ render pkgName ++ ".adb", body) ]
   where
   pkgName = sparkName fsmName
 
