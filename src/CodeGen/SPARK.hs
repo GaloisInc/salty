@@ -354,7 +354,7 @@ annotation a =
     Post e          -> text "Post" <+> text "=>" <+> parens e
     CC cs           -> vcat [ text "Contract_Cases" <+> text "=>"
                             , indent 2 $ parens $ vcat $ punctuate comma [ pre <+> text "=>" <+> post | (pre, post) <- cs ] ]
-    Ghost           -> text "Ghost" <+> text "=>" <+> sparkValue (VBool True)
+    Ghost           -> text "Ghost"
     TypeInvariant e -> text "Type_Invariant" <+> text "=>" <+> parens e
 
 annotate :: [Annotation] -> [Doc]
