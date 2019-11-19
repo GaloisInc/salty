@@ -22,6 +22,7 @@ data Annotation = Pre Doc
                 | Post Doc
                 | CC [(Doc,Doc)]
                 | Ghost
+                | TypeInvariant Doc
 
 data SpecVar = SpecVar { svName  :: Doc
                        , svType  :: Doc
@@ -55,7 +56,7 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
          , text "end" <+> pkgName <> semi ]
     where
     pub =
-      [ declType cntlrType $ text "private"
+      [ statement $ declType cntlrType $ text "private"
       , vcat $ declEnums fsmEnums
       , optIOTypeDecl fsmInputs env
       , optIOTypeDecl fsmOutputs sys
@@ -96,10 +97,21 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                                <> comma <+> svName sys) <+> text "and" <+> parens (text "not Is_Init" <+> parens cntlrName)) ] ] ]
 
     priv =
-      [ declSubtype stType (text "Integer range 1.." <> pp (fsmInitial + 1))
-      , declRecord cntlrType [ assign (declVar stName stType) (stType <> text "'Last")
+      [ statement $ vcat $ func (text "State_To_Input_Mapping")
+                             [ declVar cntlrName cntlrType ]
+                             (sparkType VTBool)
+                           : annotate [ Ghost ]
+      , statement $ vcat $ func (text "State_To_Output_Mapping")
+                             [ declVar cntlrName cntlrType ]
+                             (sparkType VTBool)
+                           : annotate [ Ghost ]
+      , statement $ declSubtype stType (text "Integer range 1.." <> pp (fsmInitial + 1))
+      , statement $ vcat [ declRecord cntlrType
+                             [ assign (declVar stName stType) (stType <> text "'Last")
                              , statement $ declVar (svName env) (svType env)
-                             , statement $ declVar (svName sys) (svType sys) ] ]
+                             , statement $ declVar (svName sys) (svType sys) ]
+                          , indent 2 $ vcat $ annotate [ TypeInvariant $ text "State_To_Input_Mapping" <+> parens cntlrType
+                                                           <+> text "and" <+> text "State_To_Output_Mapping" <+> parens cntlrType ] ] ]
 
   body =
     vcat [ text "with Ada.Containers; use Ada.Containers;"
@@ -109,8 +121,8 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
          , indent 2 $ doubleSpace defs
          , text "end" <+> pkgName <> semi ]
     where
-    defs = [ declRecord outType [ statement $ declVar stName stType
-                                , statement $ declVar (svName sys) (svType sys) ]
+    defs = [ statement $ declRecord outType [ statement $ declVar stName stType
+                                            , statement $ declVar (svName sys) (svType sys) ]
            , vcat [ func (text "Hash") [ declVar (svName env) (svType env) ] (text "Ada.Containers.Hash_Type")
                   , subBody (text "Hash")
                       [ assign (declVar (text "Hash") (text "Hash_Type")) (text "17") ]
@@ -138,7 +150,7 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
            , vcat [ text "subtype Transition_Map is Transition_Maps.Map"
                   , indent 2 $ vcat [ text "(Capacity => Transition_Map_Max_Capacity,"
                                     , text " Modulus  => Transition_Maps.Default_Modulus (Transition_Map_Max_Capacity));" ] ]
-           , declType (text "Transition_Lookup") (text "array" <+> parens stType <+> text "of Transition_Map")
+           , statement $ declType (text "Transition_Lookup") (text "array" <+> parens stType <+> text "of Transition_Map")
            , eFunc (text "Is_Init")
                [ declVar cntlrName cntlrType ]
                (sparkType VTBool)
@@ -265,7 +277,7 @@ doubleSpace xs =
   concatWith (surround (PP.line <> PP.line)) (filter (not . isEmpty) xs)
 
 declType :: Doc -> Doc -> Doc
-declType n t = statement $ text "type" <+> n <+> text "is" <+> t
+declType n t = text "type" <+> n <+> text "is" <+> t
 
 declSubtype :: Doc -> Doc -> Doc
 declSubtype n t = text "sub" <> declType n t
@@ -275,7 +287,7 @@ declEnums [] = []
 declEnums es = punctuate hardline [ declEnum e | e <- es ]
   where
   declEnum TC.EnumDef { TC.eName, TC.eCons } =
-    declType (sparkName eName <> text "_Type") (parens . align . hcat $ punctuate (comma <> space) (map sparkName eCons))
+    statement $ declType (sparkName eName <> text "_Type") (parens . align . hcat $ punctuate (comma <> space) (map sparkName eCons))
 
 mkSpecVar :: StateVars -> String -> String -> SpecVar
 mkSpecVar v n t
@@ -293,11 +305,11 @@ mkSpecVar v n t
 optIOTypeDecl :: StateVars -> SpecVar -> Doc
 optIOTypeDecl vars v
   | svIsRec v =
-      declRecord (svType v)
-        [ statement $ declVar (sparkName n) (sparkType viType) | (n, VarInfo { viType }) <- Map.toList vars ]
+      statement $ declRecord (svType v)
+                    [ statement $ declVar (sparkName n) (sparkType viType) | (n, VarInfo { viType }) <- Map.toList vars ]
   | otherwise =
       case viType $ head $ Map.elems vars of
-        (VTInt _ _) -> declSubtype (svType v) (sparkType $ viType (head $ Map.elems vars))
+        (VTInt _ _) -> statement $ declSubtype (svType v) (sparkType $ viType (head $ Map.elems vars))
         _           -> PP.empty
 
 declRecord :: Doc -> [Doc] -> Doc
@@ -338,11 +350,12 @@ declParam name m t = name <> colon <+> mode m <+> t
 annotation :: Annotation -> Doc
 annotation a =
   case a of
-    Pre e  -> text "Pre" <+> text "=>" <+> parens e
-    Post e -> text "Post" <+> text "=>" <+> parens e
-    CC cs  -> vcat [ text "Contract_Cases" <+> text "=>"
-                   , indent 2 $ parens $ vcat $ punctuate comma [ pre <+> text "=>" <+> post | (pre, post) <- cs ] ]
-    Ghost  -> text "Ghost" <+> text "=>" <+> sparkValue (VBool True)
+    Pre e           -> text "Pre" <+> text "=>" <+> parens e
+    Post e          -> text "Post" <+> text "=>" <+> parens e
+    CC cs           -> vcat [ text "Contract_Cases" <+> text "=>"
+                            , indent 2 $ parens $ vcat $ punctuate comma [ pre <+> text "=>" <+> post | (pre, post) <- cs ] ]
+    Ghost           -> text "Ghost" <+> text "=>" <+> sparkValue (VBool True)
+    TypeInvariant e -> text "Type_Invariant" <+> text "=>" <+> parens e
 
 annotate :: [Annotation] -> [Doc]
 annotate [] = []
