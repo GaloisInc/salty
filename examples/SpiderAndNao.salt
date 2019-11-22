@@ -1,0 +1,65 @@
+controller SpiderAndNao where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+-- For this mission the Spider robot will walk across the field and go scare the Nao robot. The spider
+-- robot will start under a box and will start to move once the box is removed. The spider will
+-- utilize different walking gaits based on the terrain it is currently working through. Once the
+-- spider robot get into the region where the Nao robot locates, the spider robot will perform
+-- predefined actions. The Nao robot will react in response.
+
+input headTap: Bool
+input boxOverYou: Bool
+
+output loadGravelGaits: Bool = False
+output loadInclineGaits: Bool = False
+output sitDown: Bool = False
+output reactToSpiderGotOut: Bool = False
+output calmDown: Bool = False
+output relief: Bool = False
+output threatenTheNao: Bool = False
+output threatenTheSpider: Bool = False
+output reachedNao: Bool = False
+output bit0: Bool
+output bit1: Bool
+output bit2: Bool
+output bit3: Bool
+
+sys_trans
+  (!(threatenTheNao /\ !False) \/ reachedNao')
+  (!False \/ !reachedNao')
+  (!(reachedNao /\ !False) \/ reachedNao')
+  (!(!reachedNao /\ !threatenTheNao) \/ !reachedNao')
+  ((!(((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ !loadGravelGaits') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') /\ loadGravelGaits'))
+  ((!(((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ !loadInclineGaits') \/ ((((!bit0' /\ bit1') /\ !bit2') /\ bit3') /\ loadInclineGaits'))
+  ((!boxOverYou' /\ !sitDown') \/ (boxOverYou' /\ sitDown'))
+  ((!((boxOverYou /\ !boxOverYou') /\ !reachedNao') /\ !reactToSpiderGotOut') \/ (((boxOverYou /\ !boxOverYou') /\ !reachedNao') /\ reactToSpiderGotOut'))
+  ((!headTap' /\ !calmDown') \/ (headTap' /\ calmDown'))
+  ((!(((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !threatenTheNao') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ threatenTheNao'))
+  ((!(((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ !threatenTheSpider') \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') /\ threatenTheSpider'))
+  (!((!boxOverYou /\ boxOverYou') /\ reachedNao') \/ relief')
+  (!(boxOverYou \/ boxOverYou') \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!(headTap \/ headTap') \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!(((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')))
+  (!(((!bit0 /\ !bit1) /\ !bit2) /\ bit3) \/ ((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  (!(((!bit0 /\ !bit1) /\ bit2) /\ !bit3) \/ (((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')))
+  (!(((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((((!bit0' /\ !bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ bit2') /\ !bit3')))
+  (!(((!bit0 /\ bit1) /\ !bit2) /\ !bit3) \/ (((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ bit3')))
+  (!(((!bit0 /\ bit1) /\ !bit2) /\ bit3) \/ (((((!bit0' /\ bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  (!(((!bit0 /\ bit1) /\ bit2) /\ !bit3) \/ (((((!bit0' /\ bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')))
+  (!(((!bit0 /\ bit1) /\ bit2) /\ bit3) \/ (((((!bit0' /\ bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')))
+  (!(((bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ !bit2) /\ bit3) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  (!(((bit0 /\ !bit1) /\ bit2) /\ !bit3) \/ (((((bit0' /\ !bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ bit2) /\ bit3) \/ ((((bit0' /\ !bit1') /\ bit2') /\ bit3') \/ (((bit0' /\ !bit1') /\ bit2') /\ !bit3')))
+  ((((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ bit3))
+
+sys_liveness
+  (!(!(boxOverYou' \/ headTap') /\ !reachedNao') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3'))
+
+sys_liveness
+  (!(!(boxOverYou' \/ headTap') /\ reachedNao') \/ ((((bit0' /\ !bit1') /\ bit2') /\ !bit3') \/ (((bit0' /\ !bit1') /\ bit2') /\ bit3')))
+
+sys_init
+  ((((bit0 /\ !bit1) /\ bit2) /\ !bit3) \/ (((bit0 /\ !bit1) /\ bit2) /\ bit3))
+  ((((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ bit3))

@@ -1,9 +1,8 @@
-controller Democontroller1 where
+controller Demo where
 
 input tt_command : Bool = False
 input saw_target : Bool = False
 input fuel_ok    : Bool = True
-
 
 enum Behavior = SearchA | TrackTarget | Refuel
 
