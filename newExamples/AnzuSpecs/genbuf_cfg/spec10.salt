@@ -1,0 +1,268 @@
+controller GenBuf10 where
+
+input stob_req0 : Bool
+input stob_req1 : Bool
+input stob_req2 : Bool
+input stob_req3 : Bool
+input stob_req4 : Bool
+input stob_req5 : Bool
+input stob_req6 : Bool
+input stob_req7 : Bool
+input stob_req8 : Bool
+input stob_req9 : Bool
+input rtob_ack0 : Bool
+input rtob_ack1 : Bool
+input full : Bool
+input empty : Bool
+
+output btos_ack0 : Bool
+output btos_ack1 : Bool
+output btos_ack2 : Bool
+output btos_ack3 : Bool
+output btos_ack4 : Bool
+output btos_ack5 : Bool
+output btos_ack6 : Bool
+output btos_ack7 : Bool
+output btos_ack8 : Bool
+output btos_ack9 : Bool
+output btor_req0 : Bool
+output btor_req1 : Bool
+output stateg7_0 : Bool
+output stateg7_1 : Bool
+output enq : Bool
+output deq : Bool
+output stateg12 : Bool
+output slc0 : Bool
+output slc1 : Bool
+output slc2 : Bool
+output slc3 : Bool
+
+env_init
+  !stob_req0
+  !stob_req1
+  !stob_req2
+  !stob_req3
+  !stob_req4
+  !stob_req5
+  !stob_req6
+  !stob_req7
+  !stob_req8
+  !stob_req9
+  !rtob_ack0
+  !rtob_ack1
+  !full
+  empty
+
+env_trans
+  (stob_req0 /\ !btos_ack0) -> stob_req0'
+  btos_ack0 -> !stob_req0'
+  (stob_req1 /\ !btos_ack1) -> stob_req1'
+  btos_ack1 -> !stob_req1'
+  (stob_req2 /\ !btos_ack2) -> stob_req2'
+  btos_ack2 -> !stob_req2'
+  (stob_req3 /\ !btos_ack3) -> stob_req3'
+  btos_ack3 -> !stob_req3'
+  (stob_req4 /\ !btos_ack4) -> stob_req4'
+  btos_ack4 -> !stob_req4'
+  (stob_req5 /\ !btos_ack5) -> stob_req5'
+  btos_ack5 -> !stob_req5'
+  (stob_req6 /\ !btos_ack6) -> stob_req6'
+  btos_ack6 -> !stob_req6'
+  (stob_req7 /\ !btos_ack7) -> stob_req7'
+  btos_ack7 -> !stob_req7'
+  (stob_req8 /\ !btos_ack8) -> stob_req8'
+  btos_ack8 -> !stob_req8'
+  (stob_req9 /\ !btos_ack9) -> stob_req9'
+  btos_ack9 -> !stob_req9'
+  !btor_req0 -> !rtob_ack0'
+  (btor_req0 /\ rtob_ack0) -> rtob_ack0'
+  !btor_req1 -> !rtob_ack1'
+  (btor_req1 /\ rtob_ack1) -> rtob_ack1'
+  (enq /\ !deq) -> !empty'
+  (deq /\ !enq) -> !full'
+  (enq <-> deq) -> ((full <-> full') /\ (empty <-> empty'))
+
+env_liveness
+  btor_req0 <-> rtob_ack0
+
+env_liveness
+  btor_req1 <-> rtob_ack1
+
+sys_init
+  !btos_ack0
+  !btos_ack1
+  !btos_ack2
+  !btos_ack3
+  !btos_ack4
+  !btos_ack5
+  !btos_ack6
+  !btos_ack7
+  !btos_ack8
+  !btos_ack9
+  !btor_req0
+  !btor_req1
+  !stateg7_0
+  stateg7_1
+  !enq
+  !deq
+  !stateg12
+  !slc0
+  !slc1
+  !slc2
+  !slc3
+
+sys_trans
+  (!stob_req0 /\ stob_req0') -> !btos_ack0'
+  (!btos_ack0 /\ !stob_req0) -> !btos_ack0'
+  (btos_ack0 /\ stob_req0) -> btos_ack0'
+  (!btos_ack0) \/ (!btos_ack1)
+  (!btos_ack0) \/ (!btos_ack2)
+  (!btos_ack0) \/ (!btos_ack3)
+  (!btos_ack0) \/ (!btos_ack4)
+  (!btos_ack0) \/ (!btos_ack5)
+  (!btos_ack0) \/ (!btos_ack6)
+  (!btos_ack0) \/ (!btos_ack7)
+  (!btos_ack0) \/ (!btos_ack8)
+  (!btos_ack0) \/ (!btos_ack9)
+  (!stob_req1 /\ stob_req1') -> !btos_ack1'
+  (!btos_ack1 /\ !stob_req1) -> !btos_ack1'
+  (btos_ack1 /\ stob_req1) -> btos_ack1'
+  (!btos_ack1) \/ (!btos_ack2)
+  (!btos_ack1) \/ (!btos_ack3)
+  (!btos_ack1) \/ (!btos_ack4)
+  (!btos_ack1) \/ (!btos_ack5)
+  (!btos_ack1) \/ (!btos_ack6)
+  (!btos_ack1) \/ (!btos_ack7)
+  (!btos_ack1) \/ (!btos_ack8)
+  (!btos_ack1) \/ (!btos_ack9)
+  (!stob_req2 /\ stob_req2') -> !btos_ack2'
+  (!btos_ack2 /\ !stob_req2) -> !btos_ack2'
+  (btos_ack2 /\ stob_req2) -> btos_ack2'
+  (!btos_ack2) \/ (!btos_ack3)
+  (!btos_ack2) \/ (!btos_ack4)
+  (!btos_ack2) \/ (!btos_ack5)
+  (!btos_ack2) \/ (!btos_ack6)
+  (!btos_ack2) \/ (!btos_ack7)
+  (!btos_ack2) \/ (!btos_ack8)
+  (!btos_ack2) \/ (!btos_ack9)
+  (!stob_req3 /\ stob_req3') -> !btos_ack3'
+  (!btos_ack3 /\ !stob_req3) -> !btos_ack3'
+  (btos_ack3 /\ stob_req3) -> btos_ack3'
+  (!btos_ack3) \/ (!btos_ack4)
+  (!btos_ack3) \/ (!btos_ack5)
+  (!btos_ack3) \/ (!btos_ack6)
+  (!btos_ack3) \/ (!btos_ack7)
+  (!btos_ack3) \/ (!btos_ack8)
+  (!btos_ack3) \/ (!btos_ack9)
+  (!stob_req4 /\ stob_req4') -> !btos_ack4'
+  (!btos_ack4 /\ !stob_req4) -> !btos_ack4'
+  (btos_ack4 /\ stob_req4) -> btos_ack4'
+  (!btos_ack4) \/ (!btos_ack5)
+  (!btos_ack4) \/ (!btos_ack6)
+  (!btos_ack4) \/ (!btos_ack7)
+  (!btos_ack4) \/ (!btos_ack8)
+  (!btos_ack4) \/ (!btos_ack9)
+  (!stob_req5 /\ stob_req5') -> !btos_ack5'
+  (!btos_ack5 /\ !stob_req5) -> !btos_ack5'
+  (btos_ack5 /\ stob_req5) -> btos_ack5'
+  (!btos_ack5) \/ (!btos_ack6)
+  (!btos_ack5) \/ (!btos_ack7)
+  (!btos_ack5) \/ (!btos_ack8)
+  (!btos_ack5) \/ (!btos_ack9)
+  (!stob_req6 /\ stob_req6') -> !btos_ack6'
+  (!btos_ack6 /\ !stob_req6) -> !btos_ack6'
+  (btos_ack6 /\ stob_req6) -> btos_ack6'
+  (!btos_ack6) \/ (!btos_ack7)
+  (!btos_ack6) \/ (!btos_ack8)
+  (!btos_ack6) \/ (!btos_ack9)
+  (!stob_req7 /\ stob_req7') -> !btos_ack7'
+  (!btos_ack7 /\ !stob_req7) -> !btos_ack7'
+  (btos_ack7 /\ stob_req7) -> btos_ack7'
+  (!btos_ack7) \/ (!btos_ack8)
+  (!btos_ack7) \/ (!btos_ack9)
+  (!stob_req8 /\ stob_req8') -> !btos_ack8'
+  (!btos_ack8 /\ !stob_req8) -> !btos_ack8'
+  (btos_ack8 /\ stob_req8) -> btos_ack8'
+  (!btos_ack8) \/ (!btos_ack9)
+  (!stob_req9 /\ stob_req9') -> !btos_ack9'
+  (!btos_ack9 /\ !stob_req9) -> !btos_ack9'
+  (btos_ack9 /\ stob_req9) -> btos_ack9'
+  (btor_req0 /\ !rtob_ack0) -> btor_req0'
+  (!btor_req0) \/ (!btor_req1)
+  rtob_ack0 -> !btor_req0'
+  (btor_req1 /\ !rtob_ack1) -> btor_req1'
+  rtob_ack1 -> !btor_req1'
+  (btor_req0 /\ btor_req1) -> False
+  (!stateg7_1 /\ !btor_req0 /\ btor_req1) -> stateg7_1' /\ !stateg7_0'
+  (stateg7_1 /\ btor_req0 /\ !btor_req1) -> !stateg7_1' /\ !stateg7_0'
+  (!stateg7_1 /\ !btor_req0 /\ !btor_req1) -> !stateg7_1' /\ stateg7_0'
+  (stateg7_1 /\ !btor_req0 /\ !btor_req1) -> stateg7_1' /\ stateg7_0'
+  (!stateg7_1 /\ !stateg7_0 /\ btor_req0 /\ !btor_req1) -> !stateg7_1' /\ !stateg7_0'
+  (stateg7_1 /\ !stateg7_0 /\ !btor_req0 /\ btor_req1) -> stateg7_1' /\ !stateg7_0'
+  (!stateg7_1 /\ stateg7_0 /\ btor_req0) -> False
+  (stateg7_1 /\ stateg7_0 /\ btor_req1) -> False
+  (!btos_ack0 /\ btos_ack0') -> enq'
+  (!btos_ack0 /\ btos_ack0') -> !slc0' /\ !slc1' /\ !slc2' /\ !slc3'
+  (!btos_ack1 /\ btos_ack1') -> enq'
+  (!btos_ack1 /\ btos_ack1') <-> slc0' /\ !slc1' /\ !slc2' /\ !slc3'
+  (!btos_ack2 /\ btos_ack2') -> enq'
+  (!btos_ack2 /\ btos_ack2') <-> !slc0' /\ slc1' /\ !slc2' /\ !slc3'
+  (!btos_ack3 /\ btos_ack3') -> enq'
+  (!btos_ack3 /\ btos_ack3') <-> slc0' /\ slc1' /\ !slc2' /\ !slc3'
+  (!btos_ack4 /\ btos_ack4') -> enq'
+  (!btos_ack4 /\ btos_ack4') <-> !slc0' /\ !slc1' /\ slc2' /\ !slc3'
+  (!btos_ack5 /\ btos_ack5') -> enq'
+  (!btos_ack5 /\ btos_ack5') <-> slc0' /\ !slc1' /\ slc2' /\ !slc3'
+  (!btos_ack6 /\ btos_ack6') -> enq'
+  (!btos_ack6 /\ btos_ack6') <-> !slc0' /\ slc1' /\ slc2' /\ !slc3'
+  (!btos_ack7 /\ btos_ack7') -> enq'
+  (!btos_ack7 /\ btos_ack7') <-> slc0' /\ slc1' /\ slc2' /\ !slc3'
+  (!btos_ack8 /\ btos_ack8') -> enq'
+  (!btos_ack8 /\ btos_ack8') <-> !slc0' /\ !slc1' /\ !slc2' /\ slc3'
+  (!btos_ack9 /\ btos_ack9') -> enq'
+  (!btos_ack9 /\ btos_ack9') <-> slc0' /\ !slc1' /\ !slc2' /\ slc3'
+  ((btos_ack0 \/ !btos_ack0') /\ (btos_ack1 \/ !btos_ack1') /\ (btos_ack2 \/ !btos_ack2') /\ (btos_ack3 \/ !btos_ack3') /\ (btos_ack4 \/ !btos_ack4') /\ (btos_ack5 \/ !btos_ack5') /\ (btos_ack6 \/ !btos_ack6') /\ (btos_ack7 \/ !btos_ack7') /\ (btos_ack8 \/ !btos_ack8') /\ (btos_ack9 \/ !btos_ack9')) -> !enq'
+  (rtob_ack0 /\ !rtob_ack0') -> deq'
+  (rtob_ack1 /\ !rtob_ack1') -> deq'
+  ((!rtob_ack0 \/ rtob_ack0') /\ (!rtob_ack1 \/ rtob_ack1')) -> !deq'
+  (full /\ !deq) -> !enq
+  empty -> !deq
+  (!stateg12 /\ empty) -> !stateg12'
+  (!stateg12 /\ deq ) -> !stateg12'
+  (!stateg12 /\ !empty /\ !deq) -> stateg12'
+  (stateg12 /\ !deq ) -> stateg12'
+  (stateg12 /\ deq ) -> !stateg12'
+
+sys_liveness
+  stob_req0 <-> btos_ack0
+
+sys_liveness
+  stob_req1 <-> btos_ack1
+
+sys_liveness
+  stob_req2 <-> btos_ack2
+
+sys_liveness
+  stob_req3 <-> btos_ack3
+
+sys_liveness
+  stob_req4 <-> btos_ack4
+
+sys_liveness
+  stob_req5 <-> btos_ack5
+
+sys_liveness
+  stob_req6 <-> btos_ack6
+
+sys_liveness
+  stob_req7 <-> btos_ack7
+
+sys_liveness
+  stob_req8 <-> btos_ack8
+
+sys_liveness
+  stob_req9 <-> btos_ack9
+
+sys_liveness
+  !stateg12
+

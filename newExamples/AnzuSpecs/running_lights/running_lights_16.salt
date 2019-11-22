@@ -1,0 +1,51 @@
+controller RunningLights where
+
+input button1 : Bool = False
+input button2 : Bool = False
+
+output state1 : Bool = False
+output state2 : Bool = False
+enum LightNumber = L0 | L1 | L2 | L3 | L4 | L5 | L6 | L7 | L8 | L9 | L10 | L11 | L12 | L13 | L14 | L15
+output light : LightNumber = L0
+
+env_liveness
+  True
+
+sys_trans
+  !state1 /\ (!button1 \/ light == L0) -> !state1'
+  !state1 /\ ( button1 /\ !light == L0) ->  state1'
+  state1  /\ !light == L0 ->  state1'
+  state1  /\  light == L0 -> !state1'
+
+  !state2 /\ (!button2 \/  light == L15) -> !state2'
+  !state2 /\ ( button2 /\ !light == L15) ->  state2'
+  state2  /\ !light == L15 ->  state2'
+  state2  /\  light == L15 -> !state2'
+
+  !light == L0 /\ !light == L1 -> !light' == L0
+  !light == L0 /\ !light == L2 -> !light' == L1
+  !light == L1 /\ !light == L3 -> !light' == L2
+  !light == L2 /\ !light == L4 -> !light' == L3
+  !light == L3 /\ !light == L5 -> !light' == L4
+  !light == L4 /\ !light == L6 -> !light' == L5
+  !light == L5 /\ !light == L7 -> !light' == L6
+  !light == L6 /\ !light == L8 -> !light' == L7
+  !light == L7 /\ !light == L9 -> !light' == L8
+  !light == L8 /\ !light == L10 -> !light' == L9
+  !light == L9 /\ !light == L11 -> !light' == L10
+  !light == L10 /\ !light == L12 -> !light' == L11
+  !light == L11 /\ !light == L13 -> !light' == L12
+  !light == L12 /\ !light == L14 -> !light' == L13
+  !light == L13 /\ !light == L15 -> !light' == L14
+  !light == L14 /\ !light == L15 -> !light' == L15
+
+  light == L0 /\ !state1' /\ !state2' -> light' == L0
+  light == L15 /\ !state1' /\ !state2' -> light' == L15
+  light == L0 /\ !state1  /\ !state2  -> light' == L0
+  light == L15 /\ !state1  /\ !state2  -> light' == L15
+
+sys_liveness
+  !state1
+
+sys_liveness
+  !state2
