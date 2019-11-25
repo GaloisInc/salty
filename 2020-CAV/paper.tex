@@ -1,0 +1,182 @@
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+\usepackage{xtab}
+\usepackage{stmaryrd}
+\usepackage{amsmath, amssymb}
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+
+% OUR MACROS
+\input{macros}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TITLE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\title{End-to-End Verification of Initial and Transition Properties of GR(1) Designs in SPARK\thanks{Supported by AFRL contract FA8650-16-C-2642 and AFOSR grant RQCOR20-35.}}
+%
+\titlerunning{End-to-End Verification of GR(1) Designs in SPARK}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{First Author\inst{1}\orcidID{0000-1111-2222-3333} \and
+Second Author\inst{2,3}\orcidID{1111-2222-3333-4444} \and
+Third Author\inst{3}\orcidID{2222--3333-4444-5555}}
+%
+\authorrunning{F. Author et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{Princeton University, Princeton NJ 08544, USA \and
+Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
+\email{lncs@springer.com}\\
+\url{http://www.springer.com/gp/computer-science/lncs} \and
+ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
+\email{\{abc,lncs\}@uni-heidelberg.de}}
+%
+\maketitle              % typeset the header of the contribution
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ABSTRACT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+%The abstract should briefly summarize the contents of the paper in 150--250 words.
+Manually designing control logic for reactive systems is time-consuming and error-prone. 
+An alternative is to automatically generate controllers using ``correct-by-construction'' synthesis approaches. 
+Recently, there has been interest in synthesizing controllers from Generalized Reactivity(1) or GR(1) specifications, 
+since computational complexity is relatively low, and several tools now exist. 
+However, though these tools implement synthesis approaches that are theoretically ``correct-by-construction,'' 
+errors in tool implementation can lead to errors in synthesized controllers. 
+We are therefore interested in ``end-to-end'' verification of synthesized controllers with respect to their original GR(1) specifications.
+Toward this end we have modified Salty, a tool that produces executable software implementations of controllers 
+from GR(1) specifications in a variety of programming languages, to produce implementations in SPARK.
+SPARK is both a language and associated set of verification tools, and so its use enables the desired ``end-to-end'' verification of a 
+subset of properties comprising GR(1) specifications, in this case system initial and transition properties. 
+In this paper, we discuss how we encode synthesized controllers and the necessary contracts and assertions needed for 
+SPARK to verify the aforementioned properties automatically, i.e. without requiring additional annotations from the user. 
+Since GR(1) specifications encode assumptions about the environment in which the controlled system operates, 
+we also discuss how we handle these assumptions in the implementation, since there are several reasonable choices for how they could be handled. 
+Finally, we discuss possible approaches for verifying the full set of GR(1) properties, i.e. including liveness.
+
+\keywords{Reactive synthesis \and end-to-end verification \and functional verification.}
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% INTRODUCTION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+Reactive systems must be capable of correctly responding to various inputs, 
+e.g. originating from human users or events in the system's operational environment. 
+The process of manually designing the control logic for such systems is both time-consuming and error prone. 
+An alternative is to use ``correct-by-construction'' synthesis approaches to automatically generate 
+the design of a system's control logic directly from specifications, which can 
+reduce both design time and the likelihood of errors 
+\cite{alur2016compositional}, \cite{fainekos2009temporal}, \cite{guo2014cooperative}, \cite{kupermann2001synthesizing}. 
+In general, \emph{synthesis} is the process of automatically generating a design from a specification. 
+More specifically, \emph{reactive synthesis} approaches generate designs in the context of an uncontrolled environment, 
+assumptions about which are encoded in the specification.
+Reactive synthesis approaches tend to have high computational complexity,  
+so there is particular interest in synthesis from Generalized Reactivity(1) or GR(1) specifications, 
+the complexity of which is only polynomial in the size of the game graph encoded by the specification \cite{bloem2012}.
+Synthesis from GR(1) specifications has been used to generate digital circuits \cite{ehlers2012symbolically} 
+and controllers for aircraft power distribution \cite{xu2012case}, 
+software-defined networks \cite{wang2013automated}, ground robots \cite{kress2007s},
+and teams of unmanned vehicles \cite{apker2016}, to name a few. 
+
+A GR(1) specification $\varphi$ takes the form $\varphi = \varphi^e \limplies \varphi^s$, 
+where $\varphi^e$ encodes assumptions about the \emph{environment} in which a system is to operate,
+and $\varphi^s$ encodes guarantees the \emph{system} should make under those assumptions \cite{Ehlers2016}. 
+More specifically, $\varphi$ takes the form 
+$\varphi = (\varphi^e_i \land \varphi^e_t \land \varphi^e_l)  \limplies (\varphi^s_i \land \varphi^s_t \land \varphi^s_l)$,
+where $\varphi^e_i$ and $\varphi^s_i$ are \emph{initial} properties, 
+$\varphi^e_t$ and $\varphi^s_t$ are \emph{transition} or safety properties, and 
+$\varphi^e_l$ and $\varphi^s_l$ are \emph{liveness} properties. 
+For inputs in the set $\inputs$ controlled by the environment 
+and outputs in the set $\outputs$ produced by the system, terms are:
+
+\vspace{0.5em}
+
+\noindent \begin{xtabular}{p{.045\columnwidth}p{.015\columnwidth}p{.860\columnwidth}}
+ $\varphi^e_i$, $\varphi^s_i$ & - & Boolean formulas over $\inputs$ and $\outputs$, respectively, that characterize the initial state of the environment and system.
+\end{xtabular}
+
+\noindent \begin{xtabular}{p{.045\columnwidth}p{.015\columnwidth}p{.860\columnwidth}}
+ $\varphi^e_t$, $\varphi^s_t$ & - &  Formulas of the form $\bigwedge_{j \in J} \always B_j$, where each $B_j$ is a Boolean combination of variables from $\inputs \cup \outputs$ and expressions of the form $\lnext v$, where $v \in \inputs$ for $\varphi^e_t$ and $v \in \inputs \cup \outputs$ for $\varphi^s_t$. These encode properties that should always hold as well as rules for how inputs and outputs are allowed to change based on current input and output values.
+\end{xtabular}
+
+\noindent \begin{xtabular}{p{.045\columnwidth}p{.015\columnwidth}p{.860\columnwidth}}
+$\varphi^e_l$, $\varphi^s_l$ & - & Formulas of the form $\bigwedge_{j \in J} \always \eventually B_j$, where each $B_j$ is a Boolean formula over $\inputs \cup \outputs$. These encode properties that should hold infinitely often.
+\end{xtabular}
+
+\vspace{0.5em}
+
+\noindent It is assumed that at each time step, the environment chooses an input from $\inputs$, and then the system chooses an output from $\outputs$ in response.
+
+Several tools for synthesis from GR(1) specifications are available. 
+For example, RATSY \cite{bloem2010ratsy} has a focus on circuit design and can synthesize designs encoded in 
+BLIF (Berkeley Logic Interchange Format), Verilog, and HIF (HDL Intermediate Format). 
+Similarly, Anzu \cite{jobstmann2007anzu} produces circuit designs in Verilog.
+LTLMoP \cite{finucane2010ltlmop} is focused on control of robots modeled as hybrid systems, 
+and it synthesizes designs as hybrid controllers along with handler modules to help connect controllers to simulated or real-world systems.
+Slugs \cite{Ehlers2016} is architected to allow users to easily tailor the synthesis algorithm for specific applications,
+ e.g. to optimize criteria such as quick response, cost-optimality, and error-resilience, and produces mathematical representations of controller designs.
+Salty \cite{elliott2019salty} provides a front-end to Slugs that makes specifications easier to write and debug and 
+a back-end that turns controller designs into executable sofware implementations in a variety of programming languages.
+
+Though all of these tools implement synthesis algorithms that are theoretically ``correct-by-construction,'' 
+tool implementation errors could result in errors in synthesized controllers. 
+We are therefore interested in ``end-to-end'' verification of synthesized controllers with respect to their original GR(1) specifications. 
+Toward this end, we have extended the Salty tool to produce software implementations of synthesized controller designs in SPARK. 
+SPARK is both a programming language with a specification language and associated verification toolset \cite{hoang2015spark}. 
+Though SPARK aims to perform fully automated verification, often the user must help guide the underlying provers through 
+annotations such as assertions and loop invariants in the code. 
+However, since controller designs synthesized from GR(1) specifications follow a regular structure, it was our hope that we could 
+synthesize both the controller logic and the annotations necessary to automatically prove that controllers meet their functional specifications in SPARK. 
+To date, we have largely achieved this goal for a subset of properties comprising GR(1) specifiations, 
+i.e. system initial and transition properties, for moderately-sized controllers.
+In what follows, in \sectref{sec:implementation} we discuss the SPARK implementation. 
+In \sectref{sec:caseStudies}, we demonstrate the efficacy of our approach on examples pulled from a variety of sources.
+In \sectref{sec:discussion}, we discuss possible approaches for proving liveness properties as well as design choice alternatives, 
+e.g. for dealing with environment specifications.
+We end with concluding remarks in 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPLEMENTATION and Verification in SPARK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implementation and Verification in SPARK}
+\label{sec:implementation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CASE STUDIES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Case Studies}
+\label{sec:caseStudies}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CASE STUDIES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{sec:discussion}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CONCLUSIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusions}
+\label{sec:conclusions}
+
+%
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+\bibliographystyle{splncs04}
+\bibliography{bibfile}
+
+\end{document}
