@@ -8,6 +8,8 @@ import           Slugs.FSM
 import qualified TypeCheck.AST   as TC
 
 import qualified Data.Char       as C
+import           Data.Function   (on)
+import           Data.List       (sortBy)
 import qualified Data.Map.Strict as Map
 import           Data.Maybe      (fromMaybe)
 import qualified Data.Text       as T
@@ -183,7 +185,7 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                       , declParam (svName sys) Out (svType sys) ]
                   , subBody (text "Move")
                       [ ]
-                      [ mkNested fsmNodes (qualify (Just cntlrName) stName)
+                      [ mkNested fsmNodes cntlrName stName (svName env) (svName sys)
                       , statement $ assign (qualify (Just cntlrName) (svName env)) (svName env)
                       , statement $ assign (svName sys) (qualify (Just cntlrName) (svName sys)) ] ] ]
 
@@ -399,52 +401,66 @@ mkStateOutputEq ns sys =
   mkEntry outputs = sys <> text "'" <> parens (fsep $ punctuate comma
     [ sparkName n <+> text "=>" <+> sparkValue v | (n,v) <- Map.toList outputs ])
 
-mkNested :: Map.Map Int Node -> Doc -> Doc
-mkNested ns st = vcat [ mkCase st [(pp (s + 1),n) | (s,n) <- Map.toList ns ] ]
--- TODO: recursive? enumerate all input combinations & assign outputs
+-- NOTE: assumes inputs are ordered the same across nodes
+mkNested :: Map.Map Int Node -> Doc -> Doc -> Doc -> Doc -> Doc
+mkNested ns cntlrName stName envName sysName =
+  vcat [ text "case" <+> qualify (Just cntlrName) stName <+> text "is"
+       , indent 2 $ vcat [ vcat [ text "when" <+> pp (s+1) <+> text "=>"
+                                , indent 2 $ mkNested' ns cntlrName stName envName sysName (sort nodeTrans) [] False PP.empty ]
+                           | (s, Node { nodeTrans }) <- Map.toList ns ]
+       , statement $ text "end case" ]
   where
-  mkCase var whens = vcat [ text "case" <+> var <+> text "is"
-                          , indent 2 $ vcat [ vcat [ text "when" <+> val <+> text "=>"
-                                                   , indent 2 (text "test") ] | (val, _) <- whens ]
-                                                   -- , indent 2 ex ] | (val, ex) <- whens ] ]
-                          , statement $ text "end case" ]
+  sort ts = map fst $
+              sortBy (compare `on` snd)
+                (zip ts
+                  [ map snd (Map.toList xs) |
+                    xs <- [ nodeInputs | Node { nodeInputs } <- map (ns Map.!) ts ] ])
 
-mkTable :: Map.Map Int Node -> Doc
-mkTable ts = vcat [ vcat $ map (mkEntry s) (nodeTrans n) | (s,n) <- Map.toList ts ]
+mkNested' :: Map.Map Int Node -> Doc -> Doc -> Doc -> Doc -> [Int] -> [Value] -> Bool -> Doc -> Doc
+mkNested' _ _ _ _ _ [] [] _ d = d
+mkNested' ns cntlrName stName envName sysName [] p _ d =
+  mkNested' ns cntlrName stName envName sysName [] (init p) True $
+    vcat [ d
+         , indent ((length p - 1) * 4) $ vcat
+           [ indent 2 $ vcat
+             [ text "when others =>"
+             , indent 2 (statement $ text "raise Program_Error") ]
+           , statement $ text "end case" ] ]
+mkNested' ns cntlrName stName envName sysName ts p b d =
+  let Node { nodeInputs, nodeOutputs } = ns Map.! head ts
+    in mkCase (Map.toList nodeInputs) nodeOutputs
   where
-  mkEntry s i =
-    let Node { nodeInputs, nodeOutputs } = ts Map.! i
-      in statement $ text "Transition_Maps.Insert" <+>
-           tuple [ text "Transitions" <> parens (pp (s + 1))
-                 , mkVal nodeInputs
-                 , tuple [ pp (i + 1), mkVal nodeOutputs ] ]
+  values = map snd
 
-  tuple ds = parens . fsep $ commas ds
-
-  mkVal is
-    | Map.size is == 1 = sparkValue . head $ Map.elems is
-    | otherwise        = tuple $ map sparkValue $ Map.elems is
-
-mkTablePost :: Map.Map Int Node -> Doc -> Doc
-mkTablePost ts t = vcat [ vcat [ vcat $ map (mkContains s) (nodeTrans n) | (s,n) <- Map.toList ts ]
-                        , text ""
-                        , vcat [ vcat $ map (mkElement s) (nodeTrans n) | (s,n) <- Map.toList ts ] ]
-  where
-  mkContains s i =
-    let Node { nodeInputs } = ts Map.! i
-      in text "and Transition_Maps.Contains" <+>
-           tuple [ text "Init'Result" <> parens (pp (s + 1))
-                 , mkVal nodeInputs ]
-
-  mkElement s i =
-    let Node { nodeInputs, nodeOutputs } = ts Map.! i
-      in text "and" <+> parens (text "Transition_Maps.Element" <+>
-           tuple [ text "Init'Result" <> parens (pp (s + 1))
-                 , t <> text "'" <> parens (mkVal nodeInputs) ]
-           <+> text "=" <+> tuple [ pp (i + 1), mkVal nodeOutputs ])
-
-  tuple ds = parens . fsep $ commas ds
-
-  mkVal is
-    | Map.size is == 1 = sparkValue . head $ Map.elems is
-    | otherwise        = tuple $ map sparkValue $ Map.elems is
+  mkCase xs nodeOutputs
+    | values xs == p = -- matches prefix (leaf)
+        mkNested' ns cntlrName stName envName sysName (tail ts) p False $
+          vcat [ d
+               , indent (length p * 4) $ vcat $
+                 statement
+                    (assign (qualify (Just cntlrName) stName) (pp (head ts + 1)))
+                 : [ statement $
+                       assign
+                         (qualify (Just (qualify (Just cntlrName) sysName)) (sparkName n))
+                         (sparkValue v)
+                     | (n,v) <- Map.toList nodeOutputs ] ]
+    | take (length p) (values xs) == p = -- matches prefix
+        let when = indent 2 $ text "when" <+> sparkValue (snd $ xs !! length p) <+> text "=>"
+          in mkNested' ns cntlrName stName envName sysName ts (take (length p + 1) (values xs)) False $
+               vcat $
+                 (if PP.isEmpty d then [] else [d]) ++
+                   [ indent (length p * 4)
+                       (if not b -- descending
+                         then vcat [ text "case" <+> qualify (Just envName) (sparkName (fst $ xs !! length p)) <+> text "is"
+                                   , when ]
+                         else when) ]
+    | b = -- doesn't match prefix (backtracking)
+        mkNested' ns cntlrName stName envName sysName ts (init p) True $
+          vcat [ d
+               , indent (length p * 4) $ vcat
+                 [ indent 2 $ vcat
+                   [ text "when others =>"
+                   , indent 2 (statement $ text "raise Program_Error") ]
+                 , statement $ text "end case" ] ]
+    | otherwise = -- doesn't match prefix (leaf)
+        mkNested' ns cntlrName stName envName sysName ts (init p) True d
