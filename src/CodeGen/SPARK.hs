@@ -436,9 +436,15 @@ mkNested' ns cntlrName stName env sys ts p b d =
   mkVarName SpecVar { svIsRec = False } n = n
   mkVarName SpecVar { svName } n = qualify (Just svName) n
 
+  getNonMatching [] = []
+  getNonMatching [_] = []
+  getNonMatching (_:ts') =
+    let Node { nodeInputs } = ns Map.! head ts'
+      in (if values (Map.toList nodeInputs) == p then getNonMatching (tail ts') else ts')
+
   mkCase xs nodeOutputs
     | values xs == p = -- matches prefix (leaf)
-        mkNested' ns cntlrName stName envName sysName (tail ts) p False $
+        mkNested' ns cntlrName stName env sys (getNonMatching ts) p False $
           vcat [ d
                , indent (length p * 4) $ vcat $
                  statement
