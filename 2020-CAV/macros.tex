@@ -1,0 +1,205 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%							References
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\chapref}[1]{Chapter~\ref{#1}}
+\newcommand{\appref}[1]{Appendix~\ref{#1}}
+\newcommand{\sectref}[1]{Section~\ref{#1}}
+\newcommand{\subsectref}[1]{Subsection~\ref{#1}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\egref}[1]{Example~\ref{#1}}
+\newcommand{\eqnref}[1]{(\ref{#1})}
+\newcommand{\thmref}[1]{Theorem~\ref{#1}}
+\newcommand{\propref}[1]{Proposition~\ref{#1}}
+\newcommand{\lemref}[1]{Lemma~\ref{#1}}
+\newcommand{\defref}[1]{Definition~\ref{#1}}
+
+\newcommand{\chapchapref}[2]{Chapters~\ref{#1} and \ref{#2}}
+\newcommand{\sectsectref}[2]{Sections~\ref{#1} and \ref{#2}}
+\newcommand{\figfigref}[2]{Figures~\ref{#1} and \ref{#2}}
+\newcommand{\tabtabref}[2]{Tables~\ref{#1} and \ref{#2}}
+
+\newcommand{\sectsectsectref}[3]{Sections~\ref{#1}, \ref{#2} and \ref{#3}}
+\newcommand{\figfigfigref}[3]{Figures~\ref{#1}, \ref{#2} and \ref{#3}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%							Code Listings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Core language
+%\lstdefinelanguage{SaltyLang}{
+% keywords=[1]{all, any, mutex}
+% keywordstyle[1]=\color{Cyan},
+% keywords=[2]{controller, where, input, output, enum, env_init, env_trans, env_liveness, sys_init, sys_trans, sys_liveness, def},
+% keywordstyle=[2]\color{blue!90!black},%\bfseries,
+% keywords=[3]{False, True},
+% keywordstyle=[3]\color{ForestGreen},%\bfseries,
+% keywords=[4]{all, any, mutex, leads_to, Bool, if, then, else},
+% keywordstyle=[4]\color{Cyan},
+% otherkeywords={', !, <, ->, <->, \, /, /\\, \\/},
+% keywordstyle=\color{Cyan},
+% identifierstyle=\color{black},
+% sensitive=true,
+% comment=[l]{--},
+% commentstyle=\color{Magenta}
+%}
+%
+%% Additional options
+%\lstset{
+% language=SaltyLang,
+% basicstyle=\small\ttfamily,
+% tabsize = 2,
+% numbers=none,
+% mathescape=false,
+% showstringspaces=false
+%}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%							Theorem Environments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newtheorem{lemma}{Lemma}
+%\theoremstyle{definition} % turn off pesky italics
+%\newtheorem{definition}{Definition}
+%\newtheorem{example}{Example}
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{proposition}{Proposition}
+%\newtheorem{proof}{Proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%							Definitions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Standard sets of numbers
+\def\Nset{\mathbb{N}}
+\def\Rset{\mathbb{R}}
+\def\Zset{\mathbb{Z}}
+
+% Reactive synthesis sets
+\def\inputs{\mathcal{I}}
+\def\outputs{\mathcal{O}}
+
+
+% abbreviations
+%\def\act{{Act}}
+%\def\sinit{{\overline{s}}}
+
+% logical operators
+\def\limplies{\rightarrow}
+\newcommand{\lequiv}{\leftrightarrow}
+\newcommand{\ltrue}{\textrm{true}}
+\newcommand{\lfalse}{\textrm{false}}
+\newcommand{\lxor}{\oplus}
+
+% temporal operators
+\def\always{\square}
+\def\until{\mathbin{\mathsf{U}}}
+\def\wuntil{\mathbin{\mathsf{W}}}
+\def\release{\mathbin{\mathsf{R}}}
+\def\eventually{\lozenge}
+\def\always{\square}
+\def\lnext{\varbigcirc}
+
+\def\palways{\square^{-1}}
+\def\peventually{\lozenge^{-1}}
+\def\past{\varbigcirc^{-1}}
+
+\newcommand{\talways}[2]{\square^{#1..#2}}
+\newcommand{\teventually}[2]{\lozenge^{#1..#2}}
+\newcommand{\tuntil}[2]{\mathbin{\mathsf{U}}^{#1..#2}}
+\newcommand{\trelease}[2]{\mathbin{\mathsf{R}}^{#1..#2}}
+
+
+% model checking
+
+%\def\true{{\mathit{true}}}
+%\def\false{{\mathit{false}}}
+%\def\AP{{\mathit{AP}}}
+%\def\Dist{{\mathit{Dist}}}
+%\def\Sat{{\mathit{Sat}}}
+%\def\Steps{{\mathit{Steps}}}
+%\def\sinit{{s_\mathit{init}}}
+%\def\Prob{{\mathit{Prob}}}
+%\def\Pr{{\mathit{Pr}}}
+%\def\Path{{\mathit{Path}}}
+%\def\Pathfin{{\mathit{FPath}}}
+%\def\Pathful{{\mathit{Path}_\mathit{ful}}}
+%\def\Adv{{\mathit{Adv}}}
+%\def\calAfair{{{\cal A}_\mathit{fair}}}
+%\def\sat{{\,\models\,}}
+%\def\notsat{{\,\not\models\,}}
+%\def\satAdv{{\,\models_\mathit{Adv}\,}}
+%\def\notsatAdv{{\,\not\models_\mathit{Adv}\,}}
+%\def\satfair{{\,\models_\mathit{fair}\,}}
+%\def\next{{X\,}}
+%\def\until{{\ {\cal U}\ }}
+%\def\buntil{{\ {\cal U}^{\leq k}\ }}
+%\def\tuntil{{\ {\cal U}^{\leq t}\ }}
+%\def\sqlt{{\sqsubset}}
+%\def\sqleq{{\sqsubseteq}}
+%\def\sqgt{{\sqsupset}}
+%\def\sqgeq{{\sqsupseteq}}
+%\def\psmin{{p_s^\mathit{min}}}
+%\def\psmax{{p_s^\mathit{max}}}
+%\def\ptmin{{p_t^\mathit{min}}}
+%\def\ptmax{{p_t^\mathit{max}}}
+%\def\pspmin{{p_{s'}^\mathit{min}}}
+%\def\pspmax{{p_{s'}^\mathit{max}}}
+%\def\Syes{{S^{\mathit{yes}}}}
+%\def\Sno{{S^{\mathit{no}}}}
+%\def\Sqm{{S^?}}
+%\def\done{{\mathit{done}}}
+%\def\calPbp{{\cal P}_{\bowtie p}}
+%\def\calSbp{{\cal S}_{\bowtie p}}
+%\def\Var{{\mathit{Var}}}
+%\def\Act{{\mathit{Act}}}
+%\def\glob{{\mathit{glob}}}
+%\def\ind{{\mathit{ind}}}
+%\def\enc{{\mathit{enc}}}
+%\def\etmcc{{ $\mathsf{E} {\;} \rotatebox{90}{$\mathsf{T}$} {\;} \mathsf{MC}^\mathsf{2}$ }}
+%\def\implies{{\rightarrow}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%							Commands
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\pdist}[1]{\mathcal{D}({#1})}
+\newcommand{\tfunction}{\longrightarrow}
+\newcommand{\trans}[3]{#1 \overset{#2}{\longrightarrow} #3}
+\newcommand{\allstates}{\overline{S}}
+
+\newcommand{\allstratstwo}{\Sigma}
+\newcommand{\strattwo}{\sigma}
+\newcommand{\Rsetinf}{\Rset_{\pm\infty}}
+\def\Rset{\mathbb{R}}
+\def\Qset{\mathbb{Q}}
+\newcommand{\dwc}{\textsf{dwc}}
+\newcommand{\mydef}{\stackrel{\mbox{\rm {\tiny def}}}{=}}
+\newcommand{\PONE}[1]{\textsf{Player~1}}
+\newcommand{\PTWO}[1]{\textsf{Player~2}}
+\newcommand{\PLAYER}[1]{\textsf{Player}~${#1}$}
+\newcommand{\Exp}{\mathbb{E}}
+%\renewcommand{\Pr}{\mathrm{Pr}}
+\newcommand{\rew}{\mathsf{rew}}
+
+
+\def\calPle{{\cal P}_{\le \lambda}}
+\def\Pr{{\mathit{Pr}}}
+\def\Prps{{\mathit{Pr}_{M^c}^{\sinit}}}
+
+
+\newcommand{\salty}{Salty\xspace}
+\newcommand{\enum}{{\texttt{enum}}\xspace}
+\newcommand{\true}{{\texttt{True}}\xspace}
+\newcommand{\false}{{\texttt{False}}\xspace}
+\newcommand*\necessary{\mathord{\Box}}
+\newcommand*\possible{\mathord{\Diamond}}
+\newcommand{\sysinit}{\lstinline{sys_init}\xspace}%{{\texttt{sys\_init}}\xspace}
+\newcommand{\envinit}{\lstinline{env_init}\xspace}%{{\texttt{env\_init}}\xspace}
+\newcommand{\systrans}{\lstinline{sys_trans}\xspace}%{{\texttt{sys\_trans}}\xspace}
+\newcommand{\envtrans}{\lstinline{env_trans}\xspace}%{{\texttt{env\_trans}}\xspace}
+\newcommand{\sysliveness}{\lstinline{sys_liveness}\xspace}%{{\texttt{sys\_liveness}}\xspace}
+\newcommand{\envliveness}{\lstinline{env_liveness}\xspace}%{{\texttt{env\_liveness}}\xspace}

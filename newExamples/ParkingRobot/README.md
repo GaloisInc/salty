@@ -1,10 +1,14 @@
+# Parking Robot example
+
 Pulled from https://github.com/tulip-control/tulip-control/tree/master/examples
 
 Modified their python program gr1.py to prettyprint the specification.
 With TuLiP installed, run
-  python2 gr1.py
+```
+python2 gr1.py
+```
 to produce the following output, which was translated to Salty by hand:
-
+```
 ENVIRONMENT VARIABLES:
 	park	boolean
 
@@ -37,3 +41,12 @@ GUARANTEE:
     LIVENESS
 	  []<>(X0reach)
 	& []<>(X5)
+```
+
+## Requirements
+Requires tulip. You might be able simply download the tulip repository, then add
+its location to your PYTHONPATH, e.g.
+```
+export PYTHONPATH="\home\username\tulip-control"
+```
+However, tulip itself has dependencies that you may also need to install.

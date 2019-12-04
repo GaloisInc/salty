@@ -1,0 +1,124 @@
+controller GenBuf3 where
+
+input stob_req0 : Bool
+input stob_req1 : Bool
+input stob_req2 : Bool
+input rtob_ack0 : Bool
+input rtob_ack1 : Bool
+input full : Bool
+input empty : Bool
+
+output btos_ack0 : Bool
+output btos_ack1 : Bool
+output btos_ack2 : Bool
+output btor_req0 : Bool
+output btor_req1 : Bool
+output stateg7_0 : Bool
+output stateg7_1 : Bool
+output enq : Bool
+output deq : Bool
+output stateg12 : Bool
+output slc0 : Bool
+output slc1 : Bool
+
+env_init
+  !stob_req0
+  !stob_req1
+  !stob_req2
+  !rtob_ack0
+  !rtob_ack1
+  !full
+  empty
+
+env_trans
+  (stob_req0 /\ !btos_ack0) -> stob_req0'
+  btos_ack0 -> !stob_req0'
+  (stob_req1 /\ !btos_ack1) -> stob_req1'
+  btos_ack1 -> !stob_req1'
+  (stob_req2 /\ !btos_ack2) -> stob_req2'
+  btos_ack2 -> !stob_req2'
+  !btor_req0 -> !rtob_ack0'
+  (btor_req0 /\ rtob_ack0) -> rtob_ack0'
+  !btor_req1 -> !rtob_ack1'
+  (btor_req1 /\ rtob_ack1) -> rtob_ack1'
+  (enq /\ !deq) -> !empty'
+  (deq /\ !enq) -> !full'
+  (enq <-> deq) -> ((full <-> full') /\ (empty <-> empty'))
+
+env_liveness
+  btor_req0 <-> rtob_ack0
+
+env_liveness
+  btor_req1 <-> rtob_ack1
+
+sys_init
+  !btos_ack0
+  !btos_ack1
+  !btos_ack2
+  !btor_req0
+  !btor_req1
+  !stateg7_0
+  stateg7_1
+  !enq
+  !deq
+  !stateg12
+  !slc0
+  !slc1
+
+sys_trans
+  (!stob_req0 /\ stob_req0') -> !btos_ack0'
+  (!btos_ack0 /\ !stob_req0) -> !btos_ack0'
+  (btos_ack0 /\ stob_req0) -> btos_ack0'
+  (!btos_ack0) \/ (!btos_ack1)
+  (!btos_ack0) \/ (!btos_ack2)
+  (!stob_req1 /\ stob_req1') -> !btos_ack1'
+  (!btos_ack1 /\ !stob_req1) -> !btos_ack1'
+  (btos_ack1 /\ stob_req1) -> btos_ack1'
+  (!btos_ack1) \/ (!btos_ack2)
+  (!stob_req2 /\ stob_req2') -> !btos_ack2'
+  (!btos_ack2 /\ !stob_req2) -> !btos_ack2'
+  (btos_ack2 /\ stob_req2) -> btos_ack2'
+  (btor_req0 /\ !rtob_ack0) -> btor_req0'
+  (!btor_req0) \/ (!btor_req1)
+  rtob_ack0 -> !btor_req0'
+  (btor_req1 /\ !rtob_ack1) -> btor_req1'
+  rtob_ack1 -> !btor_req1'
+  (btor_req0 /\ btor_req1) -> False
+  (!stateg7_1 /\ !btor_req0 /\ btor_req1) -> stateg7_1' /\ !stateg7_0'
+  (stateg7_1 /\ btor_req0 /\ !btor_req1) -> !stateg7_1' /\ !stateg7_0'
+  (!stateg7_1 /\ !btor_req0 /\ !btor_req1) -> !stateg7_1' /\ stateg7_0'
+  (stateg7_1 /\ !btor_req0 /\ !btor_req1) -> stateg7_1' /\ stateg7_0'
+  (!stateg7_1 /\ !stateg7_0 /\ btor_req0 /\ !btor_req1) -> !stateg7_1' /\ !stateg7_0'
+  (stateg7_1 /\ !stateg7_0 /\ !btor_req0 /\ btor_req1) -> stateg7_1' /\ !stateg7_0'
+  (!stateg7_1 /\ stateg7_0 /\ btor_req0) -> False
+  (stateg7_1 /\ stateg7_0 /\ btor_req1) -> False
+  (!btos_ack0 /\ btos_ack0') -> enq'
+  (!btos_ack0 /\ btos_ack0') -> !slc0' /\ !slc1'
+  (!btos_ack1 /\ btos_ack1') -> enq'
+  (!btos_ack1 /\ btos_ack1') <-> slc0' /\ !slc1'
+  (!btos_ack2 /\ btos_ack2') -> enq'
+  (!btos_ack2 /\ btos_ack2') <-> !slc0' /\ slc1'
+  ((btos_ack0 \/ !btos_ack0') /\ (btos_ack1 \/ !btos_ack1') /\ (btos_ack2 \/ !btos_ack2')) -> !enq'
+  (rtob_ack0 /\ !rtob_ack0') -> deq'
+  (rtob_ack1 /\ !rtob_ack1') -> deq'
+  ((!rtob_ack0 \/ rtob_ack0') /\ (!rtob_ack1 \/ rtob_ack1')) -> !deq'
+  (full /\ !deq) -> !enq
+  empty -> !deq
+  (!stateg12 /\ empty) -> !stateg12'
+  (!stateg12 /\ deq ) -> !stateg12'
+  (!stateg12 /\ !empty /\ !deq) -> stateg12'
+  (stateg12 /\ !deq ) -> stateg12'
+  (stateg12 /\ deq ) -> !stateg12'
+
+sys_liveness
+  stob_req0 <-> btos_ack0
+
+sys_liveness
+  stob_req1 <-> btos_ack1
+
+sys_liveness
+  stob_req2 <-> btos_ack2
+
+sys_liveness
+  !stateg12
+

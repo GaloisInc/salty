@@ -1,0 +1,287 @@
+controller Arbiter9 where
+
+input hready : Bool
+input hbusreq0 : Bool
+input hlock0 : Bool
+input hbusreq1 : Bool
+input hlock1 : Bool
+input hbusreq2 : Bool
+input hlock2 : Bool
+input hbusreq3 : Bool
+input hlock3 : Bool
+input hbusreq4 : Bool
+input hlock4 : Bool
+input hbusreq5 : Bool
+input hlock5 : Bool
+input hbusreq6 : Bool
+input hlock6 : Bool
+input hbusreq7 : Bool
+input hlock7 : Bool
+input hbusreq8 : Bool
+input hlock8 : Bool
+input hburst0 : Bool
+input hburst1 : Bool
+
+output hmaster0 : Bool
+output hmaster1 : Bool
+output hmaster2 : Bool
+output hmaster3 : Bool
+output hmastlock : Bool
+output start : Bool
+output decide : Bool
+output locked : Bool
+output hgrant0 : Bool
+output hgrant1 : Bool
+output hgrant2 : Bool
+output hgrant3 : Bool
+output hgrant4 : Bool
+output hgrant5 : Bool
+output hgrant6 : Bool
+output hgrant7 : Bool
+output hgrant8 : Bool
+output busreq : Bool
+output statea1 : Bool
+output stateg2 : Bool
+output stateg3_0 : Bool
+output stateg3_1 : Bool
+output stateg3_2 : Bool
+output stateg10_1 : Bool
+output stateg10_2 : Bool
+output stateg10_3 : Bool
+output stateg10_4 : Bool
+output stateg10_5 : Bool
+output stateg10_6 : Bool
+output stateg10_7 : Bool
+output stateg10_8 : Bool
+
+env_init
+  !hready
+  !hbusreq0
+  !hlock0
+  !hbusreq1
+  !hlock1
+  !hbusreq2
+  !hlock2
+  !hbusreq3
+  !hlock3
+  !hbusreq4
+  !hlock4
+  !hbusreq5
+  !hlock5
+  !hbusreq6
+  !hlock6
+  !hbusreq7
+  !hlock7
+  !hbusreq8
+  !hlock8
+  !hburst0
+  !hburst1
+
+env_trans
+   hlock0 -> hbusreq0 
+   hlock1 -> hbusreq1 
+   hlock2 -> hbusreq2 
+   hlock3 -> hbusreq3 
+   hlock4 -> hbusreq4 
+   hlock5 -> hbusreq5 
+   hlock6 -> hbusreq6 
+   hlock7 -> hbusreq7 
+   hlock8 -> hbusreq8 
+
+env_liveness
+  !statea1
+
+env_liveness
+  hready
+
+sys_init
+  !hmaster0
+  !hmaster1
+  !hmaster2
+  !hmaster3
+  !hmastlock
+  start
+  decide
+  !locked
+  hgrant0
+  !hgrant1
+  !hgrant2
+  !hgrant3
+  !hgrant4
+  !hgrant5
+  !hgrant6
+  !hgrant7
+  !hgrant8
+  !busreq
+  !statea1
+  !stateg2
+  !stateg3_0
+  !stateg3_1
+  !stateg3_2
+  !stateg10_1
+  !stateg10_2
+  !stateg10_3
+  !stateg10_4
+  !stateg10_5
+  !stateg10_6
+  !stateg10_7
+  !stateg10_8
+
+sys_trans
+  (!hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (!hmaster3) -> (!hbusreq0 <-> !busreq)
+  (hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (!hmaster3) -> (!hbusreq1 <-> !busreq)
+  (!hmaster0) /\ (hmaster1) /\ (!hmaster2) /\ (!hmaster3) -> (!hbusreq2 <-> !busreq)
+  (hmaster0) /\ (hmaster1) /\ (!hmaster2) /\ (!hmaster3) -> (!hbusreq3 <-> !busreq)
+  (!hmaster0) /\ (!hmaster1) /\ (hmaster2) /\ (!hmaster3) -> (!hbusreq4 <-> !busreq)
+  (hmaster0) /\ (!hmaster1) /\ (hmaster2) /\ (!hmaster3) -> (!hbusreq5 <-> !busreq)
+  (!hmaster0) /\ (hmaster1) /\ (hmaster2) /\ (!hmaster3) -> (!hbusreq6 <-> !busreq)
+  (hmaster0) /\ (hmaster1) /\ (hmaster2) /\ (!hmaster3) -> (!hbusreq7 <-> !busreq)
+  (!hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (hmaster3) -> (!hbusreq8 <-> !busreq)
+  ((!statea1) /\ ((!hmastlock) \/ (hburst0) \/ (hburst1))) -> !statea1'
+  ((!statea1) /\ (hmastlock) /\ (!hburst0) /\ (!hburst1)) -> statea1'
+  ((statea1) /\ (busreq)) -> statea1'
+  ((statea1) /\ (!busreq)) -> !statea1'
+  (!hready) -> !start'
+  ((!stateg2) /\ ((!hmastlock) \/ (!start) \/ (hburst0) \/ (hburst1))) -> !stateg2'
+  ((!stateg2) /\ (hmastlock) /\ (start) /\ (!hburst0) /\ (!hburst1)) -> stateg2'
+  ((stateg2) /\ (!start) /\ (busreq)) -> stateg2'
+  ((stateg2) /\ (start)) -> False
+  ((stateg2) /\ (!start) /\ (!busreq)) -> !stateg2'
+  ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!hmastlock) \/ (!start) \/ ((hburst0) \/ (!hburst1)))) -> (!stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((hmastlock) /\ (start) /\ ((!hburst0) /\ (hburst1)) /\ (!hready))) -> (stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((hmastlock) /\ (start) /\ ((!hburst0) /\ (hburst1)) /\ (hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ !stateg3_1' /\ stateg3_2')
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ !stateg3_1' /\ stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((start))) -> False
+  (hready) -> ((hgrant0) <-> (!hmaster0' /\ !hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant1) <-> (hmaster0' /\ !hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant2) <-> (!hmaster0' /\ hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant3) <-> (hmaster0' /\ hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant4) <-> (!hmaster0' /\ !hmaster1' /\ hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant5) <-> (hmaster0' /\ !hmaster1' /\ hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant6) <-> (!hmaster0' /\ hmaster1' /\ hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant7) <-> (hmaster0' /\ hmaster1' /\ hmaster2' /\ !hmaster3'))
+  (hready) -> ((hgrant8) <-> (!hmaster0' /\ !hmaster1' /\ !hmaster2' /\ hmaster3'))
+  (hready) -> (!locked <-> !hmastlock')
+  !start' -> (((!hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (!hmaster3)) <-> (!hmaster0' /\ !hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  !start' -> (((hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (!hmaster3)) <-> (hmaster0' /\ !hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  !start' -> (((!hmaster0) /\ (hmaster1) /\ (!hmaster2) /\ (!hmaster3)) <-> (!hmaster0' /\ hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  !start' -> (((hmaster0) /\ (hmaster1) /\ (!hmaster2) /\ (!hmaster3)) <-> (hmaster0' /\ hmaster1' /\ !hmaster2' /\ !hmaster3'))
+  !start' -> (((!hmaster0) /\ (!hmaster1) /\ (hmaster2) /\ (!hmaster3)) <-> (!hmaster0' /\ !hmaster1' /\ hmaster2' /\ !hmaster3'))
+  !start' -> (((hmaster0) /\ (!hmaster1) /\ (hmaster2) /\ (!hmaster3)) <-> (hmaster0' /\ !hmaster1' /\ hmaster2' /\ !hmaster3'))
+  !start' -> (((!hmaster0) /\ (hmaster1) /\ (hmaster2) /\ (!hmaster3)) <-> (!hmaster0' /\ hmaster1' /\ hmaster2' /\ !hmaster3'))
+  !start' -> (((hmaster0) /\ (hmaster1) /\ (hmaster2) /\ (!hmaster3)) <-> (hmaster0' /\ hmaster1' /\ hmaster2' /\ !hmaster3'))
+  !start' -> (((!hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (hmaster3)) <-> (!hmaster0' /\ !hmaster1' /\ !hmaster2' /\ hmaster3'))
+  ((!start')) -> ((hmastlock) <-> hmastlock')
+  (decide /\ hlock0 /\ hgrant0')->locked'
+  (decide /\ !hlock0 /\ hgrant0')->!locked'
+  (decide /\ hlock1 /\ hgrant1')->locked'
+  (decide /\ !hlock1 /\ hgrant1')->!locked'
+  (decide /\ hlock2 /\ hgrant2')->locked'
+  (decide /\ !hlock2 /\ hgrant2')->!locked'
+  (decide /\ hlock3 /\ hgrant3')->locked'
+  (decide /\ !hlock3 /\ hgrant3')->!locked'
+  (decide /\ hlock4 /\ hgrant4')->locked'
+  (decide /\ !hlock4 /\ hgrant4')->!locked'
+  (decide /\ hlock5 /\ hgrant5')->locked'
+  (decide /\ !hlock5 /\ hgrant5')->!locked'
+  (decide /\ hlock6 /\ hgrant6')->locked'
+  (decide /\ !hlock6 /\ hgrant6')->!locked'
+  (decide /\ hlock7 /\ hgrant7')->locked'
+  (decide /\ !hlock7 /\ hgrant7')->!locked'
+  (decide /\ hlock8 /\ hgrant8')->locked'
+  (decide /\ !hlock8 /\ hgrant8')->!locked'
+  (!decide)->(((!hgrant0)<->!hgrant0'))
+  (!decide)->(((!hgrant1)<->!hgrant1'))
+  (!decide)->(((!hgrant2)<->!hgrant2'))
+  (!decide)->(((!hgrant3)<->!hgrant3'))
+  (!decide)->(((!hgrant4)<->!hgrant4'))
+  (!decide)->(((!hgrant5)<->!hgrant5'))
+  (!decide)->(((!hgrant6)<->!hgrant6'))
+  (!decide)->(((!hgrant7)<->!hgrant7'))
+  (!decide)->(((!hgrant8)<->!hgrant8'))
+  (!decide)->(!locked <-> !locked')
+  ((!stateg10_1) /\ (((hgrant1) \/ (hbusreq1))))->!stateg10_1'
+  ((!stateg10_1) /\ ((!hgrant1) /\ (!hbusreq1)))->stateg10_1'
+  ((stateg10_1) /\ ((!hgrant1) /\ (!hbusreq1)))->stateg10_1'
+  ((stateg10_1) /\ (((hgrant1)) /\ (!hbusreq1)))->False
+  ((stateg10_1) /\ (hbusreq1))->!stateg10_1'
+  ((!stateg10_2) /\ (((hgrant2) \/ (hbusreq2))))->!stateg10_2'
+  ((!stateg10_2) /\ ((!hgrant2) /\ (!hbusreq2)))->stateg10_2'
+  ((stateg10_2) /\ ((!hgrant2) /\ (!hbusreq2)))->stateg10_2'
+  ((stateg10_2) /\ (((hgrant2)) /\ (!hbusreq2)))->False
+  ((stateg10_2) /\ (hbusreq2))->!stateg10_2'
+  ((!stateg10_3) /\ (((hgrant3) \/ (hbusreq3))))->!stateg10_3'
+  ((!stateg10_3) /\ ((!hgrant3) /\ (!hbusreq3)))->stateg10_3'
+  ((stateg10_3) /\ ((!hgrant3) /\ (!hbusreq3)))->stateg10_3'
+  ((stateg10_3) /\ (((hgrant3)) /\ (!hbusreq3)))->False
+  ((stateg10_3) /\ (hbusreq3))->!stateg10_3'
+  ((!stateg10_4) /\ (((hgrant4) \/ (hbusreq4))))->!stateg10_4'
+  ((!stateg10_4) /\ ((!hgrant4) /\ (!hbusreq4)))->stateg10_4'
+  ((stateg10_4) /\ ((!hgrant4) /\ (!hbusreq4)))->stateg10_4'
+  ((stateg10_4) /\ (((hgrant4)) /\ (!hbusreq4)))->False
+  ((stateg10_4) /\ (hbusreq4))->!stateg10_4'
+  ((!stateg10_5) /\ (((hgrant5) \/ (hbusreq5))))->!stateg10_5'
+  ((!stateg10_5) /\ ((!hgrant5) /\ (!hbusreq5)))->stateg10_5'
+  ((stateg10_5) /\ ((!hgrant5) /\ (!hbusreq5)))->stateg10_5'
+  ((stateg10_5) /\ (((hgrant5)) /\ (!hbusreq5)))->False
+  ((stateg10_5) /\ (hbusreq5))->!stateg10_5'
+  ((!stateg10_6) /\ (((hgrant6) \/ (hbusreq6))))->!stateg10_6'
+  ((!stateg10_6) /\ ((!hgrant6) /\ (!hbusreq6)))->stateg10_6'
+  ((stateg10_6) /\ ((!hgrant6) /\ (!hbusreq6)))->stateg10_6'
+  ((stateg10_6) /\ (((hgrant6)) /\ (!hbusreq6)))->False
+  ((stateg10_6) /\ (hbusreq6))->!stateg10_6'
+  ((!stateg10_7) /\ (((hgrant7) \/ (hbusreq7))))->!stateg10_7'
+  ((!stateg10_7) /\ ((!hgrant7) /\ (!hbusreq7)))->stateg10_7'
+  ((stateg10_7) /\ ((!hgrant7) /\ (!hbusreq7)))->stateg10_7'
+  ((stateg10_7) /\ (((hgrant7)) /\ (!hbusreq7)))->False
+  ((stateg10_7) /\ (hbusreq7))->!stateg10_7'
+  ((!stateg10_8) /\ (((hgrant8) \/ (hbusreq8))))->!stateg10_8'
+  ((!stateg10_8) /\ ((!hgrant8) /\ (!hbusreq8)))->stateg10_8'
+  ((stateg10_8) /\ ((!hgrant8) /\ (!hbusreq8)))->stateg10_8'
+  ((stateg10_8) /\ (((hgrant8)) /\ (!hbusreq8)))->False
+  ((stateg10_8) /\ (hbusreq8))->!stateg10_8'
+  (decide /\ !hbusreq0 /\ !hbusreq1 /\ !hbusreq2 /\ !hbusreq3 /\ !hbusreq4 /\ !hbusreq5 /\ !hbusreq6 /\ !hbusreq7 /\ !hbusreq8) -> hgrant0'
+
+sys_liveness
+  !stateg2
+
+sys_liveness
+  (!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2)
+
+sys_liveness
+  ((!hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (!hmaster3)) \/ !hbusreq0
+
+sys_liveness
+  ((hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (!hmaster3)) \/ !hbusreq1
+
+sys_liveness
+  ((!hmaster0) /\ (hmaster1) /\ (!hmaster2) /\ (!hmaster3)) \/ !hbusreq2
+
+sys_liveness
+  ((hmaster0) /\ (hmaster1) /\ (!hmaster2) /\ (!hmaster3)) \/ !hbusreq3
+
+sys_liveness
+  ((!hmaster0) /\ (!hmaster1) /\ (hmaster2) /\ (!hmaster3)) \/ !hbusreq4
+
+sys_liveness
+  ((hmaster0) /\ (!hmaster1) /\ (hmaster2) /\ (!hmaster3)) \/ !hbusreq5
+
+sys_liveness
+  ((!hmaster0) /\ (hmaster1) /\ (hmaster2) /\ (!hmaster3)) \/ !hbusreq6
+
+sys_liveness
+  ((hmaster0) /\ (hmaster1) /\ (hmaster2) /\ (!hmaster3)) \/ !hbusreq7
+
+sys_liveness
+  ((!hmaster0) /\ (!hmaster1) /\ (!hmaster2) /\ (hmaster3)) \/ !hbusreq8
+
