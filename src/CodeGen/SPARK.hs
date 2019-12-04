@@ -122,13 +122,13 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                               , annotate [ Ghost ] ]
            , statement $ vcat [ assign (declVar (text "State_To_Input_Equivalence") (text "constant SI_Equivalence_Array"))
                                   $ vcat [ PP.empty
-                                         , indent 2 $ mkStateInputEq fsmNodes (svType env) ]
+                                         , indent 2 $ mkStateInputEq fsmNodes env ]
                               , annotate [ Ghost ] ]
            , statement $ vcat [ declType (text "SO_Equivalence_Array") (text "array" <+> parens (stType <> text "'First .." <+> stType <> text "'Last-1") <+> text "of" <+> svType sys)
                                      , annotate [ Ghost ] ]
            , statement $ vcat [ assign (declVar (text "State_To_Output_Equivalence") (text "constant SO_Equivalence_Array"))
                                   $ vcat [ PP.empty
-                                         , indent 2 $ mkStateOutputEq fsmNodes (svType sys) ]
+                                         , indent 2 $ mkStateOutputEq fsmNodes sys ]
                               , annotate [ Ghost ] ]
            , eFunc (text "State_To_Input_Mapping")
                [ declVar cntlrName cntlrType ]
@@ -185,7 +185,7 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                       , declParam (svName sys) Out (svType sys) ]
                   , subBody (text "Move")
                       [ ]
-                      [ mkNested fsmNodes cntlrName stName (svName env) (svName sys)
+                      [ mkNested fsmNodes cntlrName stName env sys
                       , statement $ assign (qualify (Just cntlrName) (svName env)) (svName env)
                       , statement $ assign (svName sys) (qualify (Just cntlrName) (svName sys)) ] ] ]
 
@@ -385,28 +385,29 @@ sparkExpr (fsmInputs,_) env sys next es =
 
   mkExpr e = text "UNDEFINED" <+> pp (show e)
 
-mkStateInputEq :: Map.Map Int Node -> Doc -> Doc
+mkStateInputEq :: Map.Map Int Node -> SpecVar -> Doc
 mkStateInputEq ns env =
   parens $ vcat $ punctuate comma
-    [ mkEntry nodeInputs | (_, Node { nodeInputs }) <- take (Map.size ns - 1) (Map.toList ns) ]
-  where
-  mkEntry inputs = env <> text "'" <> parens (fsep $ punctuate comma
-    [ sparkName n <+> text "=>" <+> sparkValue v | (n,v) <- Map.toList inputs ])
+    [ mkVarVals nodeInputs env | (_, Node { nodeInputs }) <- take (Map.size ns - 1) (Map.toList ns) ]
 
-mkStateOutputEq :: Map.Map Int Node -> Doc -> Doc
+mkStateOutputEq :: Map.Map Int Node -> SpecVar -> Doc
 mkStateOutputEq ns sys =
   parens $ vcat $ punctuate comma
-    [ mkEntry nodeOutputs | (_, Node { nodeOutputs }) <- take (Map.size ns - 1) (Map.toList ns) ]
-  where
-  mkEntry outputs = sys <> text "'" <> parens (fsep $ punctuate comma
-    [ sparkName n <+> text "=>" <+> sparkValue v | (n,v) <- Map.toList outputs ])
+    [ mkVarVals nodeOutputs sys | (_, Node { nodeOutputs }) <- take (Map.size ns - 1) (Map.toList ns) ]
+
+mkVarVals :: Map.Map Name Value -> SpecVar -> Doc
+mkVarVals vars SpecVar { svType, svIsRec = True } =
+  svType <> text "'" <> parens (fsep $
+    punctuate comma
+      [ sparkName n <+> text "=>" <+> sparkValue v | (n,v) <- Map.toList vars ])
+mkVarVals vars _ = sparkValue $ snd $ head $ Map.toList vars
 
 -- NOTE: assumes inputs are ordered the same across nodes
-mkNested :: Map.Map Int Node -> Doc -> Doc -> Doc -> Doc -> Doc
-mkNested ns cntlrName stName envName sysName =
+mkNested :: Map.Map Int Node -> Doc -> Doc -> SpecVar -> SpecVar -> Doc
+mkNested ns cntlrName stName env sys =
   vcat [ text "case" <+> qualify (Just cntlrName) stName <+> text "is"
        , indent 2 $ vcat [ vcat [ text "when" <+> pp (s+1) <+> text "=>"
-                                , indent 2 $ mkNested' ns cntlrName stName envName sysName (sort nodeTrans) [] False PP.empty ]
+                                , indent 2 $ mkNested' ns cntlrName stName env sys (sort nodeTrans) [] False PP.empty ]
                            | (s, Node { nodeTrans }) <- Map.toList ns ]
        , statement $ text "end case" ]
   where
@@ -416,21 +417,24 @@ mkNested ns cntlrName stName envName sysName =
                   [ map snd (Map.toList xs) |
                     xs <- [ nodeInputs | Node { nodeInputs } <- map (ns Map.!) ts ] ])
 
-mkNested' :: Map.Map Int Node -> Doc -> Doc -> Doc -> Doc -> [Int] -> [Value] -> Bool -> Doc -> Doc
+mkNested' :: Map.Map Int Node -> Doc -> Doc -> SpecVar -> SpecVar -> [Int] -> [Value] -> Bool -> Doc -> Doc
 mkNested' _ _ _ _ _ [] [] _ d = d
-mkNested' ns cntlrName stName envName sysName [] p _ d =
-  mkNested' ns cntlrName stName envName sysName [] (init p) True $
+mkNested' ns cntlrName stName env sys [] p _ d =
+  mkNested' ns cntlrName stName env sys [] (init p) True $
     vcat [ d
          , indent ((length p - 1) * 4) $ vcat
            [ indent 2 $ vcat
              [ text "when others =>"
              , indent 2 (statement $ text "raise Program_Error") ]
            , statement $ text "end case" ] ]
-mkNested' ns cntlrName stName envName sysName ts p b d =
+mkNested' ns cntlrName stName env sys ts p b d =
   let Node { nodeInputs, nodeOutputs } = ns Map.! head ts
     in mkCase (Map.toList nodeInputs) nodeOutputs
   where
   values = map snd
+
+  mkVarName SpecVar { svIsRec = False } n = n
+  mkVarName SpecVar { svName } n = qualify (Just svName) n
 
   mkCase xs nodeOutputs
     | values xs == p = -- matches prefix (leaf)
@@ -441,21 +445,21 @@ mkNested' ns cntlrName stName envName sysName ts p b d =
                     (assign (qualify (Just cntlrName) stName) (pp (head ts + 1)))
                  : [ statement $
                        assign
-                         (qualify (Just (qualify (Just cntlrName) sysName)) (sparkName n))
+                         (qualify (Just cntlrName) (mkVarName sys (sparkName n)))
                          (sparkValue v)
                      | (n,v) <- Map.toList nodeOutputs ] ]
     | take (length p) (values xs) == p = -- matches prefix
         let when = indent 2 $ text "when" <+> sparkValue (snd $ xs !! length p) <+> text "=>"
-          in mkNested' ns cntlrName stName envName sysName ts (take (length p + 1) (values xs)) False $
+          in mkNested' ns cntlrName stName env sys ts (take (length p + 1) (values xs)) False $
                vcat $
                  (if PP.isEmpty d then [] else [d]) ++
                    [ indent (length p * 4)
                        (if not b -- descending
-                         then vcat [ text "case" <+> qualify (Just envName) (sparkName (fst $ xs !! length p)) <+> text "is"
+                         then vcat [ text "case" <+> mkVarName env (sparkName (fst $ xs !! length p)) <+> text "is"
                                    , when ]
                          else when) ]
     | b = -- doesn't match prefix (backtracking)
-        mkNested' ns cntlrName stName envName sysName ts (init p) True $
+        mkNested' ns cntlrName stName env sys ts (init p) True $
           vcat [ d
                , indent (length p * 4) $ vcat
                  [ indent 2 $ vcat
@@ -463,4 +467,4 @@ mkNested' ns cntlrName stName envName sysName ts p b d =
                    , indent 2 (statement $ text "raise Program_Error") ]
                  , statement $ text "end case" ] ]
     | otherwise = -- doesn't match prefix (leaf)
-        mkNested' ns cntlrName stName envName sysName ts (init p) True d
+        mkNested' ns cntlrName stName env sys ts (init p) True d
