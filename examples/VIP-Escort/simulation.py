@@ -1,6 +1,4 @@
 #!/usr/bin/python
-#import psaltlib.Outputs
-#import psaltlib.Inputs
 import itertools
 import zmq, sys, re, time
 sys.path.insert(0, 'lmcp/py')
@@ -18,12 +16,12 @@ class Location():
         self.lat = lat
         self.lon = lon
 
-AVERROR = 'Error: AirVehicleState for ID ' 
+AVERROR = 'Warning: AirVehicleState for ID ' 
 
 context = zmq.Context()
 socket_sub = context.socket(zmq.SUB)
 socket_sub.connect("tcp://127.0.0.1:5560")
-socket_sub.setsockopt(zmq.SUBSCRIBE, 'afrl.cmasi.AirVehicle')
+socket_sub.setsockopt(zmq.SUBSCRIBE, b'afrl.cmasi.AirVehicle')
 socket_send = context.socket(zmq.PUSH)
 socket_send.connect("tcp://127.0.0.1:5561")
 
@@ -47,8 +45,7 @@ def goto(uav, loc):
     msg_obj.EntityList = [uav]
     msg_obj.TaskList = [loc]
     msg_obj.OperatingRegion = 100
-    header = str(msg_obj.FULL_LMCP_TYPE_NAME) + "$lmcp|" +\
-             str(msg_obj.FULL_LMCP_TYPE_NAME) + "||0|0$"
+    header = bytearray(str(msg_obj.FULL_LMCP_TYPE_NAME) + "$lmcp|" + str(msg_obj.FULL_LMCP_TYPE_NAME) + "||0|0$", 'ascii')
     smsg = LMCPFactory.packMessage(msg_obj, True)
     socket_send.send(header + smsg)
 
@@ -57,8 +54,7 @@ def track(tracker):
     msg_obj = factory.createObjectByName("CMASI", "AutomationRequest")
     msg_obj.EntityList = [tracker]
     msg_obj.TaskList = [6]
-    header = str(msg_obj.FULL_LMCP_TYPE_NAME) + "$lmcp|" +\
-             str(msg_obj.FULL_LMCP_TYPE_NAME) + "||0|0$"
+    header = bytearray(str(msg_obj.FULL_LMCP_TYPE_NAME) + "$lmcp|" + str(msg_obj.FULL_LMCP_TYPE_NAME) + "||0|0$", 'ascii')
     smsg = LMCPFactory.packMessage(msg_obj, True)
     socket_send.send(header + smsg)
 
@@ -117,8 +113,8 @@ def update_surv(splist, av_states):
 
 def get_next_message(socket_sub, lmcp_factory):
         data = socket_sub.recv()
-        address, attributes, msg = data.split('$', 2)
-        msg_format, msg_type, msg_group, entityid, serviceid = attributes.split('|', 4)
+        address, attributes, msg = data.split(b'$', 2)
+        msg_format, msg_type, msg_group, entityid, serviceid = attributes.split(b'|', 4)
         msg = msg
         obj = lmcp_factory.getObject(msg)
         if (int(entityid) == 0 and int(
@@ -132,7 +128,7 @@ def initialize_av_configurations(av_configurations, av_ids, lmcp_factory, socket
         msg_obj = get_next_message(socket_sub, lmcp_factory)
         if msg_obj and msg_obj.FULL_LMCP_TYPE_NAME == 'afrl.cmasi.AirVehicleConfiguration':
             if msg_obj.get_ID() in av_ids:
-                if not av_configurations.has_key(msg_obj.get_ID()):
+                if msg_obj.get_ID() not in av_configurations:
                     print('Recording AirVehicleConfiguration with ID ' + str(msg_obj.get_ID()))
                 else:
                     print('Warning: Recording duplicate AirVehicleConfiguration with ID ' + str(msg_obj.get_ID()))
@@ -149,10 +145,10 @@ def initialize_av_configurations(av_configurations, av_ids, lmcp_factory, socket
     return msg_obj
 
 def initialize_av_states(av_configurations, av_states, msg_obj, lmcp_factory, socket_sub):
-    av_initializations = av_configurations.keys()
+    av_initializations = list(av_configurations.keys())
     while len(av_initializations) > 0:
         if msg_obj and msg_obj.FULL_LMCP_TYPE_NAME == 'afrl.cmasi.AirVehicleState':
-            if not av_configurations.has_key(msg_obj.get_ID()):
+            if msg_obj.get_ID() not in av_configurations:
                 print('Warning: Ignoring unknown AirVehicleState ' + str(msg_obj.get_ID()))
             elif av_initializations.count(msg_obj.get_ID()) == 1:
                 av_states[msg_obj.get_ID()] = AvState(av_configurations[msg_obj.get_ID()], 
@@ -164,10 +160,10 @@ def initialize_av_states(av_configurations, av_states, msg_obj, lmcp_factory, so
     return msg_obj
 
 def update_av_states(av_states, msg_obj, lmcp_factory, socket_sub):
-    av_initializations = av_states.keys()
+    av_initializations = list(av_states.keys())
     while len(av_initializations) > 0:
         if msg_obj and msg_obj.FULL_LMCP_TYPE_NAME == 'afrl.cmasi.AirVehicleState':
-            if not av_states.has_key(msg_obj.get_ID()):
+            if msg_obj.get_ID() not in av_states:
                 print('Warning: Ignoring unknown AirVehicleState ' + str(msg_obj.get_ID()))
             elif av_initializations.count(msg_obj.get_ID()) == 1:
                 av_states[msg_obj.get_ID()].update_state(msg_obj)
