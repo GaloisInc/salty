@@ -1,0 +1,22 @@
+controller Demo where
+
+input tt_command : Bool = False
+input saw_target : Bool = False
+input fuel_ok    : Bool = True
+
+enum Behavior = SearchA | TrackTarget | Refuel
+
+output behavior : Behavior = SearchA
+
+def app(f,x) = f(x)
+
+def setBehavior(b) = behavior == b
+
+-- track target play (safety)
+sys_trans
+  if fuel_ok
+     then if tt_command && saw_target
+             then behavior == TrackTarget
+             else behavior == SearchA
+
+     else app(setBehavior,Refuel)

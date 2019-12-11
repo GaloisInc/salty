@@ -1,0 +1,63 @@
+controller FireFighting where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io) and
+-- slugs (https://github.com/VerifiableRobotics/slugs)
+
+-- For this example, the robot acts as a firefighter in a simple household environment. The mission of
+-- the robot is to search the whole house, and bring any detected hazardous item to the porch region.
+-- In addition, if the robot detects a person, it needs to stay in place and radio for help.
+
+input person: Bool = False
+input hazardous_item: Bool = False
+
+output pick_up: Bool = False
+output drop: Bool = False
+output radio: Bool = False
+output carrying_item: Bool = False
+
+enum Region = Porch | Living | Deck | Kitchen | Dining | Bedroom
+output location: Region = Porch
+
+env_trans
+  (location == Porch) -> !hazardous_item'
+  (location == Porch) -> !person'
+
+sys_trans
+  -- Define robot safety including how to pick up
+  pick_up' <-> (hazardous_item' /\ !carrying_item')
+  pick_up' -> (location' == location)
+  (!drop /\ (pick_up \/ carrying_item)) <-> carrying_item'
+  ((location' == Porch) /\ carrying_item') <-> drop'
+
+  !carrying_item -> !(location' == Porch)
+
+  -- Define when and how to radio
+  person' <-> radio'
+  (radio' \/ radio) -> (location' == location)
+
+  -- Allowable transitions
+  (location == Porch) -> any { (location' == Porch), (location' == Living), (location' == Kitchen) }
+  (location == Dining) -> any { (location' == Dining), (location' == Living), (location' == Kitchen) }
+  (location == Deck) -> any { (location' == Deck), (location' == Kitchen), (location' == Bedroom) }
+  (location == Living) -> any { (location' == Living), (location' == Porch), (location' == Dining), (location' == Bedroom) }
+  (location == Kitchen) -> any { (location' == Kitchen), (location' == Porch), (location' == Dining), (location' == Deck) }
+  (location == Bedroom) -> any { (location' == Bedroom), (location' == Deck), (location' == Living) }
+
+-- Patrol goals
+sys_liveness
+  (!carrying_item' /\ !radio') -> (location' == Living)
+
+sys_liveness
+  (!carrying_item' /\ !radio') -> (location' == Bedroom)
+
+sys_liveness
+  (!carrying_item' /\ !radio') -> (location' == Deck)
+
+sys_liveness
+  (!carrying_item' /\ !radio') -> (location' == Kitchen)
+
+sys_liveness
+  (!carrying_item' /\ !radio') -> (location' == Dining)
+
+sys_liveness
+  (carrying_item' /\ !radio') -> (location' == Porch)

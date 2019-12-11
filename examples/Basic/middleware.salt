@@ -1,0 +1,61 @@
+controller Middleware where
+
+input m_1_Fuel_0_0  : Bool = False
+input m_2_Fuel_0_0  : Bool = False
+input m_1_Found_2_0 : Bool = False
+
+enum Command = None | ST_2_A | ST_2_B
+
+input p_1_Command_0_0 : Command = None
+input p_2_Loiter_0_0  : Bool    = True
+
+enum Behavior = Loiter | Refuel | Search | Upload | Track
+
+output b_1_Behavior_0_0 : Behavior = Loiter
+output b_2_Behavior_0_0 : Behavior = Loiter
+
+
+-- abbreviations
+def p_1_Loiter_0_0 = p_1_Command_0_0  == None
+def p_1_ST_2_A     = p_1_Command_0_0  == ST_2_A
+def p_1_ST_2_B     = p_1_Command_0_0  == ST_2_B
+
+def b_1_Loiter_0_0 = b_1_Behavior_0_0 == Loiter
+def b_1_Refuel_0_0 = b_1_Behavior_0_0 == Refuel
+def b_1_Search_0_0 = b_1_Behavior_0_0 == Search
+def b_1_Search_0_1 = b_1_Behavior_0_0 == Search
+def b_1_Track_2_0  = b_1_Behavior_0_0 == Track
+def b_2_Loiter_0_0 = b_2_Behavior_0_0 == Loiter
+def b_2_Refuel_0_0 = b_2_Behavior_0_0 == Refuel
+def b_2_Search_0_0 = b_2_Behavior_0_0 == Search
+
+
+sys_trans
+  (p_1_Loiter_0_0 /\ !m_1_Fuel_0_0) -> b_1_Loiter_0_0
+  (p_2_Loiter_0_0 /\ !m_2_Fuel_0_0) -> b_2_Loiter_0_0
+
+
+def play(cmd,health,switch,b1,b2) =
+  sys_trans
+    (cmd /\ health /\  switch) -> b1
+    (cmd /\ health /\ !switch) -> b2
+
+play(p_1_ST_2_A,!m_1_Fuel_0_0,m_1_Found_2_0,b_1_Search_0_0,b_1_Track_2_0)
+play(p_1_ST_2_B,!m_1_Fuel_0_0,m_1_Found_2_0,b_1_Search_0_1,b_1_Track_2_0)
+
+
+-- Contingency -----------------------------------------------------------------
+
+def contingency(health,action) =
+  sys_trans
+    ! health -> action
+
+contingency(!m_1_Fuel_0_0,b_1_Refuel_0_0)
+contingency(!m_2_Fuel_0_0,b_2_Refuel_0_0)
+
+
+-- Default Action --------------------------------------------------------------
+
+sys_trans
+  !p_1_Loiter_0_0 -> !b_1_Loiter_0_0
+  !p_2_Loiter_0_0 -> !b_2_Loiter_0_0

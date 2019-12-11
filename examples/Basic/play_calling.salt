@@ -1,0 +1,104 @@
+controller PlayCalling where
+
+-- Sensors ---------------------------------------------------------------------
+
+input s_Target  : Bool = False
+input s_DataOut : Bool = False
+input s_Data    : Bool = False
+input s_Fuel    : Bool = True
+input s_Sensor  : Bool = True
+
+
+-- UAV Behavior ----------------------------------------------------------------
+
+enum Behavior = Loiter
+              | SearchArea
+              | SearchPerimeter
+              | TrackTarget
+              | DeliverData
+              | Refuel
+
+output behavior : Behavior = Loiter
+
+
+-- Input Commands --------------------------------------------------------------
+
+enum Command = C_None
+             | C_TrackTarget
+             | C_SearchForest
+             | C_SearchForestPerimeter
+
+input command : Command = C_None
+
+-- Differences to "LTL Play Calling":
+--
+-- We don't use IFF for the play safety properties, as the commands share
+-- behaviors. If we implement as in the paper, the specification will not be
+-- realizable when multiple commands are implemented.
+def play (c,b1,r1,m,b2,r2,health) =
+  sys_trans
+    (command == c /\ region == r1 /\ all health /\ !m) -> behavior == b1
+    (command == c /\ region == r2 /\ all health /\  m) -> behavior == b2
+    (behavior <- { b1, b2 }) -> all health
+
+  sys_liveness
+    (command == c /\ all health) -> (behavior <- { b1, b2 })
+
+
+-- Target Tracking -------------------------------------------------------------
+
+play(C_TrackTarget,SearchArea,Region_BC,s_Target,TrackTarget,Region_BC,{ s_Fuel, s_Sensor })
+
+
+-- Forest Searching ------------------------------------------------------------
+
+play(C_SearchForest,SearchArea,Region_F,s_DataOut,DeliverData,Region_CS,{ s_Fuel, s_Sensor })
+
+
+-- Perimeter Search ------------------------------------------------------------
+
+play(C_SearchForestPerimeter,SearchPerimeter,Region_F,!s_Data,DeliverData,Region_CS,{ s_Fuel, s_Sensor })
+
+
+-- Contingency -----------------------------------------------------------------
+
+def contingency(hf,ht,b,r) =
+  sys_trans
+    (behavior == b) <-> (region == r /\ all ht)
+   -- if region == r /\ all ht
+   --    then behavior == b
+   --    else behavior == other
+
+  sys_liveness
+    ( !(any hf) /\  all ht ) -> behavior == b
+
+
+-- refuel contingency
+contingency({ s_Fuel },{},Refuel,Region_CS)
+
+-- Loiter ----------------------------------------------------------------------
+
+sys_trans
+  (command == C_None) -> (behavior <- { Refuel, Loiter })
+
+
+-- Region Transition -----------------------------------------------------------
+
+-- | Regions in the simulation.
+enum Region = Region_0
+            | Region_BC
+            | Region_CS
+            | Region_F
+
+-- | The current region of the UAV.
+output region : Region = Region_0
+
+def region_trans(from,to) =
+  sys_trans
+    region == from -> (region' == from \/ (region' <- to))
+
+-- define the region connections
+region_trans(Region_0, { Region_CS, Region_BC, Region_F })
+region_trans(Region_F, { Region_0 })
+region_trans(Region_CS,{ Region_0 })
+region_trans(Region_BC,{ Region_0 })

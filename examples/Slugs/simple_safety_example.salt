@@ -1,0 +1,17 @@
+controller Simple_Safety_Example where
+
+-- Based on an example in slugs (https://github.com/VerifiableRobotics/slugs)
+
+input a (A) : Bool
+input b (B) : Bool
+
+output c (C) : Bool = True
+
+env_init
+  !a \/ !b
+
+sys_trans
+  c' ^ a'
+
+env_trans
+  a' \/ b'

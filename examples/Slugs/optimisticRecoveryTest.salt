@@ -1,0 +1,22 @@
+controller OptimisticRecoveryTest where
+
+-- Based on an example in slugs (https://github.com/VerifiableRobotics/slugs)
+
+input a (A) : Bool = False
+
+output x (X) : Bool
+output y (Y) : Bool
+
+env_trans
+  ! y \/ ! a'
+
+sys_trans
+  ! a' \/ ! (x ^ x')
+  y    \/ ! a' \/ ! y'
+  ! y  \/ ! a' \/ ! y'
+
+sys_liveness
+  ! x
+
+sys_liveness
+  x
