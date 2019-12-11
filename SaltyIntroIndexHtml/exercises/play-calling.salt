@@ -1,0 +1,72 @@
+controller Example where
+
+
+-- Support Macros --------------------------------------------------------------
+
+-- Generic play definition
+def play(cmd, b1, r1, m, b2, r2, h) =
+  sys_trans
+    (command == cmd /\ all h /\ ! m) -> (behavior == b1 /\ region == r1)
+    (command == cmd /\ all h /\   m) -> (behavior == b2 /\ region == r2)
+
+  sys_liveness
+    (command == cmd /\ all h) -> (behavior <- { b1, b2 })
+
+
+-- Generic contingency definition
+def contingency(hf, ht, b, r) =
+  sys_trans
+    (! (any hf) /\ all ht) -> (behavior == b /\ region == r)
+
+  sys_liveness
+    (! (any hf) /\ all ht) -> behavior == b
+
+
+-- Sensor Definitions ----------------------------------------------------------
+
+-- Fuel sensor, true when the UAV has sufficient fuel to continue
+input s_Fuel (FUEL) : Bool = True
+
+
+-- Target sensor, true when another object has been detected
+input s_Target (TARGET) : Bool = False
+
+
+-- Behaviors -------------------------------------------------------------------
+
+-- Generic play behaviors
+enum Behavior = Search | Track | Loiter | Refuel
+
+-- Behavior output
+output behavior (BEHAVIOR) : Behavior = Loiter
+
+
+-- Generic Loiter Behavior -----------------------------------------------------
+
+def loiter(cmd) =
+  sys_trans
+    (command == cmd /\ s_Fuel) <-> behavior == Loiter
+
+
+-- Concrete Plays --------------------------------------------------------------
+
+def searchTrack(r1, r2) =
+  play(SearchTrack, Search, r1, s_Target, Track, r2, { s_Fuel })
+
+
+-- Concrete Contingencies ------------------------------------------------------
+
+def refuel(r) = contingency({ s_Fuel }, {}, Refuel, r)
+
+
+-- Scenario Description --------------------------------------------------------
+
+enum Command = None | SearchTrack
+input command : Command = None
+
+enum Region = Tower | Field | Forest | Fence
+output region : Region = Tower
+
+loiter(None)
+searchTrack(Forest, Forest)
+refuel(Tower)

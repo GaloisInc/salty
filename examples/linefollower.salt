@@ -1,0 +1,36 @@
+controller LineFollower where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+-- In this example, the robot (NXT) is asked to follow a line on the ground. This example is not
+-- suitable for simulation.
+
+input white: Bool
+input black: Bool
+input touch: Bool
+
+output turnLeft: Bool
+output turnRight: Bool
+output dontMove: Bool
+output left: Bool = True
+output right: Bool = False
+output crossedBlackLeft: Bool = False
+output crossedBlackRight: Bool = False
+output stopEverything: Bool = False
+
+env_liveness
+  touch
+
+sys_trans
+  (!(crossedBlackLeft /\ white') /\ ((white' /\ crossedBlackRight) \/ left)) <-> left'
+  (!(crossedBlackRight /\ white') /\ ((white' /\ crossedBlackLeft) \/ right)) <-> right'
+
+  (left /\ !right) <-> turnLeft'
+  (right /\ !left) <-> turnRight'
+
+  (!(white' /\ left) /\ ((black' /\ left) \/ crossedBlackLeft)) <-> crossedBlackLeft'
+  (!(white' /\ right) /\ ((black' /\ right) \/ crossedBlackRight)) <-> crossedBlackRight'
+
+  (!(touch' /\ stopEverything) /\ ((touch' /\ !stopEverything) \/ stopEverything)) -> stopEverything'
+
+  stopEverything -> dontMove'

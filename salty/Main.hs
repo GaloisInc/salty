@@ -1,39 +1,41 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
-import Options
+import           Options
 
-import           CodeGen.Cpp (cppFSM)
-import           CodeGen.Dot (dotFSM)
-import           CodeGen.Java (Package,javaFSM)
-import           CodeGen.Python (pythonFSM)
-import           Message (ppError)
-import           Opt (opt)
-import           Opt.Simpl (simp)
-import           PP (Doc,pp,text)
+import           CodeGen.Cpp                (cppFSM)
+import           CodeGen.Dot                (dotFSM)
+import           CodeGen.Java               (Package, javaFSM)
+import           CodeGen.Python             (pythonFSM)
+import           CodeGen.SPARK              (sparkFSM)
+import           Message                    (ppError)
+import           Opt                        (opt)
+import           Opt.Simpl                  (simp)
+import           PP                         (Doc, pp, text)
 import           Scope.Check
-import           Scope.Name (Name,emptySupply,nameText)
-import           Slugs (runSlugs,parseSlugsJSON,parseSlugsOut,FSM)
-import           SrcLoc (srcLoc)
+import           Scope.Name                 (Name, emptySupply, nameText)
+import           Slugs                      (FSM, parseSlugsJSON, parseSlugsOut,
+                                             runSlugs)
+import           SrcLoc                     (srcLoc)
 import           Syntax.AST
 import           Syntax.Parser
 import           TypeCheck
-import qualified TypeCheck.AST as TC
+import qualified TypeCheck.AST              as TC
 
-import           Control.Exception (catch,IOException)
-import           Control.Monad (when)
-import qualified Data.Aeson as JSON
-import qualified Data.Aeson.Encode.Pretty as JSON
+import           Control.Exception          (IOException, catch)
+import           Control.Monad              (unless, when)
+import qualified Data.Aeson                 as JSON
+import qualified Data.Aeson.Encode.Pretty   as JSON
 import qualified Data.ByteString.Lazy.Char8 as LB
-import qualified Data.Foldable as F
-import qualified Data.Map.Strict as Map
-import           Data.Maybe (mapMaybe)
-import qualified Data.Text.IO as T
-import           System.Directory (createDirectoryIfMissing)
-import           System.Exit (exitFailure)
-import           System.FilePath (takeDirectory,(</>))
-import           System.IO (hPrint,stderr)
-import           Text.Show.Pretty (ppShow)
+import qualified Data.Foldable              as F
+import qualified Data.Map.Strict            as Map
+import           Data.Maybe                 (fromMaybe, mapMaybe)
+import qualified Data.Text.IO               as T
+import           System.Directory           (createDirectoryIfMissing)
+import           System.Exit                (exitFailure)
+import           System.FilePath            (takeDirectory, (</>))
+import           System.IO                  (hPrint, stderr)
+import           Text.Show.Pretty           (ppShow)
 
 main :: IO ()
 main  =
@@ -45,7 +47,7 @@ main  =
          Nothing  -> do putStrLn "No input specified"
                         exitFailure
 
-     fsm <- genFSM opts input
+     (fsm, cont) <- genFSM opts input
 
      case optJava opts of
        Just pkg -> writePackage opts (javaFSM pkg fsm)
@@ -59,7 +61,15 @@ main  =
 
      when (optDot opts) (writePackage opts (dotFSM fsm))
 
-genFSM :: Options -> Input -> IO FSM
+     -- TODO: support for user-defined macros as expression functions?
+     -- TODO: allow generation without contracts?
+     when (optSPARK opts)
+       (case cont of
+          Just c  -> writePackage opts (sparkFSM fsm c)
+          Nothing -> do putStrLn "No controller available"
+                        exitFailure)
+
+genFSM :: Options -> Input -> IO (FSM, Maybe TC.Controller)
 
 genFSM opts (InpSpec path) =
   do bytes <- T.readFile path
@@ -77,8 +87,8 @@ genFSM opts (InpSpec path) =
 
      (scCont,scSup) <-
        case scopeRes of
-         Just sc  -> return sc
-         Nothing  -> exitFailure
+         Just sc -> return sc
+         Nothing -> exitFailure
 
      (tcCont,tcSup) <-
        case typeCheck scSup scCont of
@@ -98,12 +108,12 @@ genFSM opts (InpSpec path) =
      when (optSanity opts) $
        do sMsgs <- sanityCheck (optDumpSanity opts) (optZ3 opts) exCont
           mapM_ (output . ppSanityMessage) sMsgs
-          when (not (null (sanityErrors sMsgs))) exitFailure
+          unless (null (sanityErrors sMsgs)) exitFailure
 
      when (optDumpSimp opts) (output (pp (simp exCont)))
 
      (oCont,_) <-
-       if optOptLevel opts >= 1 
+       if optOptLevel opts >= 1
           then do let (oCont,oSup) = opt tcSup exCont
                   when (optDumpOpt opts) (output (pp oCont))
                   return (oCont,oSup)
@@ -116,7 +126,7 @@ genFSM opts (InpSpec path) =
           exitFailure
 
      case mb of
-       Just fsm -> return fsm
+       Just fsm -> return (fsm,Just exCont)
        Nothing  -> do putStrLn "Unrealizable"
                       exitFailure
 
@@ -130,7 +140,7 @@ genFSM opts (InpJSON path) =
      json <- LB.readFile path
 
      case parseSlugsJSON path numInputs json of
-       Just fsm -> return fsm
+       Just fsm -> return (fsm,Nothing)
        Nothing  -> do putStrLn "Failed to parse slugs JSON output"
                       exitFailure
 
@@ -144,7 +154,7 @@ genFSM opts (InpSlugsOut path) =
      slugsout <- LB.readFile path
 
      case parseSlugsOut path numInputs slugsout of
-       Just fsm -> return fsm
+       Just fsm -> return (fsm,Nothing)
        Nothing  -> do putStrLn "Failed to parse slugs output"
                       exitFailure
 
@@ -156,9 +166,7 @@ output  = hPrint stderr
 writePackage :: Options -> Package -> IO ()
 writePackage opts pkg = mapM_ writeClass (Map.toList pkg)
   where
-  prefix = case optOutDir opts of
-             Just dir -> dir
-             Nothing  -> ""
+  prefix = fromMaybe "" (optOutDir opts)
 
   writeClass (file,doc) =
     do let outFile = prefix </> file
@@ -185,16 +193,16 @@ dumpAnnotations TC.Controller { .. } =
 
   enums = mapMaybe dumpEnum cEnums
 
-  dumpEnum TC.EnumDef { .. } = 
+  dumpEnum TC.EnumDef { .. } =
     do annot <- eAnn
        return $ JSON.object [ "enum"       JSON..= jsonName eName
                             , "annotation" JSON..= jsonAnnotation annot
                             , "values"     JSON..= map jsonName eCons ]
- 
+
   stateVars = mapMaybe (dumpStateVar "input")  cInputs
            ++ mapMaybe (dumpStateVar "output") cOutputs
 
-  dumpStateVar ty = \ TC.StateVar { .. } ->
+  dumpStateVar ty TC.StateVar { .. } =
     do annot <- svAnn
        return $ JSON.object [ ty           JSON..= jsonName svName
                             , "annotation" JSON..= jsonAnnotation annot ]

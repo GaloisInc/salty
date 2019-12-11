@@ -353,35 +353,35 @@ ann_obj_entry :: { (T.Text, Ann Parsed) }
 
 -- Utilities -------------------------------------------------------------------
 
-parens(p) :: { p }
+parens(p)
   : '(' p ')' { $2 }
 
-layout(p) :: { [p] }
+layout(p)
   : 'v{' sep('v;', p) 'v}'  { $2 }
 
-sep(p,q) :: { [q] }
+sep(p,q)
   : {- empty -}    { []         }
   | sep1_body(p,q) { reverse $1 }
 
-sep1(p,q) :: { [q] }
+sep1(p,q)
   : sep1_body(p,q) { reverse $1 }
 
-sep1_body(p,q) :: { [q] }
+sep1_body(p,q)
   : q                  { [$1]  }
   | sep1_body(p,q) p q { $3:$1 }
 
-list(p) :: { [p] }
+list(p)
   : {- empty -}  { []         }
   | list_body(p) { reverse $1 }
 
-list1(p) :: { [p] }
+list1(p)
   : list_body(p) { reverse $1 }
 
-list_body(p) :: { [p] }
+list_body(p)
   : p              { [$1]    }
   | list_body(p) p { $2 : $1 }
 
-opt(p) :: { Maybe p }
+opt(p)
   : {- empty -}        { Nothing }
   | p                  { Just $1 }
 

@@ -1,0 +1,25 @@
+controller TrafficLight where
+
+input tick : Bool
+
+output red    : Bool
+output yellow : Bool
+output green  : Bool
+
+env_liveness
+  tick
+
+sys_init
+  red /\ !yellow /\ !green  
+
+sys_trans
+  (red' /\ !yellow' /\ !green') \/ (!red' /\ yellow' /\ !green') \/ (!red' /\ !yellow' /\ green')
+  red /\ tick' -> green'
+  green /\ tick' -> yellow'
+  yellow /\ tick' -> red'
+  red /\ !tick' -> red'
+  green /\ !tick' -> green'
+  yellow /\ !tick' -> yellow'
+
+sys_liveness
+  green 

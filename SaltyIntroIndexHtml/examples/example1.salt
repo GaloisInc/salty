@@ -1,0 +1,7 @@
+controller Example1 where
+
+input a: Bool
+output b: Bool
+
+sys_trans
+  a == b

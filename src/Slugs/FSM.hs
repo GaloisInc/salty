@@ -57,7 +57,7 @@ data VType = VTBool
 data Value = VBool Bool
            | VCon Name
            | VNum Integer
-             deriving (Show)
+             deriving (Eq, Ord, Show)
 
 
 -- FSM from Specification ------------------------------------------------------
