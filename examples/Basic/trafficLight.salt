@@ -1,3 +1,6 @@
+-- A basic specification for a standard traffic light controller.
+-- Does not use any of the Salty language features.
+
 controller TrafficLight where
 
 input tick : Bool

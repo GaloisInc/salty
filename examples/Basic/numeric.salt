@@ -1,3 +1,5 @@
+-- A simple example with an input and output that are Integers.
+
 controller Numeric where
 
 input a : Int 0 ... 5 = 0

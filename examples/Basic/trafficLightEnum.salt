@@ -1,3 +1,6 @@
+-- A basic specification for a standard traffic light controller.
+-- Uses an enumeration to make the spec a bit more compact and intuitive.
+
 controller TrafficLightEnum where
 
 input tick : Bool

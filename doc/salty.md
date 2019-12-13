@@ -1,7 +1,5 @@
 % The Salty Language
 
-\pagebreak
-
 # Introduction
 
 Salty is a strongly-typed language for aiding GR(1) synthesis that provides a

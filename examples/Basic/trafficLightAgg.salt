@@ -1,3 +1,7 @@
+-- A basic specification for a standard traffic light controller.
+-- Uses some of the Salty language constructs (any, mutex, if-then-else) 
+-- to make the specification a bit more compact and intuitive.
+
 controller TrafficLightAgg where
 
 input tick : Bool

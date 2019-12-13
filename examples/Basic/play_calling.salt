@@ -1,3 +1,9 @@
+-- Similar to middleware.salt but with some differences.
+--
+-- We don't use IFF for the play safety properties, as the commands share
+-- behaviors. If we implement as in the paper, the specification will not be
+-- realizable when multiple commands are implemented.
+
 controller PlayCalling where
 
 -- Sensors ---------------------------------------------------------------------
@@ -30,11 +36,6 @@ enum Command = C_None
 
 input command : Command = C_None
 
--- Differences to "LTL Play Calling":
---
--- We don't use IFF for the play safety properties, as the commands share
--- behaviors. If we implement as in the paper, the specification will not be
--- realizable when multiple commands are implemented.
 def play (c,b1,r1,m,b2,r2,health) =
   sys_trans
     (command == c /\ region == r1 /\ all health /\ !m) -> behavior == b1

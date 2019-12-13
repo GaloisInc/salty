@@ -1,3 +1,11 @@
+-- Example that implements the UAV architecture described in the paper:
+--  T. B. Apker,  B. Johnson, and L. Humphrey, "LTL Templates for Play-Calling Supervisory Control,"
+-- Proc. AIAA Infotech@Aerospace, 2016.
+--
+-- A contingency command is given to a UAV if its health is degrated, where health is defined
+-- by some Boolean formula. Otherwise, it performs a "play" depending on the play command, 
+-- with each play involving two possible behaviors toggled by a mission "switch."
+
 controller Middleware where
 
 input m_1_Fuel_0_0  : Bool = False

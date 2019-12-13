@@ -12,11 +12,6 @@ date: 'April 20, 2017'
 
 ---
 
-## Goals Today
-
-* Showing what we've accomplished with Laura Humphrey over the past year
-* Getting feedback on salty to better meet AFRL's needs
-
 ## Salty
 
 <ul>
@@ -133,6 +128,14 @@ sys_trans
   address them in more detail when talking about syntax
 </aside>
 
+## Visualizing the Controller
+
+![example1-svg](Example1.svg)
+
+<aside class="notes">
+* Salty can output a picture of the state machine that was produced
+</aside>
+
 ## Generating Python
 
 ```bash
@@ -148,16 +151,8 @@ Writing Example1.py
   corresponds to the `b` variable of the spec
 </aside>
 
-## Visualizing the Controller
-
-![example1-svg](Example1.svg)
-
-<aside class="notes">
-* Salty can output a picture of the state machine that was produced
-</aside>
-
 ## Using the Controller
-
+From within Python
 ```python
 >>> from Example1 import Example1
 >>> x = Example1()

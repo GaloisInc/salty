@@ -1,4 +1,20 @@
-controller Example where
+-- Scenario Description --------------------------------------------------------
+-- The scenario has two UAVs and their mission is to search and track a target. 
+-- The two UAV coordinate the tasks so that if the primary UAV is unable to track the target due to low fuel, 
+-- the task will be assigned to the secondary UAV. For more details, check out the comments for each spec block.
+
+-- This example is similar to the example in ../CooperativeSearch, except in that example, the UAV can be "recalled" 
+-- instead of having to "refuel." Also, in the CooperativeSearch framework, one cannot make the assumption that
+-- only one input changes at a time. This leads to some changes in the spec. In particular, the CooperativeSearch 
+-- example loses the part of the spec that says only one input changes at a time. To be realizable, it has to add 
+-- an env_trans spec that if the target has never been detected before, it can at most be detected in one region. 
+-- It also has to add sys_trans specs that the target can at most be seen in one region; once the target's region
+-- is known, it remains known; don't flag the region if the targe hasn't been seen; and do flag it if it has been seen.
+
+-- It is possible that the two have slightly different behaviors as well. It may be that CooperativeSearch is more 
+-- precise on when a vehicle is able to start tracking a target.
+
+controller MultiAgent where
 
 -- Inputs ----------------------------------------------------------
 
@@ -66,5 +82,3 @@ sys_trans
   (! reg_1' /\ ! reg_2' /\ ! s_Target_1' /\ s_Fuel_1' -> (behavior_1' == Search_1_1))
     /\ (! reg_1' /\ ! reg_2' /\ ! s_Target_2' /\ s_Fuel_2' -> (behavior_2' == Search_2_2))
 
--- Scenario Description --------------------------------------------------------
--- the scenario has two UAVs and their mission is to search and track a target. The two UAV coordinate the tasks so that if the primary UAV is unable to track the target due to low fuel, the task will be assigned to the secondary UAV. For more details, check out the comments for each spec block.

@@ -1,3 +1,5 @@
+-- A basic example.
+
 controller Init where
 
 input x : Bool
