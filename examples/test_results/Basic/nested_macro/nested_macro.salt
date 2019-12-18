@@ -1,0 +1,29 @@
+-- Demonstrates nested macros. 
+-- 
+-- Spec is for a UAV that has three behaviors: searching, tracking a target, and refueling.
+-- If fuel is not ok, it should refuel. 
+-- Otherwise, if it sees the target and is commanded to track the target (tt_command), 
+-- it should track the target; or else it should do a search. 
+
+controller NestedMacro where
+
+input tt_command : Bool = False
+input saw_target : Bool = False
+input fuel_ok    : Bool = True
+
+enum Behavior = SearchA | TrackTarget | Refuel
+
+output behavior : Behavior = SearchA
+
+def app(f,x) = f(x)
+
+def setBehavior(b) = behavior == b
+
+-- track target play (safety)
+sys_trans
+  if fuel_ok
+     then if tt_command && saw_target
+             then behavior == TrackTarget
+             else behavior == SearchA
+
+     else app(setBehavior,Refuel)

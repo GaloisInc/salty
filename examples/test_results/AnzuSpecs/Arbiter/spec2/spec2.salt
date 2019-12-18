@@ -1,0 +1,120 @@
+controller Arbiter2 where
+
+input hready : Bool
+input hbusreq0 : Bool
+input hlock0 : Bool
+input hbusreq1 : Bool
+input hlock1 : Bool
+input hburst0 : Bool
+input hburst1 : Bool
+
+output hmaster0 : Bool
+output hmastlock : Bool
+output start : Bool
+output decide : Bool
+output locked : Bool
+output hgrant0 : Bool
+output hgrant1 : Bool
+output busreq : Bool
+output statea1 : Bool
+output stateg2 : Bool
+output stateg3_0 : Bool
+output stateg3_1 : Bool
+output stateg3_2 : Bool
+output stateg10_1 : Bool
+
+env_init
+  !hready
+  !hbusreq0
+  !hlock0
+  !hbusreq1
+  !hlock1
+  !hburst0
+  !hburst1
+
+env_trans
+   hlock0 -> hbusreq0 
+   hlock1 -> hbusreq1 
+
+env_liveness
+  !statea1
+
+env_liveness
+  hready
+
+sys_init
+  !hmaster0
+  !hmastlock
+  start
+  decide
+  !locked
+  hgrant0
+  !hgrant1
+  !busreq
+  !statea1
+  !stateg2
+  !stateg3_0
+  !stateg3_1
+  !stateg3_2
+  !stateg10_1
+
+sys_trans
+  (!hmaster0) -> (!hbusreq0 <-> !busreq)
+  (hmaster0) -> (!hbusreq1 <-> !busreq)
+  ((!statea1) /\ ((!hmastlock) \/ (hburst0) \/ (hburst1))) -> !statea1'
+  ((!statea1) /\ (hmastlock) /\ (!hburst0) /\ (!hburst1)) -> statea1'
+  ((statea1) /\ (busreq)) -> statea1'
+  ((statea1) /\ (!busreq)) -> !statea1'
+  (!hready) -> !start'
+  ((!stateg2) /\ ((!hmastlock) \/ (!start) \/ (hburst0) \/ (hburst1))) -> !stateg2'
+  ((!stateg2) /\ (hmastlock) /\ (start) /\ (!hburst0) /\ (!hburst1)) -> stateg2'
+  ((stateg2) /\ (!start) /\ (busreq)) -> stateg2'
+  ((stateg2) /\ (start)) -> False
+  ((stateg2) /\ (!start) /\ (!busreq)) -> !stateg2'
+  ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!hmastlock) \/ (!start) \/ ((hburst0) \/ (!hburst1)))) -> (!stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((hmastlock) /\ (start) /\ ((!hburst0) /\ (hburst1)) /\ (!hready))) -> (stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((hmastlock) /\ (start) /\ ((!hburst0) /\ (hburst1)) /\ (hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ !stateg3_1' /\ stateg3_2')
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ !stateg3_1' /\ stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((start))) -> False
+  (hready) -> ((hgrant0) <-> (!hmaster0'))
+  (hready) -> ((hgrant1) <-> (hmaster0'))
+  (hready) -> (!locked <-> !hmastlock')
+  !start' -> (((!hmaster0)) <-> (!hmaster0'))
+  !start' -> (((hmaster0)) <-> (hmaster0'))
+  ((!start')) -> ((hmastlock) <-> hmastlock')
+  (decide /\ hlock0 /\ hgrant0')->locked'
+  (decide /\ !hlock0 /\ hgrant0')->!locked'
+  (decide /\ hlock1 /\ hgrant1')->locked'
+  (decide /\ !hlock1 /\ hgrant1')->!locked'
+  (!decide)->(((!hgrant0)<->!hgrant0'))
+  (!decide)->(((!hgrant1)<->!hgrant1'))
+  (!decide)->(!locked <-> !locked')
+  ((!stateg10_1) /\ (((hgrant1) \/ (hbusreq1))))->!stateg10_1'
+  ((!stateg10_1) /\ ((!hgrant1) /\ (!hbusreq1)))->stateg10_1'
+  ((stateg10_1) /\ ((!hgrant1) /\ (!hbusreq1)))->stateg10_1'
+  ((stateg10_1) /\ (((hgrant1)) /\ (!hbusreq1)))->False
+  ((stateg10_1) /\ (hbusreq1))->!stateg10_1'
+  (decide /\ !hbusreq0 /\ !hbusreq1) -> hgrant0'
+
+sys_liveness
+  !stateg2
+
+sys_liveness
+  (!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2)
+
+sys_liveness
+  ((!hmaster0)) \/ !hbusreq0
+
+sys_liveness
+  ((hmaster0)) \/ !hbusreq1
+

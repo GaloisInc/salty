@@ -1,0 +1,14 @@
+-- A basic example.
+
+controller Init where
+
+input x : Bool
+input y : Bool
+
+output z : Bool
+
+env_init
+  x ^ y
+
+sys_trans
+  z

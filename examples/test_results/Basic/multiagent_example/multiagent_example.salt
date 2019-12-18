@@ -1,0 +1,84 @@
+-- Scenario Description --------------------------------------------------------
+-- The scenario has two UAVs and their mission is to search and track a target. 
+-- The two UAV coordinate the tasks so that if the primary UAV is unable to track the target due to low fuel, 
+-- the task will be assigned to the secondary UAV. For more details, check out the comments for each spec block.
+
+-- This example is similar to the example in ../CooperativeSearch, except in that example, the UAV can be "recalled" 
+-- instead of having to "refuel." Also, in the CooperativeSearch framework, one cannot make the assumption that
+-- only one input changes at a time. This leads to some changes in the spec. In particular, the CooperativeSearch 
+-- example loses the part of the spec that says only one input changes at a time. To be realizable, it has to add 
+-- an env_trans spec that if the target has never been detected before, it can at most be detected in one region. 
+-- It also has to add sys_trans specs that the target can at most be seen in one region; once the target's region
+-- is known, it remains known; don't flag the region if the targe hasn't been seen; and do flag it if it has been seen.
+
+-- It is possible that the two have slightly different behaviors as well. It may be that CooperativeSearch is more 
+-- precise on when a vehicle is able to start tracking a target.
+
+controller MultiAgent where
+
+-- Inputs ----------------------------------------------------------
+
+-- Fuel sensor, true when the UAV has sufficient fuel to continue
+
+input s_Fuel_1 (FUEL1) : Bool = True
+input s_Fuel_2 (FUEL2) : Bool = True
+
+-- Target sensor, true when the target has been detected
+
+input s_Target_1 (TARGET1) : Bool = False
+input s_Target_2 (TARGET2) : Bool = False
+
+-- Outputs -------------------------------------------------------------------
+
+-- the UAV must be doing exactly one task at a time
+enum Behavior_1 = Search_1_1 | Search_2_1 | Track_1 | Refuel_1
+enum Behavior_2 = Search_1_2 | Search_2_2 | Track_2 | Refuel_2
+
+output behavior_1 (BEHAVIOR1) : Behavior_1 = Search_1_1
+output behavior_2 (BEHAVIOR2) : Behavior_2 = Search_2_2
+
+-- bits for recording the region where the target was spotted.
+output reg_1 (REG1) : Bool = False
+output reg_2 (REG2) : Bool = False
+
+-- Refuel when fuel is low
+sys_trans
+  ((! s_Fuel_1') <-> behavior_1' == Refuel_1) /\ (!s_Fuel_2' <-> behavior_2' == Refuel_2)
+
+-- assumption that the environment state changes one variable at a time
+env_trans
+  ((s_Target_1 == !s_Target_1') /\ (s_Target_2 == s_Target_2') /\ (s_Fuel_1 == s_Fuel_1') /\ (s_Fuel_1 == s_Fuel_1')) \/
+    ((s_Target_1 == s_Target_1') /\ (s_Target_2 == !s_Target_2') /\ (s_Fuel_1 == s_Fuel_1') /\ (s_Fuel_2 == s_Fuel_2')) \/ 
+      ((s_Target_1 == s_Target_1') /\ (s_Target_2 == s_Target_2') /\ (s_Fuel_1 == !s_Fuel_1') /\ (s_Fuel_2 == s_Fuel_2')) \/ 
+        ((s_Target_1 == s_Target_1') /\ (s_Target_2 == s_Target_2') /\ (s_Fuel_1 == s_Fuel_1') /\ (s_Fuel_2 == !s_Fuel_2'))
+
+-- Search region if target was previously found but was lost and fuel is high
+sys_trans
+  ((reg_1' /\ !s_Target_1' /\ !s_Target_2' /\ s_Fuel_1') -> behavior_1' == Search_1_1) 
+    /\ ((reg_1' /\ !s_Target_1' /\ !s_Target_2' /\ s_Fuel_2') -> behavior_2' == Search_1_2)
+      /\ ((reg_2' /\ !s_Target_1' /\ !s_Target_2' /\ s_Fuel_1') -> behavior_1' == Search_2_1)
+        /\ ((reg_2' /\ !s_Target_1' /\ !s_Target_2' /\ s_Fuel_2') -> behavior_2' == Search_2_2)
+
+-- If the target is found, track it with the primary vehicle if its fuel is high, otherwise track it with the secondary vehicle if its fuel is high
+sys_trans
+  (reg_1' /\ (s_Target_1' \/ s_Target_2') /\ s_Fuel_1' -> behavior_1' == Track_1) 
+    /\ (reg_1' /\ (s_Target_1' \/ s_Target_2') /\ !s_Fuel_1' /\ s_Fuel_2' -> behavior_2' == Track_2)
+      /\ (reg_1' /\ s_Target_1' /\ s_Fuel_1' /\ s_Fuel_2' -> behavior_2' == Search_1_2)
+       /\ (reg_2' /\ (s_Target_1' \/ s_Target_2') /\ s_Fuel_2' -> behavior_2' == Track_2)
+          /\ (reg_2' /\ (s_Target_1' \/ s_Target_2') /\ !s_Fuel_2' /\ s_Fuel_1' -> behavior_1' == Track_1)
+            /\ (reg_2' /\ s_Target_2' /\ s_Fuel_1' /\ s_Fuel_2' -> behavior_1' == Search_2_1)
+
+-- Record the region in which the target was first seen
+sys_trans
+  (( (! reg_1) /\ (! reg_2) /\ s_Target_1') -> reg_1')
+    /\ (( (! reg_1) /\ (! reg_2) /\ s_Target_2') -> reg_2') 
+      /\ (( (! reg_1) /\ (! reg_2) /\ (! s_Target_1') ) -> (!reg_1'))
+        /\ (((! reg_1) /\ (! reg_2) /\ (! s_Target_2') ) -> (!reg_2'))
+           /\ ((reg_1 -> reg_1') /\ (reg_2 -> reg_2'))
+             /\ ((reg_1 -> !reg_2) /\ (reg_1 -> !reg_2))
+
+-- Search for target in designed area if not yet found and fuel is high
+sys_trans
+  (! reg_1' /\ ! reg_2' /\ ! s_Target_1' /\ s_Fuel_1' -> (behavior_1' == Search_1_1))
+    /\ (! reg_1' /\ ! reg_2' /\ ! s_Target_2' /\ s_Fuel_2' -> (behavior_2' == Search_2_2))
+

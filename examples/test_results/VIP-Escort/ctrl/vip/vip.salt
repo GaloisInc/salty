@@ -1,0 +1,106 @@
+controller Vip where
+
+-- A flag to mark a location as surveilled
+input sp0 : Bool = False
+input sp1 : Bool = False
+input sp2 : Bool = True
+input sp3 : Bool = False
+input sp4 : Bool = True
+
+-- Variables for the current location of the VIP, UAV1 and UAV2
+--input vlocs : Int 0 ... 4 = 1
+--input uloc1s : Int 0 ... 4 = 2
+--input uloc2s : Int 0 ... 4 = 4
+input olocs : Int 0 ... 4 = 3
+
+-- VIP tracking command for UAV1 and UAV2
+output vTrack1 : Bool = False
+output vTrack2 : Bool = False
+
+-- Go to commands for VIP, UAV1 and UAV2
+output vloc : Int 0 ... 4 = 1  
+output uloc1 : Int 0 ... 4 = 2
+output uloc2 : Int 0 ... 4 = 4
+
+-- Environment assumptions
+env_trans
+
+    --olocs' == 0 -> olocs == 0 \/ olocs == 1 \/ olocs == 2
+    --olocs' == 1 -> olocs == 0 \/ olocs == 1 \/ olocs == 2
+    --olocs' == 2 -> olocs == 0 \/ olocs == 1 \/ olocs == 2 \/ olocs == 3 \/ olocs == 4
+    --olocs' == 3 -> olocs == 2 \/ olocs == 3 \/ olocs == 4
+    --olocs' == 4 -> olocs == 2 \/ olocs == 3 \/ olocs == 4
+    olocs != 0
+    olocs != 1
+    -- A location is considered surveilled iff the location is visited by either UAVs 
+    (uloc1 == 0 \/ uloc2 == 0) -> sp0'
+    (uloc1 == 1 \/ uloc2 == 1) -> sp1'
+    (uloc1 == 2 \/ uloc2 == 2) -> sp2'
+    (uloc1 == 3 \/ uloc2 == 3) -> sp3'
+    (uloc1 == 4 \/ uloc2 == 4) -> sp4'
+
+    !sp0 /\ (uloc1 != 0 /\ uloc2 != 0) -> !sp0'
+    !sp1 /\ (uloc1 != 1 /\ uloc2 != 1) -> !sp1'
+    !sp2 /\ (uloc1 != 2 /\ uloc2 != 2) -> !sp2'
+    !sp3 /\ (uloc1 != 3 /\ uloc2 != 3) -> !sp3'
+    !sp4 /\ (uloc1 != 4 /\ uloc2 != 4) -> !sp4'
+
+    -- A surveilled location remains marked as surveilled
+
+    sp0 -> sp0'
+    sp1 -> sp1'
+    sp2 -> sp2'
+    sp3 -> sp3'
+    sp4 -> sp4'
+
+env_liveness
+    olocs != 2
+env_liveness
+    olocs != 3
+env_liveness
+    olocs != 4
+
+sys_trans
+
+    -- VIP can only move when it's tracked
+    (vloc != vloc') -> (vTrack1' \/ vTrack2') 
+    -- a UAV can track the VIP iff they are both at the same location
+    
+    vTrack1' -> (vloc == 0 /\ uloc1 == 0) \/ (vloc == 1 /\ uloc1 == 1) \/ (vloc == 2 /\ uloc1 == 2) \/ (vloc == 3 /\ uloc1 == 3) \/ (vloc == 4 /\ uloc1 == 4)
+
+    vTrack2' -> (vloc == 0 /\ uloc2 == 0) \/  (vloc == 1 /\ uloc2 == 1) \/ (vloc == 2 /\ uloc2 == 2) \/ (vloc == 3 /\ uloc2 == 3) \/ (vloc == 4 /\ uloc2 == 4)
+
+    -- Allowed transitions between locations for VIP, UAV1, and UAV2
+    uloc1' == 0 -> uloc1 == 0 \/ uloc1 == 1 \/ uloc1 == 2
+    uloc1' == 1 -> uloc1 == 0 \/ uloc1 == 1 \/ uloc1 == 2
+    uloc1' == 2 -> uloc1 == 0 \/ uloc1 == 1 \/ uloc1 == 2 \/ uloc1 == 3 \/ uloc1 == 4
+    uloc1' == 3 -> uloc1 == 2 \/ uloc1 == 3 \/ uloc1 == 4
+    uloc1' == 4 -> uloc1 == 2 \/ uloc1 == 3 \/ uloc1 == 4
+
+    uloc2' == 0 -> uloc2 == 0 \/ uloc2 == 1 \/ uloc2 == 2
+    uloc2' == 1 -> uloc2 == 0 \/ uloc2 == 1 \/ uloc2 == 2
+    uloc2' == 2 -> uloc2 == 0 \/ uloc2 == 1 \/ uloc2 == 2 \/ uloc2 == 3 \/ uloc2 == 4
+    uloc2' == 3 -> uloc2 == 2 \/ uloc2 == 3 \/ uloc2 == 4
+    uloc2' == 4 -> uloc2 == 2 \/ uloc2 == 3 \/ uloc2 == 4
+
+    vTrack1 -> uloc1 == vloc
+    vTrack2 -> uloc2 == vloc
+
+    vloc' == 0 -> vloc == 0 \/ vloc == 1 \/ vloc == 2   
+    vloc' == 1 -> vloc == 0 \/ vloc == 1 \/ vloc == 2  
+    vloc' == 2 -> vloc == 0 \/ vloc == 1 \/ vloc == 2 \/ vloc == 3 \/ vloc == 4    
+    vloc' == 3 -> vloc == 2 \/ vloc == 3 \/ vloc == 4  
+    vloc' == 4 -> vloc == 2 \/ vloc == 3 \/ vloc == 4
+
+    vloc == 0 -> olocs != 0
+    vloc == 1 -> olocs != 1
+    vloc == 2 -> olocs != 2
+    vloc == 3 -> olocs != 3
+    vloc == 4 -> olocs != 4
+
+sys_liveness
+   vloc == 4
+sys_liveness   
+   vloc == 0
+sys_liveness
+   sp0

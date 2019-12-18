@@ -1,0 +1,83 @@
+controller IRobotCreatewithpickup where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+-- In this example, the robot is asked to go around all regions and search for markers. Once it found
+-- a marker, it will first ask the human user for a confirmation. If the human user confirm the action,
+-- the robot will pick the marker up and drop it into a designated region.
+
+input markersNearBy: Bool
+input hasArrived: Bool
+input confirm: Bool = False
+input abort: Bool = False
+
+output pickup: Bool = False
+output drop: Bool = False
+output goToMarker: Bool = False
+output carrying_marker: Bool = False
+output searchmode: Bool = True
+output retrievemode: Bool = False
+output confirmationmode: Bool = False
+output bit0: Bool
+output bit1: Bool
+output bit2: Bool
+output bit3: Bool
+
+sys_trans
+  (!(((retrievemode /\ drop) \/ (abort' /\ confirmationmode)) /\ !((((markersNearBy' /\ ((((((((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3))) /\ !carrying_marker) /\ !goToMarker) /\ !abort')) \/ searchmode')
+  (!((((markersNearBy' /\ ((((((((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3))) /\ !carrying_marker) /\ !goToMarker) /\ !abort') \/ !searchmode')
+  (!(searchmode /\ !((((markersNearBy' /\ ((((((((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3))) /\ !carrying_marker) /\ !goToMarker) /\ !abort')) \/ searchmode')
+  (!(!searchmode /\ !((retrievemode /\ drop) \/ (abort' /\ confirmationmode))) \/ !searchmode')
+  (!(searchmode' /\ !carrying_marker') \/ !(((!bit0' /\ !bit1') /\ !bit2') /\ !bit3'))
+  (!((((((searchmode /\ markersNearBy') /\ ((((((((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3))) /\ !carrying_marker) /\ !goToMarker) /\ !abort') /\ !(abort' \/ confirm')) \/ confirmationmode')
+  (!(abort' \/ confirm') \/ !confirmationmode')
+  (!(confirmationmode /\ !(abort' \/ confirm')) \/ confirmationmode')
+  (!(!confirmationmode /\ !(((((searchmode /\ markersNearBy') /\ ((((((((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3))) /\ !carrying_marker) /\ !goToMarker) /\ !abort')) \/ !confirmationmode')
+  (!confirmationmode' \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!(abort' /\ confirmationmode') \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!((confirmationmode /\ confirm') /\ !drop) \/ retrievemode')
+  (!drop \/ !retrievemode')
+  (!(retrievemode /\ !drop) \/ retrievemode')
+  (!(!retrievemode /\ !(confirmationmode /\ confirm')) \/ !retrievemode')
+  ((!((retrievemode' /\ !hasArrived') /\ !carrying_marker') /\ !goToMarker') \/ (((retrievemode' /\ !hasArrived') /\ !carrying_marker') /\ goToMarker'))
+  ((!((retrievemode' /\ hasArrived') /\ !carrying_marker') /\ !pickup') \/ (((retrievemode' /\ hasArrived') /\ !carrying_marker') /\ pickup'))
+  ((!((((carrying_marker' /\ !bit0') /\ !bit1') /\ !bit2') /\ !bit3') /\ !drop') \/ (((((carrying_marker' /\ !bit0') /\ !bit1') /\ !bit2') /\ !bit3') /\ drop'))
+  (!(pickup /\ !drop) \/ carrying_marker')
+  (!drop \/ !carrying_marker')
+  (!(carrying_marker /\ !drop) \/ carrying_marker')
+  (!(!carrying_marker /\ !pickup) \/ !carrying_marker')
+  (!(((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ ((((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((!bit0 /\ !bit1) /\ !bit2) /\ bit3) \/ (((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((!bit0 /\ !bit1) /\ bit2) /\ !bit3) \/ (((((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((((!bit0' /\ !bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  (!(((!bit0 /\ bit1) /\ !bit2) /\ !bit3) \/ (((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((!bit0 /\ bit1) /\ !bit2) /\ bit3) \/ (((((!bit0' /\ bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')))
+  (!(((!bit0 /\ bit1) /\ bit2) /\ !bit3) \/ ((((((!bit0' /\ bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((!bit0 /\ bit1) /\ bit2) /\ bit3) \/ (((((((!bit0' /\ bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ !bit2) /\ bit3) \/ ((((((((((bit0' /\ !bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  ((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ bit3))
+
+sys_liveness
+  (!searchmode' \/ (((!bit0' /\ !bit1') /\ bit2') /\ bit3'))
+
+sys_liveness
+  (!searchmode' \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3'))
+
+sys_liveness
+  (!searchmode' \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3'))
+
+sys_liveness
+  (!searchmode' \/ (((!bit0' /\ bit1') /\ !bit2') /\ !bit3'))
+
+sys_liveness
+  (!searchmode' \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3'))
+
+sys_liveness
+  (!searchmode' \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3'))
+
+sys_liveness
+  (!carrying_marker' \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3'))
+
+sys_init
+  ((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ bit3))

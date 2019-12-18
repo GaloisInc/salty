@@ -1,0 +1,22 @@
+controller TulipGr1 where
+
+input park : Bool
+
+enum Grid = X0 | X1 | X2 | X3 | X4 | X5 
+output loc : Grid = X0
+output x0reach : Bool = True
+
+env_liveness
+  !park
+
+sys_trans
+  loc == X0 -> loc' == X1 \/ loc' == X3
+  loc == X1 -> loc' == X0 \/ loc' == X2 \/ loc' == X4
+  loc == X2 -> loc' == X1 \/ loc' == X5
+  loc == X3 -> loc' == X0 \/ loc' == X4
+  loc == X4 -> loc' == X1 \/ loc' == X3 \/ loc' == X5
+  loc == X5 -> loc' == X2 \/ loc' == X4
+
+sys_liveness
+  x0reach
+  loc == X5

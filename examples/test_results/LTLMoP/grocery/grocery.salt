@@ -1,0 +1,83 @@
+controller Grocery where
+
+-- Based on an example in LTLMoP (https://ltlmop.github.io)
+
+-- For this example, the robot acts as an employee in a simple grocery store environment. The mission of the robot is to
+-- patrol around the store, and report to the manager if there is any missing item from the shelf. In addition, if the
+-- robot detects a spill on the aisles, it needs to avoid that aisles.
+
+input see_spill: Bool
+input see_missingitem: Bool
+input head_tapped: Bool
+
+output look_leftright: Bool = False
+output call_manager: Bool = False
+output sit_down: Bool = False
+output say_impossible: Bool = False
+output say_spill: Bool = False
+output spill_top: Bool = False
+output spill_bottom: Bool = False
+output bit0: Bool
+output bit1: Bool
+output bit2: Bool
+output bit3: Bool
+
+env_liveness
+  !head_tapped
+
+sys_trans
+  (!((((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) /\ see_spill') /\ !False) \/ spill_top')
+  (!False \/ !spill_top')
+  (!(spill_top /\ !False) \/ spill_top')
+  (!(!spill_top /\ !(((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) /\ see_spill')) \/ !spill_top')
+  (!((((((!bit0 /\ bit1) /\ bit2) /\ !bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) /\ see_spill') /\ !False) \/ spill_bottom')
+  (!False \/ !spill_bottom')
+  (!(spill_bottom /\ !False) \/ spill_bottom')
+  (!(!spill_bottom /\ !(((((!bit0 /\ bit1) /\ bit2) /\ !bit3) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) /\ see_spill')) \/ !spill_bottom')
+  (!spill_top' \/ !(((bit0' /\ !bit1') /\ bit2') /\ bit3'))
+  (!spill_bottom' \/ !(((bit0' /\ !bit1') /\ bit2') /\ !bit3'))
+  (!(see_missingitem' /\ !head_tapped') \/ call_manager')
+  (!head_tapped' \/ !call_manager')
+  (!(call_manager /\ !head_tapped') \/ call_manager')
+  (!(!call_manager /\ !see_missingitem') \/ !call_manager')
+  (!(!call_manager /\ call_manager') \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!head_tapped' \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!(!spill_bottom /\ spill_bottom') \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  (!(!spill_top /\ spill_top') \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  ((!(!call_manager' /\ ((((bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((bit0 /\ !bit1) /\ bit2) /\ !bit3))) /\ !look_leftright') \/ ((!call_manager' /\ ((((bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((bit0 /\ !bit1) /\ bit2) /\ !bit3))) /\ look_leftright'))
+  ((!(spill_top' /\ spill_bottom') /\ !say_impossible') \/ ((spill_top' /\ spill_bottom') /\ say_impossible'))
+  ((!(spill_top' /\ spill_bottom') /\ !sit_down') \/ ((spill_top' /\ spill_bottom') /\ sit_down'))
+  (!sit_down' \/ (((((!bit0' /\ !bit0) \/ (bit0' /\ bit0)) /\ ((!bit1' /\ !bit1) \/ (bit1' /\ bit1))) /\ ((!bit2' /\ !bit2) \/ (bit2' /\ bit2))) /\ ((!bit3' /\ !bit3) \/ (bit3' /\ bit3))))
+  ((!(((!spill_top /\ spill_top') /\ !say_impossible') \/ ((!spill_bottom /\ spill_bottom') /\ !say_impossible')) /\ !say_spill') \/ ((((!spill_top /\ spill_top') /\ !say_impossible') \/ ((!spill_bottom /\ spill_bottom') /\ !say_impossible')) /\ say_spill'))
+  (!(((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((((!bit0' /\ !bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  (!(((!bit0 /\ !bit1) /\ !bit2) /\ bit3) \/ (((((!bit0' /\ !bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')))
+  (!(((!bit0 /\ !bit1) /\ bit2) /\ !bit3) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')))
+  (!(((!bit0 /\ !bit1) /\ bit2) /\ bit3) \/ ((((!bit0' /\ !bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')))
+  (!(((!bit0 /\ bit1) /\ !bit2) /\ !bit3) \/ ((((!bit0' /\ bit1') /\ !bit2') /\ !bit3') \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  (!(((!bit0 /\ bit1) /\ !bit2) /\ bit3) \/ ((((((!bit0' /\ bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ bit2') /\ !bit3')))
+  (!(((!bit0 /\ bit1) /\ bit2) /\ !bit3) \/ ((((((!bit0' /\ bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ bit2') /\ !bit3')))
+  (!(((!bit0 /\ bit1) /\ bit2) /\ bit3) \/ ((((((!bit0' /\ bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ !bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ ((((((bit0' /\ !bit1') /\ !bit2') /\ !bit3') \/ (((!bit0' /\ !bit1') /\ !bit2') /\ !bit3')) \/ (((!bit0' /\ bit1') /\ !bit2') /\ !bit3')) \/ (((bit0' /\ !bit1') /\ bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ !bit2) /\ bit3) \/ ((((bit0' /\ !bit1') /\ !bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')))
+  (!(((bit0 /\ !bit1) /\ bit2) /\ !bit3) \/ (((((bit0' /\ !bit1') /\ bit2') /\ !bit3') \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3')) \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3')))
+  (!(((bit0 /\ !bit1) /\ bit2) /\ bit3) \/ (((((bit0' /\ !bit1') /\ bit2') /\ bit3') \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3')))
+  ((((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ bit3))
+
+sys_liveness
+  (!(call_manager' /\ !(spill_top' /\ spill_bottom')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ bit3'))
+
+sys_liveness
+  (!(!call_manager' /\ !(spill_top' /\ spill_bottom')) \/ (((bit0' /\ !bit1') /\ !bit2') /\ !bit3'))
+
+sys_liveness
+  (!(!call_manager' /\ !(spill_top' /\ spill_bottom')) \/ (((!bit0' /\ bit1') /\ bit2') /\ bit3'))
+
+sys_liveness
+  (!(!call_manager' /\ !(spill_top' /\ spill_bottom')) \/ (((!bit0' /\ bit1') /\ bit2') /\ !bit3'))
+
+sys_liveness
+  (!(!call_manager' /\ !(spill_top' /\ spill_bottom')) \/ (((!bit0' /\ bit1') /\ !bit2') /\ bit3'))
+
+sys_init
+  ((((((bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3))
+  ((((((((((((((!bit0 /\ !bit1) /\ !bit2) /\ !bit3) \/ (((!bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ !bit1) /\ bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ !bit2) /\ bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ !bit3)) \/ (((!bit0 /\ bit1) /\ bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ !bit2) /\ bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ !bit3)) \/ (((bit0 /\ !bit1) /\ bit2) /\ bit3))

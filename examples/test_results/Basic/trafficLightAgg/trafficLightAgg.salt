@@ -1,0 +1,24 @@
+-- A basic specification for a standard traffic light controller.
+-- Uses some of the Salty language constructs (any, mutex, if-then-else) and initial values 
+-- for variables to make the specification a bit more compact and intuitive.
+
+controller TrafficLightAgg where
+
+input tick : Bool
+
+output red    : Bool = True
+output yellow : Bool = False
+output green  : Bool = False
+
+env_liveness
+  tick
+
+sys_trans
+  any{red, yellow, green}
+  mutex{red, yellow, green}
+  red -> (if tick' then green' else red')
+  yellow -> (if tick' then red' else yellow')
+  green -> (if tick' then yellow' else green')
+
+sys_liveness
+  green 

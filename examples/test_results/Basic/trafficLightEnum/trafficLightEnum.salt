@@ -1,0 +1,20 @@
+-- A basic specification for a standard traffic light controller.
+-- Uses an enumeration to make the spec a bit more compact and intuitive.
+
+controller TrafficLightEnum where
+
+input tick : Bool
+
+enum Color = Red | Yellow | Green
+output color : Color = Red
+
+env_liveness
+  tick
+
+sys_trans
+  color == Red -> (if tick' then color' == Green else color' == Red)
+  color == Yellow -> (if tick' then color' == Red else color' == Yellow) 
+  color == Green -> (if tick' then color' == Yellow else color' == Green) 
+
+sys_liveness
+  color == Green 
