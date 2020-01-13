@@ -189,6 +189,7 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                       , statement $ assign (qualify (Just cntlrName) (svName env)) (svName env)
                       , statement $ assign (svName sys) (qualify (Just cntlrName) (svName sys)) ] ] ]
 
+-- NOTE: Ada is case-insensitive
 sparkName :: Name -> Doc
 sparkName n = deconflict name
   where
@@ -202,10 +203,11 @@ sparkName n = deconflict name
               "reverse", "select", "separate", "some", "subtype", "synchronized", "tagged", "task", "terminate",
               "then", "type", "until", "use", "when", "while", "with", "xor"]
 
-  --TODO: handle clashing with boilerplate generated identifiers
+  gen = ["c", "controller", "e", "environment", "s", "system", "state", "state_Num"]
 
   deconflict n'
-    | map C.toLower (T.unpack n') `elem` reserved = pp n' <> text "_N" --TODO: Capitalization
+    | map C.toLower (T.unpack n') `elem` reserved = pp n' <> text "_N"
+    | map C.toLower (T.unpack n') `elem` gen = pp n' <> text "_N"
     | otherwise = pp n'
 
 sparkType :: VType -> Doc
