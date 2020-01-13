@@ -238,6 +238,8 @@ declEnums es = punctuate hardline [ declEnum e | e <- es ]
 
 mkSpecVar :: StateVars -> String -> String -> SpecVar
 mkSpecVar v n t
+  | Map.size v == 0 =
+      SpecVar { svName = text n, svType = text t, svIsRec = False }
   | Map.size v > 1 =
       SpecVar { svName = text n, svType = text t, svIsRec = True }
   | otherwise =
@@ -254,6 +256,8 @@ optIOTypeDecl vars v
   | svIsRec v =
       statement $ declRecord (svType v)
                     [ statement $ declVar (sparkName n) (sparkType viType) | (n, VarInfo { viType }) <- Map.toList vars ]
+  | Map.size vars == 0 =
+      statement $ declSubtype (svType v) (sparkType VTBool)
   | otherwise =
       case viType $ head $ Map.elems vars of
         (VTInt _ _) -> statement $ declSubtype (svType v) (sparkType $ viType (head $ Map.elems vars))
@@ -400,7 +404,11 @@ mkVarVals vars SpecVar { svType, svIsRec = True } =
   svType <> text "'" <> parens (fsep $
     punctuate comma
       [ sparkName n <+> text "=>" <+> sparkValue v | (n,v) <- Map.toList vars ])
-mkVarVals vars _ = sparkValue $ snd $ head $ Map.toList vars
+mkVarVals vars _
+  | Map.size vars == 0 =
+      sparkValue (VBool True)
+  | otherwise =
+      sparkValue $ snd $ head $ Map.toList vars
 
 -- NOTE: assumes inputs are ordered the same across nodes
 mkNested :: Map.Map Int Node -> Doc -> Doc -> SpecVar -> SpecVar -> Doc
