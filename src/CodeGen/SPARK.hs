@@ -189,6 +189,7 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                       , statement $ assign (qualify (Just cntlrName) (svName env)) (svName env)
                       , statement $ assign (svName sys) (qualify (Just cntlrName) (svName sys)) ] ] ]
 
+-- NOTE: Ada is case-insensitive
 sparkName :: Name -> Doc
 sparkName n = deconflict name
   where
@@ -202,10 +203,11 @@ sparkName n = deconflict name
               "reverse", "select", "separate", "some", "subtype", "synchronized", "tagged", "task", "terminate",
               "then", "type", "until", "use", "when", "while", "with", "xor"]
 
-  --TODO: handle clashing with boilerplate generated identifiers
+  gen = ["c", "controller", "e", "environment", "s", "system", "state", "state_Num"]
 
   deconflict n'
-    | map C.toLower (T.unpack n') `elem` reserved = pp n' <> text "_N" --TODO: Capitalization
+    | map C.toLower (T.unpack n') `elem` reserved = pp n' <> text "_N"
+    | map C.toLower (T.unpack n') `elem` gen = pp n' <> text "_N"
     | otherwise = pp n'
 
 sparkType :: VType -> Doc
@@ -238,6 +240,8 @@ declEnums es = punctuate hardline [ declEnum e | e <- es ]
 
 mkSpecVar :: StateVars -> String -> String -> SpecVar
 mkSpecVar v n t
+  | Map.size v == 0 =
+      SpecVar { svName = text n, svType = text t, svIsRec = False }
   | Map.size v > 1 =
       SpecVar { svName = text n, svType = text t, svIsRec = True }
   | otherwise =
@@ -254,6 +258,8 @@ optIOTypeDecl vars v
   | svIsRec v =
       statement $ declRecord (svType v)
                     [ statement $ declVar (sparkName n) (sparkType viType) | (n, VarInfo { viType }) <- Map.toList vars ]
+  | Map.size vars == 0 =
+      statement $ declSubtype (svType v) (sparkType VTBool)
   | otherwise =
       case viType $ head $ Map.elems vars of
         (VTInt _ _) -> statement $ declSubtype (svType v) (sparkType $ viType (head $ Map.elems vars))
@@ -400,7 +406,11 @@ mkVarVals vars SpecVar { svType, svIsRec = True } =
   svType <> text "'" <> parens (fsep $
     punctuate comma
       [ sparkName n <+> text "=>" <+> sparkValue v | (n,v) <- Map.toList vars ])
-mkVarVals vars _ = sparkValue $ snd $ head $ Map.toList vars
+mkVarVals vars _
+  | Map.size vars == 0 =
+      sparkValue (VBool True)
+  | otherwise =
+      sparkValue $ snd $ head $ Map.toList vars
 
 -- NOTE: assumes inputs are ordered the same across nodes
 mkNested :: Map.Map Int Node -> Doc -> Doc -> SpecVar -> SpecVar -> Doc
