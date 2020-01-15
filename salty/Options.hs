@@ -30,6 +30,7 @@ data Options = Options { optHelp         :: !Bool
                        , optDumpOpt      :: !Bool
                        , optDumpSpec     :: !Bool
                        , optDumpSanity   :: !Bool
+                       , optDumpStats    :: !Bool
                        } deriving (Show)
 
 data Input = InpSpec FilePath
@@ -65,6 +66,7 @@ defaultOptions  =
           , optDumpOpt      = False
           , optDumpSpec     = False
           , optDumpSanity   = False
+          , optDumpStats    = False
           }
 
 
@@ -141,6 +143,9 @@ options  =
 
   , Option "" ["ddump-sanity"] (NoArg setDumpSanity)
     "Dump intermediate output during sanity checking"
+
+  , Option "" ["ddump-stats"] (NoArg setDumpStats)
+    "Dump fsm statistics when controller is realizable"
   ]
 
 setHelp :: Parser
@@ -214,6 +219,9 @@ setDumpSpec  = OK (\opts -> opts { optDumpSpec = True })
 
 setDumpSanity :: Parser
 setDumpSanity  = OK (\opts -> opts { optDumpSanity = True })
+
+setDumpStats :: Parser
+setDumpStats  = OK (\opts -> opts { optDumpStats = True })
 
 setPython :: Parser
 setPython  = OK (\opts -> opts { optPython = True })

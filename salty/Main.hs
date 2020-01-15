@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
@@ -14,7 +15,7 @@ import           Opt.Simpl                  (simp)
 import           PP                         (Doc, pp, text)
 import           Scope.Check
 import           Scope.Name                 (Name, emptySupply, nameText)
-import           Slugs                      (FSM, parseSlugsJSON, parseSlugsOut,
+import           Slugs                      (FSM, FSM(..), Node(..), parseSlugsJSON, parseSlugsOut,
                                              runSlugs)
 import           SrcLoc                     (srcLoc)
 import           Syntax.AST
@@ -28,6 +29,7 @@ import qualified Data.Aeson                 as JSON
 import qualified Data.Aeson.Encode.Pretty   as JSON
 import qualified Data.ByteString.Lazy.Char8 as LB
 import qualified Data.Foldable              as F
+import           Data.List                  (sort)
 import qualified Data.Map.Strict            as Map
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import qualified Data.Text.IO               as T
@@ -126,7 +128,8 @@ genFSM opts (InpSpec path) =
           exitFailure
 
      case mb of
-       Just fsm -> return (fsm,Just exCont)
+       Just fsm -> do when (optDumpStats opts) (dumpStats fsm)
+                      return (fsm,Just exCont)
        Nothing  -> do putStrLn "Unrealizable"
                       exitFailure
 
@@ -207,6 +210,24 @@ dumpAnnotations TC.Controller { .. } =
        return $ JSON.object [ ty           JSON..= jsonName svName
                             , "annotation" JSON..= jsonAnnotation annot ]
 
+
+dumpStats :: FSM -> IO ()
+dumpStats FSM { fsmNodes } =
+  do let edges = [ length nodeTrans | Node { nodeTrans } <- map snd (Map.toList fsmNodes) ]
+     putStrLn ("Number of nodes: " ++ show (length edges))
+     putStrLn ("Average number of successors: " ++ show (average edges))
+     putStrLn ("Median number of successors: " ++ show (median edges))
+     putStrLn ("Max number of successors: " ++ show (maximum edges))
+     where
+       average :: Integral a => [a] -> Float
+       average [] = 0
+       average xs = fromIntegral (sum xs) / fromIntegral (length xs)
+
+       median [] = 0
+       median xs = average $ middle $ sort xs
+
+       middle xs = take (signum (mod (len + 1) 2) + 1) $ drop (div (len - 1) 2) xs
+         where len = length xs
 
 
 jsonAnnotation :: Ann Renamed -> JSON.Value
