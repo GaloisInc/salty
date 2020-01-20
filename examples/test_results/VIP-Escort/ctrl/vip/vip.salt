@@ -30,8 +30,8 @@ env_trans
     --olocs' == 2 -> olocs == 0 \/ olocs == 1 \/ olocs == 2 \/ olocs == 3 \/ olocs == 4
     --olocs' == 3 -> olocs == 2 \/ olocs == 3 \/ olocs == 4
     --olocs' == 4 -> olocs == 2 \/ olocs == 3 \/ olocs == 4
-    olocs != 0
-    olocs != 1
+    olocs' != 0
+    olocs' != 1
     -- A location is considered surveilled iff the location is visited by either UAVs 
     (uloc1 == 0 \/ uloc2 == 0) -> sp0'
     (uloc1 == 1 \/ uloc2 == 1) -> sp1'
@@ -66,6 +66,7 @@ sys_trans
     (vloc != vloc') -> (vTrack1' \/ vTrack2') 
     -- a UAV can track the VIP iff they are both at the same location
     
+
     vTrack1' -> (vloc == 0 /\ uloc1 == 0) \/ (vloc == 1 /\ uloc1 == 1) \/ (vloc == 2 /\ uloc1 == 2) \/ (vloc == 3 /\ uloc1 == 3) \/ (vloc == 4 /\ uloc1 == 4)
 
     vTrack2' -> (vloc == 0 /\ uloc2 == 0) \/  (vloc == 1 /\ uloc2 == 1) \/ (vloc == 2 /\ uloc2 == 2) \/ (vloc == 3 /\ uloc2 == 3) \/ (vloc == 4 /\ uloc2 == 4)

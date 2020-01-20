@@ -33,8 +33,8 @@ env_init
   !hburst1
 
 env_trans
-   hlock0' -> hbusreq0'
-   hlock1' -> hbusreq1' 
+   hlock0 -> hbusreq0 
+   hlock1 -> hbusreq1 
 
 env_liveness
   !statea1
@@ -69,23 +69,23 @@ sys_trans
   ((!stateg2) /\ ((!hmastlock) \/ (!start) \/ (hburst0) \/ (hburst1))) -> !stateg2'
   ((!stateg2) /\ (hmastlock) /\ (start) /\ (!hburst0) /\ (!hburst1)) -> stateg2'
   ((stateg2) /\ (!start) /\ (busreq)) -> stateg2'
-  ((stateg2') /\ (start')) -> False
+  ((stateg2) /\ (start)) -> False
   ((stateg2) /\ (!start) /\ (!busreq)) -> !stateg2'
   ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!hmastlock) \/ (!start) \/ ((hburst0) \/ (!hburst1)))) -> (!stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
   ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((hmastlock) /\ (start) /\ ((!hburst0) /\ (hburst1)) /\ (!hready))) -> (stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
   ((!stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((hmastlock) /\ (start) /\ ((!hburst0) /\ (hburst1)) /\ (hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
   ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
   ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
-  ((stateg3_0') /\ (!stateg3_1') /\ (!stateg3_2') /\ ((start'))) -> False
-  ((!stateg3_0') /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
+  ((stateg3_0) /\ (!stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ stateg3_1' /\ !stateg3_2')
   ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (stateg3_0' /\ stateg3_1' /\ !stateg3_2')
-  ((!stateg3_0') /\ (stateg3_1') /\ (!stateg3_2') /\ ((start'))) -> False
+  ((!stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
   ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (!hready))) -> (stateg3_0' /\ stateg3_1' /\ !stateg3_2')
   ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ !stateg3_1' /\ stateg3_2')
-  ((stateg3_0') /\ (stateg3_1') /\ (!stateg3_2') /\ ((start'))) -> False
+  ((stateg3_0) /\ (stateg3_1) /\ (!stateg3_2) /\ ((start))) -> False
   ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((!start) /\ (!hready))) -> (!stateg3_0' /\ !stateg3_1' /\ stateg3_2')
   ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((!start) /\ (hready))) -> (!stateg3_0' /\ !stateg3_1' /\ !stateg3_2')
-  ((!stateg3_0') /\ (!stateg3_1') /\ (stateg3_2') /\ ((start'))) -> False
+  ((!stateg3_0) /\ (!stateg3_1) /\ (stateg3_2) /\ ((start))) -> False
   (hready) -> ((hgrant0) <-> (!hmaster0'))
   (hready) -> ((hgrant1) <-> (hmaster0'))
   (hready) -> (!locked <-> !hmastlock')
@@ -102,7 +102,7 @@ sys_trans
   ((!stateg10_1) /\ (((hgrant1) \/ (hbusreq1))))->!stateg10_1'
   ((!stateg10_1) /\ ((!hgrant1) /\ (!hbusreq1)))->stateg10_1'
   ((stateg10_1) /\ ((!hgrant1) /\ (!hbusreq1)))->stateg10_1'
-  ((stateg10_1') /\ (((hgrant1')) /\ (!hbusreq1')))->False
+  ((stateg10_1) /\ (((hgrant1)) /\ (!hbusreq1)))->False
   ((stateg10_1) /\ (hbusreq1))->!stateg10_1'
   (decide /\ !hbusreq0 /\ !hbusreq1) -> hgrant0'
 
