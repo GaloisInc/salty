@@ -186,7 +186,8 @@ sparkFSM FSM { fsmName, fsmEnums, fsmInputs, fsmOutputs, fsmInitial, fsmNodes } 
                   , subBody (text "Move")
                       [ ]
                       [ mkNested fsmNodes cntlrName stName env sys
-                      , statement $ assign (qualify (Just cntlrName) (svName env)) (svName env)
+                      , statement $ assign (qualify (Just cntlrName) (svName env))
+                          (if Map.null fsmInputs then sparkValue (VBool True) else svName env)
                       , statement $ assign (svName sys) (qualify (Just cntlrName) (svName sys)) ] ] ]
 
 -- NOTE: Ada is case-insensitive
