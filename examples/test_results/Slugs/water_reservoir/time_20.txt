@@ -1,0 +1,2 @@
+7516.37user 7.12system 2:03:38elapsed 101%CPU (0avgtext+0avgdata 1902104maxresident)k
+0inputs+175688outputs (0major+4439862minor)pagefaults 0swaps
