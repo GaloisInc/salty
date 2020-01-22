@@ -1,2 +1,7 @@
 /build/
-/salty.pdf
+*.aux
+*.bbl
+*.blg
+*.log
+*.gz
+*.pdf
