@@ -36,7 +36,7 @@ Joffrey Heugenot\inst{3}\orcidID{2222--3333-4444-5555}}
 \institute{Air Force Research Laboratory, WPAFB, OH 45433, USA \\
 \email{laura.humphrey@us.af.mil} \and
 LinQuest Corp., Beavercreek, OH 45431, USA \\
-\email{james.hamil@ctr.us.af.mil}  \and
+\email{james.hamil.ctr@us.af.mil}  \and
 AdaCore, F-75009 Paris, France \\
  \email{huguet@adacore.com}}
 %
@@ -59,7 +59,7 @@ from GR(1) specifications in a variety of programming languages -- to produce im
 SPARK is both a language and associated set of verification tools, so it has the potential to enable the ``end-to-end'' verification we desire.  
 In this paper, we discuss our experience to date using SPARK to implement controllers and verify them against 
 a subset of properties comprising their original GR(1) specifications, namely system initial and transition properties. 
-We also discuss leasons learned about how to best encode controllers in SPARK for verification, 
+We also discuss lessons learned about how to best encode controllers in SPARK for verification, 
 examples in which verification found unexpected controller behaviors, and 
 caveats related to the interpretation of GR(1) specifications.
 
@@ -148,7 +148,7 @@ Slugs
 \cite{Ehlers2016} is architected to allow users to easily tailor synthesis algorithms for specific applications,
  e.g. to optimize criteria such as quick response, cost-optimality, and error-resilience, and it produces mathematical representations of controller designs.
 Salty \cite{elliott2019salty} provides a front-end to Slugs that makes specifications easier to write and debug and 
-a back-end that turns controller designs into executable sofware implementations in a variety of programming languages.
+a back-end that turns controller designs into executable software implementations in a variety of programming languages.
 
 Though these tools implement synthesis algorithms that are theoretically ``correct-by-construction,'' 
 tool implementation errors could still result in errors in synthesized controllers. 
@@ -159,7 +159,7 @@ Though SPARK aims to perform fully automated verification, often the user must h
 annotating the code, e.g. with assertions and loop invariants. 
 However, since controller designs synthesized from GR(1) specifications follow a regular structure, it was our hope that we could 
 synthesize both the controller logic and the annotations necessary to automatically prove that controllers meet their functional specifications in SPARK. 
-To date, we have largely achieved this goal for a subset of properties comprising GR(1) specifiations, 
+To date, we have largely achieved this goal for a subset of properties comprising GR(1) specifications, 
 i.e. system initial and transition properties, for moderately-sized controllers.
 In what follows, in \sectref{sec:implementation} we discuss the SPARK implementation. 
 In \sectref{sec:caseStudies}, we demonstrate the efficacy of our approach on examples pulled from a variety of sources.
@@ -273,9 +273,9 @@ there is exactly one set of input values that brought the controller into that s
 Functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} encode lookup tables specifying the input and output value(s) for each state, respectively.
 Both of these are declared (lines 27-30) with aspect \lstinline{Ghost}, indicating that they used for proof purposes only, 
 i.e. they will create verification conditions related to type \lstinline{Controller} but are not executable. 
-The logic for these functions is given in the body (not shown here), but for instance in state 0, \lstinline{State_To_Input_Equivalence} returns \lstinline{False}, 
-since \lstinline{tick = False} as the system enters state 0, and \lstinline{State_To_Input_Equivalence} returns \lstinline{System'(red => True, yellow => False, green => False)}, 
-since $red$ is True and $yellow$ and $green$ are false as the system enters state 0.
+The logic for these functions is given in the body (not shown here), but for instance in state 1, \lstinline{State_To_Input_Equivalence} returns \lstinline{False}, 
+since \lstinline{tick = False} as the system enters state 1, and \lstinline{State_To_Input_Equivalence} returns \lstinline{System'(red => True, yellow => False, green => False)}, 
+since $red$ is True and $yellow$ and $green$ are false as the system enters state 1.
  }
 
 The public function \lstinline{Is_Init} (line 9) checks whether the controller is in its initial state, i.e. no inputs have yet been received. 
@@ -294,7 +294,7 @@ We chose to make these executable for reasons related to the meaning of GR(1) sp
 Recall that GR(1) specifications have the form $\varphi_e \limplies \varphi_s$. 
 If $\varphi_e$ ever becomes false, i.e. if the environment produces input value(s) that violate $\varphi_e$, then the specification as whole 
 is satisfied regardless of whether the system produces output value(s) that satisfy $\varphi_s$. 
-In theory, the system in this case could produce arbitrary outputs and still satisy the overall specification. 
+In theory, the system in this case could produce arbitrary outputs and still satisfy the overall specification. 
 In practice, we believe a user would generally want to know that the environment violated its specification, 
 so that the user could either choose the system output value(s) explicitly or fall back to some other error handling routine. 
 Therefore, a user needs to be able to check inputs with \lstinline{Env_Init} if \lstinline{Is_Init} returns true, 
@@ -367,9 +367,10 @@ A fragment of the body of \lstinline{Move} is shown in \figref{fig:moveBody}.
 Note that there are cases that can lead to \lstinline{Program_Error}. 
 This is because we programmatically use \lstinline{others} to cover all possible input combinations 
 that would not be allowed due to $\varphi_e^i$ or $\varphi_e^t$. 
+This makes the code generation simpler to implement as each variable's domain does not need to be explicitly tracked and covered. 
 In the traffic light example, they are unnecessary because all possible combinations of input values are 
 allowed out of each state. 
-In any case, SPARK will prove that that these cases are not reachable.
+In any case, SPARK will prove that these cases are not reachable. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -379,8 +380,8 @@ In any case, SPARK will prove that that these cases are not reachable.
 \label{sec:caseStudies}
 
 To check whether our approach has the potential to produce SPARK controllers that can be automatically verified to satisfy their original system initial and transition specifications, 
-we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, Salty, all of which make their examples publically available for download. 
-These examples -- including GR(1) specifications, sythesized SPARK packages, and SPARK analysis results -- are now all available in Salty format on the 
+we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, Salty, all of which make their examples publicly available for download. 
+These examples -- including GR(1) specifications, synthesized SPARK packages, and SPARK analysis results -- are now all available in Salty format on the 
 Salty GitHub repository\footnote{https://github.com/GaloisInc/salty/}, including the traffic light example of the previous section. 
 
 Many of the examples could be fully proven in SPARK in a matter of seconds.   
