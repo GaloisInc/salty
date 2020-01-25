@@ -126,7 +126,13 @@ $\varphi^e_l$, $\varphi^s_l$ & - & Formulas of the form $\bigwedge_{j \in J} \al
 
 \vspace{0.5em}
 
-\noindent It is assumed that at each time step, the environment chooses an input from $\inputs$, then the system chooses an output from $\outputs$ in response. 
+\noindent 
+In this context, the temporal operators $\always$ ``always,'' $\eventually$ ``eventually,'' and $\lnext$  ``next'' have the following meanings. 
+A formula of the form $\always b$ holds if $b$ is true at every time step. 
+A formula of the form $\eventually b$ holds if $b$ is eventually true at some future time step. 
+A formula of the form $\always \eventually b$ holds if $b$ is true infinitely often in the future. 
+And a formula of the form $\lnext b$ holds if $b$ is true at the next time step. 
+It is assumed that at each time step, the environment chooses an input from $\inputs$, then the system chooses an output from $\outputs$ in response. 
 The result of synthesis is a \emph{control protocol} or \emph{strategy} that can be expressed as a Moore machine, 
 with each state encoding the most recent input values from the environment and the most recent output values produced in response by the system.
 
@@ -215,8 +221,8 @@ package TrafficLight with SPARK_Mode is
   type Controller is private;
   
   type System is record
-      red: Boolean; yellow: Boolean; green: Boolean;
-    end record;
+    red: Boolean; yellow: Boolean; green: Boolean;
+  end record;
   
   function Is_Init(C: Controller) return Boolean;
   function Env_Init(tick: Boolean) return Boolean is (True);
@@ -229,11 +235,11 @@ package TrafficLight with SPARK_Mode is
     return Boolean with Pre => (not Is_Init(C)), Ghost;
     
   procedure Move(C: in out Controller; tick: in Boolean; S: out System)
-    with 
+  with 
     Pre => (if Is_Init(C) then Env_Init(tick) else Env_Trans(C, tick)),
     Contract_Cases =>
       (Is_Init(C) => Sys_Init(S) and (not Is_Init(C)),
-       others => Sys_Trans(C'Old, tick, S) and (not Is_Init(C)));
+       others     => Sys_Trans(C'Old, tick, S) and (not Is_Init(C)));
 
 private
   function State_To_Input_Mapping(C: Controller) return Boolean
@@ -268,13 +274,22 @@ Its initial state is always the last possible state number.
 Each input and output is of type \lstinline{Boolean}.
 When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{System} (lines 4-7) or \lstinline{Environment}, respectively. 
 Here, there is only one input, so it is not wrapped in a record. 
-Since controllers are Moore machines, \lstinline{Controller} includes a type invariant (lines 38-39) that specifies that for each internal state, 
-there is exactly one set of input values that brought the controller into that state and exactly one set of output values produced in that state. 
-Functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} encode lookup tables specifying the input and output value(s) for each state, respectively.
-Both of these are declared (lines 27-30) with aspect \lstinline{Ghost}, indicating that they used for proof purposes only, 
-i.e. they will create verification conditions related to type \lstinline{Controller} but are not executable. 
+Since \lstinline{Controller} is a Moore machine, for each internal state, 
+there is exactly one set of output values produced in that state. 
+Furthermore, controllers synthesized from GR(1) specifications have the additional property that 
+there is exactly one set of input values that brought the controller into that state. 
+Therefore, \lstinline{Controller} includes a type invariant (lines 38-39) that captures this property, 
+where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
+encode lookup tables specifying the input and output value(s) for each state, respectively.
+Both of these are declared (lines 27-30) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
+i.e. they will create verification conditions related to type \lstinline{Controller} but will not be executed in the actual program, 
+unless it is specified with a certain switch during compilation that they should be.
+Executing ghost code is often used for debugging, e.g. to check whether an unproved property is actually true. 
+In this case, removing the ghost code can save a lot of memory, 
+especially on bigger examples where the tables encoded by functions  \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
+would have to store information on thousands of states.
 The logic for these functions is given in the body (not shown here), but for instance in state 1, \lstinline{State_To_Input_Equivalence} returns \lstinline{False}, 
-since \lstinline{tick = False} as the system enters state 1, and \lstinline{State_To_Input_Equivalence} returns \lstinline{System'(red => True, yellow => False, green => False)}, 
+since \lstinline{tick = False} as the system enters state 1, and \lstinline{State_To_Output_Equivalence} returns \lstinline{System'(red => True, yellow => False, green => False)}, 
 since $red$ is True and $yellow$ and $green$ are false as the system enters state 1.
  }
 
@@ -288,9 +303,9 @@ It is implemented as an expression function for the same reason.
 As pulled from the Salty specification, $\varphi^s_i = red \land \lnot yellow \land \lnot green$, so this function returns the value of
 the expression \lstinline{S.red and not S.yellow and not S.green}.
 But unlike \lstinline{Is_Init} and \lstinline{Env_Init}, it is marked with aspect \lstinline{Ghost}, 
-meaning it is ``ghost code'' used only for proof and cannot be executed. 
-\lstinline{Is_Init} and \lstinline{Env_Init} are used for proof and are also executable. 
-We chose to make these executable for reasons related to the meaning of GR(1) specifications. 
+meaning it is ``ghost code'' used only for proof and will not be executed.
+\lstinline{Is_Init} and \lstinline{Env_Init} are used for proof but are also callable in functional code. 
+We chose to make them non-ghost functions for reasons related to the meaning of GR(1) specifications. 
 Recall that GR(1) specifications have the form $\varphi_e \limplies \varphi_s$. 
 If $\varphi_e$ ever becomes false, i.e. if the environment produces input value(s) that violate $\varphi_e$, then the specification as whole 
 is satisfied regardless of whether the system produces output value(s) that satisfy $\varphi_s$. 
@@ -298,14 +313,13 @@ In theory, the system in this case could produce arbitrary outputs and still sat
 In practice, we believe a user would generally want to know that the environment violated its specification, 
 so that the user could either choose the system output value(s) explicitly or fall back to some other error handling routine. 
 Therefore, a user needs to be able to check inputs with \lstinline{Env_Init} if \lstinline{Is_Init} returns true, 
-which is why both are executable.
+which is why both are callable. At the moment, they are not used in the code of the \lstinline{Move} procedure.
 Public functions \lstinline{Env_Trans} and \lstinline{Sys_Trans} (lines 14-17) check whether the next set of input value(s) and output value(s) 
 satisfy $\varphi_e^t$ and $\varphi_s^t$, respectively. 
-For the same reasons as above, \lstinline{Env_Trans} is executable but \lstinline{Sys_Trans} is ghost code. 
+For the same reasons as above, \lstinline{Sys_Trans} is a ghost function but \lstinline{Env_Trans} is not.
 Note that \lstinline{Env_Trans} has a precondition that the controller must not be in its initial state, 
 since $\varphi_e^t$ can depend on both the current and next set of input value(s). 
-This precondition is not necessary for \lstinline{Sys_Trans}, since it is not executable, and it will only be used to 
-assert properties in cases in which the controller is not in its initial state. 
+This precondition is also necessary for \lstinline{Sys_Trans}, because in the initial state, the attributes of the \lstinline{Controller} are not initialized, and the \lstinline{Sys_Trans} function might read these values. 
 As with \lstinline{Env_Init} and \lstinline{Sys_Init}, the logic for these functions is pulled from the Salty specification and 
 implemented in the body (not shown), since they make use of input and output values stored in the \lstinline{Controller}, whose fields are private.
 
