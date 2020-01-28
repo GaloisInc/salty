@@ -25,9 +25,12 @@
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-\author{Laura Humphrey\inst{1}\orcidID{0000-1111-2222-3333} \and
-James Hamil\inst{2}\orcidID{1111-2222-3333-4444} \and
-Joffrey Heugenot\inst{3}\orcidID{2222--3333-4444-5555}}
+%\author{Laura Humphrey\inst{1}\orcidID{0000-1111-2222-3333} \and
+%James Hamil\inst{2}\orcidID{1111-2222-3333-4444} \and
+%Joffrey Huguet\inst{3}\orcidID{2222--3333-4444-5555}}
+\author{Laura Humphrey\inst{1} \and
+James Hamil\inst{2} \and
+Joffrey Huguet\inst{3}}
 %
 \authorrunning{L. Humphrey et al.}
 % First names are abbreviated in the running head.
@@ -56,9 +59,9 @@ errors in tool implementation can still lead to errors in synthesized controller
 We are therefore interested in ``end-to-end'' verification of synthesized controllers with respect to their original GR(1) specifications.
 Toward this end we have modified Salty -- a tool that produces executable software implementations of controllers 
 from GR(1) specifications in a variety of programming languages -- to produce implementations in SPARK.
-SPARK is both a language and associated set of verification tools, so it has the potential to enable the ``end-to-end'' verification we desire.  
+SPARK is both a programming language and associated set of verification tools, so it has the potential to enable the ``end-to-end'' verification we desire.
 In this paper, we discuss our experience to date using SPARK to implement controllers and verify them against 
-a subset of properties comprising their original GR(1) specifications, namely system initial and transition properties. 
+a subset of properties comprising GR(1) specifications, namely system initial and transition properties. 
 We also discuss lessons learned about how to best encode controllers in SPARK for verification, 
 examples in which verification found unexpected controller behaviors, and 
 caveats related to the interpretation of GR(1) specifications.
@@ -117,7 +120,7 @@ and outputs in the set $\outputs$ produced by the system, terms are:
 \end{xtabular}
 
 \noindent \begin{xtabular}{p{.045\columnwidth}p{.015\columnwidth}p{.860\columnwidth}}
- $\varphi^e_t$, $\varphi^s_t$ & - &  Formulas of the form $\bigwedge_{j \in J} \always B_j$, where each $B_j$ is a Boolean combination of variables from $\inputs \cup \outputs$ and expressions of the form $\lnext v$, where $v \in \inputs$ for $\varphi^e_t$ and $v \in \inputs \cup \outputs$ for $\varphi^s_t$. These encode properties that should always hold as well as rules for how inputs and outputs are allowed to change based on current input and output values.
+ $\varphi^e_t$, $\varphi^s_t$ & - &  Formulas of the form $\bigwedge_{j \in J} \always B_j$, where each $B_j$ is a Boolean combination of variables from $\inputs \cup \outputs$ and expressions of the form $\lnext v$, where $v \in \inputs$ for $\varphi^e_t$ and $v \in \inputs \cup \outputs$ for $\varphi^s_t$. These encode properties that should always hold as well as rules for how inputs and outputs are allowed to change based on most recent input and output values.
 \end{xtabular}
 
 \noindent \begin{xtabular}{p{.045\columnwidth}p{.015\columnwidth}p{.860\columnwidth}}
@@ -128,13 +131,15 @@ $\varphi^e_l$, $\varphi^s_l$ & - & Formulas of the form $\bigwedge_{j \in J} \al
 
 \noindent 
 In this context, the temporal operators $\always$ ``always,'' $\eventually$ ``eventually,'' and $\lnext$  ``next'' have the following meanings. 
-A formula of the form $\always b$ holds if $b$ is true at every time step. 
-A formula of the form $\eventually b$ holds if $b$ is eventually true at some future time step. 
-A formula of the form $\always \eventually b$ holds if $b$ is true infinitely often in the future. 
-And a formula of the form $\lnext b$ holds if $b$ is true at the next time step. 
+A formula of the form $\always b$ holds if $b$ is true at every time step, 
+$\eventually b$ holds if $b$ is eventually true at some future time step, 
+$\always \eventually b$ holds if $b$ is true infinitely often in the future, 
+and $\lnext b$ holds if $b$ is true at the next time step. 
 It is assumed that at each time step, the environment chooses an input from $\inputs$, then the system chooses an output from $\outputs$ in response. 
-The result of synthesis is a \emph{control protocol} or \emph{strategy} that can be expressed as a Moore machine, 
-with each state encoding the most recent input values from the environment and the most recent output values produced in response by the system.
+The result of synthesis is a \emph{control protocol} or \emph{strategy} that can be expressed as a Moore machine. 
+In a Moore machine, each state produces a unique set of system output values, 
+and in the case of GR(1), synthesized Moore machines have the additional property that 
+there is a unique set of environment input values that brings the system into each state.
 
 Several tools for GR(1) synthesis are available. 
 For example, RATSY %(Requirements Analysis Tool with Synthesis) 
@@ -165,13 +170,13 @@ Though SPARK aims to perform fully automated verification, often the user must h
 annotating the code, e.g. with assertions and loop invariants. 
 However, since controller designs synthesized from GR(1) specifications follow a regular structure, it was our hope that we could 
 synthesize both the controller logic and the annotations necessary to automatically prove that controllers meet their functional specifications in SPARK. 
-To date, we have largely achieved this goal for a subset of properties comprising GR(1) specifications, 
+To date, we have achieved this goal for a subset of properties comprising GR(1) specifications, 
 i.e. system initial and transition properties, for moderately-sized controllers.
 In what follows, in \sectref{sec:implementation} we discuss the SPARK implementation. 
-In \sectref{sec:caseStudies}, we demonstrate the efficacy of our approach on examples pulled from a variety of sources.
-In \sectref{sec:discussion}, we discuss possible approaches for proving liveness properties as well as design choice alternatives, 
-e.g. for dealing with environment specifications.
-We end with concluding remarks in \sectref{sec:conclusions}.
+In \sectref{sec:caseStudies}, we demonstrate the efficacy of our approach on examples pulled from various sources.
+In \sectref{sec:lessonsLearned}, we discuss lessons learned, including how to structure synthesized controllers for proof, 
+examples in which SPARK revealed unexpected controller behaviors, and caveats related to the interpretation of GR(1) specifications. 
+We end with concluding remarks in \sectref{sec:conclusions}, including a discussion of future work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % IMPLEMENTATION and Verification in SPARK
@@ -182,7 +187,7 @@ We end with concluding remarks in \sectref{sec:conclusions}.
 To explain the structure of the controllers we generate in SPARK, consider a simple example of a controller for a traffic light. 
 Color changes are triggered in every state in which an input signal's value is true.
 Let this input be called $tick$.
-The traffic light's color changes from red to green to yellow and back to red, repeating the cycle infinitely. 
+The traffic light's color changes from red to green to yellow to red $\ldots$, repeating the cycle infinitely. 
 Let the output variables then be $red$, $yellow$, and $green$.
 The environment specifications are $\varphi^e_i = \top$, $\varphi^e_t = \top$, $\varphi^e_l = \always \eventually tick$, i.e.  
 $tick$ can be true or false in the initial state and has no constraints on how it transitions from state to state, but it must be true infinitely often.
@@ -264,15 +269,15 @@ end TrafficLight;
 \sloppy{
 In SPARK, subunits consist of a specification and a body. 
 For each synthesized controller, Salty automatically generates both a specification and body for a package named according to the Salty specification. 
-The package specification is shown in \figref{fig:trafficLightSpec}.
+The package specification for this traffic light example is shown in \figref{fig:trafficLightSpec}.
 Type \lstinline{Controller} encodes a Moore machine suitable for representing the state of a synthesized controller. 
-In the public part of the specification (line 2), \lstinline{Controller} is declared as a private type so that the user cannot arbitrarily manipulate its state 
+In the public part of the specification, \lstinline{Controller} (line 2) is declared as a private type so that the user cannot arbitrarily manipulate its state 
 (possibly violating the controller's GR(1) specification). 
-In the private part of the specification (lines 34-39), \lstinline{Controller} is a record that stores the controller's internal state number, 
+In the private part of the specification, \lstinline{Controller} (lines 34-39) is a record that stores the controller's internal state number, 
 current input value(s), and the current output value(s). 
 Its initial state is always the last possible state number. 
 Each input and output is of type \lstinline{Boolean}.
-When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{System} (lines 4-7) or \lstinline{Environment}, respectively. 
+When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{System} (lines 4-6) or \lstinline{Environment}, respectively. 
 Here, there is only one input, so it is not wrapped in a record. 
 Since \lstinline{Controller} is a Moore machine, for each internal state, 
 there is exactly one set of output values produced in that state. 
@@ -281,11 +286,11 @@ there is exactly one set of input values that brought the controller into that s
 Therefore, \lstinline{Controller} includes a type invariant (lines 38-39) that captures this property, 
 where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
 encode lookup tables specifying the input and output value(s) for each state, respectively.
-Both of these are declared (lines 27-30) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
+Both of these are declared (lines 26-29) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
 i.e. they will create verification conditions related to type \lstinline{Controller} but will not be executed in the actual program, 
 unless it is specified with a certain switch during compilation that they should be.
 Executing ghost code is often used for debugging, e.g. to check whether an unproved property is actually true. 
-In this case, removing the ghost code can save a lot of memory, 
+In this case, removing the ghost code can save significant memory, 
 especially on bigger examples where the tables encoded by functions  \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
 would have to store information on thousands of states.
 The logic for these functions is given in the body (not shown here), but for instance in state 1, \lstinline{State_To_Input_Equivalence} returns \lstinline{False}, 
@@ -293,19 +298,18 @@ since \lstinline{tick = False} as the system enters state 1, and \lstinline{Stat
 since $red$ is True and $yellow$ and $green$ are false as the system enters state 1.
  }
 
-The public function \lstinline{Is_Init} (line 9) checks whether the controller is in its initial state, i.e. no inputs have yet been received. 
-The public function \lstinline{Env_Init} (line 10) checks whether input(s) satisfy $\varphi_e^i$. 
+The public function \lstinline{Is_Init} (line 8) checks whether the controller is in its initial state, i.e. no inputs have yet been received. 
+The public function \lstinline{Env_Init} (line 9) checks whether input(s) satisfy $\varphi_e^i$. 
 It is implemented as an expression function, i.e. the implementation is given directly in the specification and not the body, 
 because all terms needed to define it are visible in the public part of the specification. 
 In this example, since $\varphi_e^i = \top$ as pulled from the Salty specification, this function always simply returns \lstinline{True}. 
-The public function \lstinline{Sys_Init} (lines 11-12) checks whether outputs(s) satisfy $\varphi_s^i$. 
+The public function \lstinline{Sys_Init} (lines 10-11) checks whether outputs(s) satisfy $\varphi_s^i$. 
 It is implemented as an expression function for the same reason.  
 As pulled from the Salty specification, $\varphi^s_i = red \land \lnot yellow \land \lnot green$, so this function returns the value of
 the expression \lstinline{S.red and not S.yellow and not S.green}.
-But unlike \lstinline{Is_Init} and \lstinline{Env_Init}, it is marked with aspect \lstinline{Ghost}, 
-meaning it is ``ghost code'' used only for proof and will not be executed.
+But unlike \lstinline{Is_Init} and \lstinline{Env_Init}, it is marked with aspect \lstinline{Ghost} because it is mainly used for proof and does not need to be executed. 
 \lstinline{Is_Init} and \lstinline{Env_Init} are used for proof but are also callable in functional code. 
-We chose to make them non-ghost functions for reasons related to the meaning of GR(1) specifications. 
+We chose to make these non-ghost functions for reasons related to the meaning of GR(1) specifications. 
 Recall that GR(1) specifications have the form $\varphi_e \limplies \varphi_s$. 
 If $\varphi_e$ ever becomes false, i.e. if the environment produces input value(s) that violate $\varphi_e$, then the specification as whole 
 is satisfied regardless of whether the system produces output value(s) that satisfy $\varphi_s$. 
@@ -314,7 +318,7 @@ In practice, we believe a user would generally want to know that the environment
 so that the user could either choose the system output value(s) explicitly or fall back to some other error handling routine. 
 Therefore, a user needs to be able to check inputs with \lstinline{Env_Init} if \lstinline{Is_Init} returns true, 
 which is why both are callable. At the moment, they are not used in the code of the \lstinline{Move} procedure.
-Public functions \lstinline{Env_Trans} and \lstinline{Sys_Trans} (lines 14-17) check whether the next set of input value(s) and output value(s) 
+Public functions \lstinline{Env_Trans} and \lstinline{Sys_Trans} (lines 13-16) check whether the next set of input value(s) and output value(s) 
 satisfy $\varphi_e^t$ and $\varphi_s^t$, respectively. 
 For the same reasons as above, \lstinline{Sys_Trans} is a ghost function but \lstinline{Env_Trans} is not.
 Note that \lstinline{Env_Trans} has a precondition that the controller must not be in its initial state, 
@@ -359,7 +363,7 @@ end Move;
   \label{fig:moveBody}
 \end{figure}
 
-The public procedure \lstinline{Move} (lines 19-24) transitions a controller based on its current state and 
+The public procedure \lstinline{Move} (lines 18-23) transitions a controller based on its current state and 
 next set of input value(s), and it produces the next set of output value(s). 
 It has a precondition that if the controller is in its initial state, 
 inputs must satisfy $\varphi_e^i$; otherwise they must satisfy $\varphi_e^t$.
@@ -372,20 +376,25 @@ For the right-hand side, the aspect \lstinline{Old} can therefore be used to ref
 Combined with the previous precondition, \lstinline{Contract_Cases} asserts that if the controller is in its initial state, then after execution of \lstinline{Move}, 
 the first set of output value(s) produced should satisfy $\varphi_s^i$ and the controller should no longer be in its initial state; 
 if it is not in its initial state, then the output value(s) produced should satisfy $\varphi_s^t$, 
-evaluated based on the most recent input and output values stored in C'Old, the next input value(s) just provided (in this case in \lstinline{tick}), 
+evaluated based on the most recent input and output values stored in \lstinline{C'Old}, the next input value(s) just provided (in this case in \lstinline{tick}), 
 and the next output values just generated (in this case in the record \lstinline{System}). 
 This set of contract cases embodies our main proof goal, i.e. verification of system initial and transition properties from the original GR(1) specification for the controller. 
 
-
 A fragment of the body of \lstinline{Move} is shown in \figref{fig:moveBody}. 
 Note that there are cases that can lead to \lstinline{Program_Error}. 
-This is because we programmatically use \lstinline{others} to cover all possible input combinations 
+This is because case statements require all possible cases to be covered, so 
+we programmatically use \lstinline{others} to cover all possible input combinations 
 that would not be allowed due to $\varphi_e^i$ or $\varphi_e^t$. 
-This makes the code generation simpler to implement as each variable's domain does not need to be explicitly tracked and covered. 
 In the traffic light example, they are unnecessary because all possible combinations of input values are 
 allowed out of each state. 
 In any case, SPARK will prove that these cases are not reachable. 
 
+We briefly note that Salty includes language features that can result in different constructs being used 
+to represent inputs and outputs in synthesized controllers, 
+including enumerations and integers. 
+For instance, enumerations encode that an enumerated input or output can have exactly one of a set of values, 
+as in the traffic light being exactly one color as expressed in $\varphi_s^i$ and part \eqnref{eq:mutex} of $\varphi_s^t$. 
+In such cases, enumerations or integers can make both specifications and code more compact and easier to read and understand.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CASE STUDIES
@@ -394,21 +403,29 @@ In any case, SPARK will prove that these cases are not reachable.
 \label{sec:caseStudies}
 
 To check whether our approach has the potential to produce SPARK controllers that can be automatically verified to satisfy their original system initial and transition specifications, 
-we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, Salty, all of which make their examples publicly available for download. 
+we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, and Salty, all of which make their examples publicly available for download. 
 These examples -- including GR(1) specifications, synthesized SPARK packages, and SPARK analysis results -- are now all available in Salty format on the 
 Salty GitHub repository\footnote{https://github.com/GaloisInc/salty/}, including the traffic light example of the previous section. 
 
-Many of the examples could be fully proven in SPARK in a matter of seconds.   
-However, many examples were surprisingly large, with 10s or even 100s of thousands of states, 
-resulting in controller bodies that are several megabytes in some cases. 
-Some of these could be analyzed but not fully proven; often, SPARK could prove 99\% of the checks required for functional correctness of the \lstinline{Move} function. 
-Others required too much memory to analyze.
 \figref{fig:timingResults} shows the amount of time needed to analyze examples as a function of approximate number of states, 
-with examples that proved to 99\% marked in red and examples that could not be analyzed set to -1 in red. 
+with examples with unproved functional contracts marked in red and examples that could not be analyzed set to -10 in red.
 Results were generated on a Linux VM given 24 MB RAM and 4 processors on a MacBook Pro with a 2.9 GHz Intel Core i9 with 32GB RAM.
+On most examples in which the Moore machine encoding the controller had less than 4000 transitions, 
+SPARK was able to completely verify or prove the generated code complies with its specification. 
+Examples that had more than 4000 transitions required too much memory to analyze, resulting in errors when attempting to verify them in SPARK. 
+Of examples with less than 4000 transitions, two resulted in errors. 
+These two examples had abnormally large specifications consisting of approximately 1000 terms each, whereas most other examples had 500 or less.
+Two could only be partially proven. 
+One was relatively large, with about 2000 transitions. 
+The other had arithmetic terms in its specification (Salty and Slugs support integer inputs and outputs). 
+We are investigating why this example does not fully prove, 
+since we feel that SPARK should be capable of fully proving this example.
+
+
 
 \begin{figure}
-\caption{Timing results for example controllers in SPARK.}
+\includegraphics[width=\textwidth]{salty.eps}
+\caption{Timing results for example controllers in SPARK as a function of number of transitions in the Moore machine representing the controller. Examples marked ``proven'' were fully verified, examples marked ``partial'' were partially verified, and examples marked ``error'' were too big to analyze.}
 \label{fig:timingResults}
 \end{figure}
 
@@ -423,32 +440,61 @@ Throughout the process of synthesizing and attempting to verify controllers in S
 both about SPARK and about some of the finer points of GR(1) specifications.
 
 In terms of encoding SPARK controllers for verification, we originally tried to 
-[James: fill in what we tried to do in our first iteration].
-However, using case structures in the \lstinline{Move} procedure was better suited to proof because
-[James and/or Joffrey: fill in the reason(s) why case structures are better]
+mirror the approach taken in other Salty language targets by building a static lookup table for state transitions. 
+To do this, we tried to create an array of \lstinline{Formal_Hashed_Maps} indexed by \lstinline{State_Num}, where keys 
+were derived from environment input values and used to look up the next \lstinline{State_Num} and corresponding system output values. 
+Ghost functions consisting of nested quantified expressions were used to assert that in each state, initial and transition properties held 
+according to values stored in the current state's hashed map and the outputs of next states. 
+These functions comprised the post-condition of a function that initialized the controller's lookup table. 
+The body of the \lstinline{Move} procedure simply retrieved the outputs and next state from the lookup table 
+using its stored \lstinline{State_Num} and \lstinline{Environment} input.
+The public portion of the SPARK specification was largely unchanged.
+This approach was only able to prove the smallest of examples in a reasonable amount of time. 
 
-[James and/or Laura: I want to write a little more detail about the next section]
-We also found that some examples in our database did not have any inputs, i.e. they essentially amounted to synthesizing a system independent of an environment. 
-In that case, we had specifications for a non-existent environment that were vacuous, 
-and this was causing SPARK to take an abnormally long amount of time to verify these controllers, given their relatively small size.
+While the use of formal containers was intuitive, they are more complex to reason about with respect to proof 
+because they require reasoning about models of the containers and the effects of container operations. 
+Encoding the the lookup table as a case statement is more straightforward, because for instance, 
+it is ``obvious'' to the underlying solvers that state transitions are static and that a transition exists for every possible input, since 
+case statements must be exhaustive. 
+%When building a lookup table represented as a formal container, one can imagine the provers would have to do additional reasoning 
+%to ensure that all possible transitions are defined for each state, and no entries are ever deleted or added to the container at other points in the code. 
+Encoding the \lstinline{Move} procedure as a case statement still has some issues, mainly that 
+(1) the generated code can be quite long, leading to memory errors when trying to prove the subprogram with SPARK, and
+(2) when proving the postcondition, since the solvers prove all cases at the same time and the number of cases grows 
+exponentially with the number of inputs, sometimes the solvers are not able to prove the postcondition.
+A solution to both problems could be to split the \lstinline{Move} procedure into several smaller procedures. %, e.g. splitting on the number of states 
+% in a manner similar to a classic programmer splitting large subprograms into smaller ones. 
+This would allow SPARK to apply its modular analysis on several smaller procedures, thus enabling the proof on larger files. 
+We are currently investigating ways to split up the procedure that does not accidentally create more difficulties for the solvers.
 
-We also originally had some examples that resulted in invalid SPARK code. 
-In particular, there were cases in the controller that were empty. 
-After some investigation, we discovered that in the mathematical representation of the controllers, there were states with no possible successors. 
-This is due to the interpretation of GR(1) specifications as a game between the environment and the system. 
-Recall that since GR(1) specifications have the form $\varphi_e \limplies \varphi_s$, if the environment violates its specification $\varphi_e$, then the system 
-can violate its specification $\varphi_s$ and still satisfy the overall specification. 
-States with no successors represent cases in which the system can ``win'' the game by transitioning to a state in which the environment is forced to violate $\varphi_e$. 
-In \sectref{sec:implementation}, we stated that we believe a user will generally want to know when the environment violates its specification. 
-Therefore, we believe that the best way to handle this would be to return some indication to the user, so they can decide what the system should do or fall back to some other error handling routine, 
-which will require some modifications to our SPARK code generator. 
-In the meantime, we were essentially able to tighten up these specifications so that there were no such states.
-[Laura and/or James: explain why this was happening in our examples. Also check with the VIP example: does this reveal an error in the code synthesized in other languages? It's possible that there are case statements that are "falling through"]
+Analysis with SPARK did reveal unexpected behaviors in two controllers synthesized from our corpus of examples. 
+In particular, these controllers contained empty case statements in the \lstinline{Move} procedure. 
+Upon inspection of the Slugs output, these corresponded to states with no successors. 
+Upon inspection of the specifications, we found that these two examples\footnote{Salty's vip\_orig.salt and Anzu's arbiter.salt} had 
+environment transition terms that allowed the environment to produce an input that would always cause 
+the environment to violate its own specification on the next time step. 
+These specifications had the form $\always \lnot p$ instead of $\always \lnext \lnot p$. 
+The distinction is important. 
+In the former case, the environment can choose $p$ for its next input and not violate the specification on the current time step. 
+However, it violates it on the next time step when $p$ becomes the ``current'' value instead of the ``next'' value. 
+The latter case does not allow $p$ on the next time step, and so it also cannot hold on future ``current'' steps. 
+Generally, specifications should follow the latter form, 
+and this was indeed an error in these specifications, so we fixed them.
+However, we also modified Salty to put \lstinline{raise Program_Error} for such cases and checked 
+that we were still able to prove $\varphi_e \limplies \varphi_s$ for these examples  
+(since reaching these cases would require violating the precondition $\varphi_e$ on the environment). 
+We found that in other Salty language targets, procedures equivalent to \lstinline{Move} would have raised random runtime exceptions 
+in such cases due to empty entries in their lookup tables.
 
-[Joffrey: If there are examples that are still taking an unexplainable amount of time, it'd be nice to have an intuition for why.]
-
-[Joffrey: It would also be nice if there were an intuition for why SPARK is generally able to exactly 99\% of checks for large examples. Is it the "final" form of the post condition that is causing problems?]
-
+Based on our first round of SPARK analysis, we also found some examples in our database that did not have any inputs, 
+i.e. they essentially amounted to synthesizing a system independent of an environment. 
+In those cases, we had specifications for a non-existent environment that were vacuous, 
+and this was causing SPARK to take an abnormally long amount of time to verify these controllers, given their relatively small size. 
+These controllers were did not have errors per se, 
+but they were inefficiently encoded. 
+We modified Salty to handle such cases by removing the environment, functions over the environment, and
+all references to the environment in all pre- and postconditions.
+This greatly decreased verification time and also reduced the size and increased the efficiency of the code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CONCLUSIONS
@@ -456,10 +502,21 @@ In the meantime, we were essentially able to tighten up these specifications so 
 \section{Conclusions}
 \label{sec:conclusions}
 
-[Laura: Summarize paper. Highlight benefits of SPARK, especially if it revealed "fall through" case statements in some examples. Mention it was relatively easy to figure out how to structure controllers
-and annotate code]
+We were able to successfully use SPARK to verify safety and transition properties of moderately sized controllers 
+synthesized from GR(1) specifications by the tool Salty. 
+Encoding the controllers and all of the annotations necessary for these controllers to prove automatically was relatively straighforward. 
+The act of performing ``end-to-end'' verification with SPARK on such controllers was valuable because (1) it revealed implementation errors for certain 
+types of specifications that result in random runtime errors in other Salty target languages, and (2) it revealed cases in which controllers were inefficiently encoded, i.e. when there is no environment.
 
-[Joffrey: Speculate on how to prove liveness, whether in SPARK and/or using other tools/approaches.]
+In terms of future work, we can potentially improve the scalability of our approach by decomposing the \lstinline{Move} procedure 
+into several subprocedures, as discussed in the previous section. 
+We are also interested in expressing and proving liveness properties. 
+Liveness properties will be more challenging to verify because they necessarily require reasoning about future states. 
+Verifying system liveness in SPARK will require something like encoding a lookahead and showing that certain states will inevitably be reached 
+when the environment satisfies its specification, which can also include liveness terms. 
+This is likely to result in complex first-order formulas with alternating quantification over time, which are 
+notoriously hard to handle for automated solvers, so discharging the resulting proof obligations may prove to be a challenge.
+To tackle this issue, collaboration with a model checker performing verification at the level of the input language might be appropriate.
 
 %
 % ---- Bibliography ----
