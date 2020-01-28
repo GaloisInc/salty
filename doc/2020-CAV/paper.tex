@@ -266,6 +266,7 @@ end TrafficLight;
   \label{fig:trafficLightSpec}
 \end{figure}
 
+
 In SPARK, subunits consist of a specification and a body, 
 which Salty generates. 
 % For each synthesized controller, Salty automatically generates both a specification and body for a package named according to the Salty specification. 
@@ -276,7 +277,7 @@ In the public part of the specification, \lstinline{Controller} (line 2) is decl
 In the private part of the specification, \lstinline{Controller} (lines 33-37) is a record that stores the controller's internal state number, 
 current input value(s), and the current output value(s). 
 Its initial state is always the last possible state number. 
-Each input and output is of type \lstinline{Boolean}. 
+In this example, each input and output is of type \lstinline{Boolean} (Salty also allows for enumerations and integers, to be discussed later). 
 When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{Environment} or \lstinline{System} (lines 4-6), respectively. 
 Here, there is only one input, so it is not wrapped in a record. 
 Since \lstinline{Controller} is a Moore machine, for each internal state, 
@@ -295,8 +296,8 @@ since \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping}
 internally encode large lookup tables that have to store information on every state of the controller, 
 which is often thousands of states or even millions of states for the largest example in our database.
 The logic for these functions is given in the body (not shown here), but for instance when \lstinline{C.State = 1}, 
-\lstinline{State_To_Input_Mapping} returns \lstinline{True} if and only if \lstinline{C.tick = False} and 
-\lstinline{State_To_Input_Mapping} returns \lstinline{True} if and only if 
+\lstinline{State_To_Input_Mapping (C)} returns \lstinline{True} if and only if \lstinline{C.tick = False} and 
+\lstinline{State_To_Output_Mapping (C)} returns \lstinline{True} if and only if 
 \sloppy{\lstinline{C.S = System'(red => True, yellow => False, green => False)}}, 
 since \lstinline{tick = False} brings the system into state 1 and $red$ is true and $yellow$ and $green$ are false in state 1.
  
@@ -329,6 +330,23 @@ since $\varphi_e^t$ can depend on both the current and next set of input value(s
 This precondition is also necessary for \lstinline{Sys_Trans}, because in the initial state, the attributes of the \lstinline{Controller} are not initialized, and the \lstinline{Sys_Trans} function might read these values. 
 As with \lstinline{Env_Init} and \lstinline{Sys_Init}, the logic for these functions is pulled from the Salty specification and 
 implemented in the body (not shown), since they make use of input and output values stored in the \lstinline{Controller}, whose fields are private.
+
+The public procedure \lstinline{Move} (lines 18-23) transitions a controller based on its current state and 
+next set of input value(s), and it produces the next set of output value(s). 
+It has a precondition that if the controller is in its initial state, 
+inputs must satisfy $\varphi_e^i$; otherwise they must satisfy $\varphi_e^t$.
+The aspect \lstinline{Contract_Cases} specifies additional sets of preconditions paired with postconditions, 
+where the set of all preconditions must be mutually exclusive and exhaustively cover the entire input space.
+The \lstinline{others} keyword can be used to cover the set of all input conditions not covered in any explicit cases of the contract. 
+Note that for the left-hand side of each case (left of the \lstinline{=>}), variable names refer to values before evaluation of the subprogram; 
+for the right-hand side, they refer to values after evaluation.
+Therefore, the aspect \lstinline{Old} can be used on the right to reference the value of a variable before evaluation of the subprogram. 
+Combined with the previous precondition, \lstinline{Contract_Cases} asserts that if the controller is in its initial state, then after execution of \lstinline{Move}, 
+the first set of output value(s) produced should satisfy $\varphi_s^i$ and the controller should no longer be in its initial state; 
+if it is not in its initial state, then the output value(s) produced should satisfy $\varphi_s^t$, 
+evaluated based on the most recent input and output values stored in \lstinline{C'Old}, the next input value(s) just provided (in this case in \lstinline{tick}), 
+and the next output values just generated (in this case in the record \lstinline{System}). 
+This set of contract cases embodies our main proof goal, i.e. verification of system initial and transition properties from the original GR(1) specification for the controller. 
 
 \begin{figure}
 \begin{lstlisting}[language={Ada}, basicstyle=\scriptsize]  
@@ -365,23 +383,6 @@ end Move;
   \caption{The body of the Move procedure.}
   \label{fig:moveBody}
 \end{figure}
-
-The public procedure \lstinline{Move} (lines 18-23) transitions a controller based on its current state and 
-next set of input value(s), and it produces the next set of output value(s). 
-It has a precondition that if the controller is in its initial state, 
-inputs must satisfy $\varphi_e^i$; otherwise they must satisfy $\varphi_e^t$.
-The aspect \lstinline{Contract_Cases} specifies additional sets of preconditions paired with postconditions, 
-where the set of all preconditions must be mutually exclusive and exhaustively cover the entire input space.
-The \lstinline{others} keyword can be used to cover the set of all input conditions not covered in any explicit cases of the contract. 
-Note that for the left-hand side of each case (left of the \lstinline{=>}), variable names refer to values before evaluation of the subprogram; 
-for the right-hand side, they refer to values after evaluation.
-Therefore, the aspect \lstinline{Old} can be used on the right to reference the value of a variable before evaluation of the subprogram. 
-Combined with the previous precondition, \lstinline{Contract_Cases} asserts that if the controller is in its initial state, then after execution of \lstinline{Move}, 
-the first set of output value(s) produced should satisfy $\varphi_s^i$ and the controller should no longer be in its initial state; 
-if it is not in its initial state, then the output value(s) produced should satisfy $\varphi_s^t$, 
-evaluated based on the most recent input and output values stored in \lstinline{C'Old}, the next input value(s) just provided (in this case in \lstinline{tick}), 
-and the next output values just generated (in this case in the record \lstinline{System}). 
-This set of contract cases embodies our main proof goal, i.e. verification of system initial and transition properties from the original GR(1) specification for the controller. 
 
 A fragment of the body of \lstinline{Move} is shown in \figref{fig:moveBody}. 
 Note that there are cases that can lead to \lstinline{Program_Error}. 
@@ -446,6 +447,7 @@ since we feel that SPARK should be capable of fully proving this example.
 \label{fig:timingResults}
 \end{figure}
 
+\vspace{-1em}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Lessons Learned
@@ -510,10 +512,10 @@ We found that in other Salty language targets, procedures equivalent to \lstinli
 in such cases due to empty entries in their lookup tables.
 
 Based on our first round of SPARK analysis, we also found some examples in our database that did not have any inputs, 
-i.e. they essentially amounted to synthesizing a system independent of an environment. 
+i.e. they amounted to synthesizing a system independent of an environment. 
 In those cases, we had specifications for a non-existent environment that were vacuous, 
 and this was causing SPARK to take an abnormally long amount of time to verify these controllers, given their relatively small size. 
-These controllers were did not have errors per se, 
+These controllers did not have errors per se, 
 but they were inefficiently encoded. 
 We plan to modify Salty to handle such cases by removing the environment, functions over the environment, and
 all references to the environment in all pre- and postconditions.
@@ -528,7 +530,7 @@ This greatly decreases verification time and also reduces the size and increases
 We were able to successfully use SPARK to verify safety and transition properties of moderately sized controllers 
 synthesized by Salty from GR(1) specifications. 
 Encoding the controllers and all of the annotations necessary for these controllers to prove automatically was relatively straighforward, 
-and it was satisfying to be able to generate proofs using a single tool rather than having to use mulitple tools to perform verification.
+and it was satisfying to be able to generate proofs using a single tool rather than having to use multiple tools to perform verification.
 Furthermore, the act of performing ``end-to-end'' verification with SPARK on such controllers was valuable because (1) it revealed implementation errors for certain 
 types of specifications that result in random runtime errors in other Salty target languages, and (2) it revealed cases in which controllers were inefficiently encoded, i.e. when there is no environment.
 
