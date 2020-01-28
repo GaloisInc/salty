@@ -137,13 +137,12 @@ $\always \eventually b$ holds if $b$ is true infinitely often in the future,
 and $\lnext b$ holds if $b$ is true at the next time step. 
 It is assumed that at each time step, the environment chooses an input from $\inputs$, then the system chooses an output from $\outputs$ in response. 
 The result of synthesis is a \emph{control protocol} or \emph{strategy} that can be expressed as a Moore machine. 
-In a Moore machine, each state produces a unique set of system output values, 
-and in the case of GR(1), synthesized Moore machines have the additional property that 
-there is a unique set of environment input values that brings the system into each state.
+%Note that in the case of GR(1), synthesized Moore machines not only produce a single set of system output values in each state, 
+%there is a unique set of environment input values that brings the controller into each state.
 
 Several tools for GR(1) synthesis are available. 
 For example, RATSY %(Requirements Analysis Tool with Synthesis) 
-\cite{bloem2010ratsy} has a focus on circuit design and can synthesize designs 
+\cite{bloem2010ratsy} has a focus on circuit design and synthesizes designs 
 encoded in BLIF, %(Berkeley Logic Interchange Format),
 Verilog, and HIF. %(HDL Intermediate Format). 
 Similarly, Anzu \cite{jobstmann2007anzu} produces circuit designs in Verilog.
@@ -156,26 +155,26 @@ TuLiP
 \cite{TuLiP2011} has a similar focus and can synthesize controller implementations in Python. 
 Slugs 
 %(SmalL bUt Complete GROne Synthesizer) 
-\cite{Ehlers2016} is architected to allow users to easily tailor synthesis algorithms for specific applications,
+\cite{Ehlers2016} is architected to allow users to tailor synthesis algorithms,
  e.g. to optimize criteria such as quick response, cost-optimality, and error-resilience, and it produces mathematical representations of controller designs.
 Salty \cite{elliott2019salty} provides a front-end to Slugs that makes specifications easier to write and debug and 
 a back-end that turns controller designs into executable software implementations in a variety of programming languages.
 
 Though these tools implement synthesis algorithms that are theoretically ``correct-by-construction,'' 
 tool implementation errors could still result in errors in synthesized controllers. 
-We are therefore interested in ``end-to-end'' verification of synthesized controllers with respect to their original GR(1) specifications. 
+We are therefore interested in ``end-to-end'' verification of synthesized controllers. % with respect to their original GR(1) specifications. 
 Toward this end, we have extended Salty to produce software implementations of synthesized controller designs in SPARK. 
 SPARK is both a programming language with a specification language and associated verification toolset \cite{hoang2015spark}. 
 Though SPARK aims to perform fully automated verification, often the user must help guide the underlying provers by
 annotating the code, e.g. with assertions and loop invariants. 
 However, since controller designs synthesized from GR(1) specifications follow a regular structure, it was our hope that we could 
-synthesize both the controller logic and the annotations necessary to automatically prove that controllers meet their functional specifications in SPARK. 
+synthesize both the controller logic and the annotations necessary to automatically prove that controllers meet their GR(1) specifications in SPARK. 
 To date, we have achieved this goal for a subset of properties comprising GR(1) specifications, 
 i.e. system initial and transition properties, for moderately-sized controllers.
 In what follows, in \sectref{sec:implementation} we discuss the SPARK implementation. 
-In \sectref{sec:caseStudies}, we demonstrate the efficacy of our approach on examples pulled from various sources.
+In \sectref{sec:caseStudies}, we discuss our results on examples pulled from various sources.
 In \sectref{sec:lessonsLearned}, we discuss lessons learned, including how to structure synthesized controllers for proof, 
-examples in which SPARK revealed unexpected controller behaviors, and caveats related to the interpretation of GR(1) specifications. 
+examples in which SPARK revealed unexpected controller behaviors, and caveats related to GR(1) specifications. 
 We end with concluding remarks in \sectref{sec:conclusions}, including a discussion of future work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,10 +183,10 @@ We end with concluding remarks in \sectref{sec:conclusions}, including a discuss
 \section{Implementation and Verification in SPARK}
 \label{sec:implementation}
 
-To explain the structure of the controllers we generate in SPARK, consider a simple example of a controller for a traffic light. 
-Color changes are triggered in every state in which an input signal's value is true.
-Let this input be called $tick$.
-The traffic light's color changes from red to green to yellow to red $\ldots$, repeating the cycle infinitely. 
+To explain the structure of our synthesized SPARK controllers, consider a simple example of a traffic light controller. 
+Let the controller's single input be $tick$. 
+Color changes occur in every state in which $tick$ is true.
+The traffic light's color cycles infinitely over the sequence red $\rightarrow$ green $\rightarrow$ yellow $\rightarrow$ red $\rightarrow$ $\ldots$.
 Let the output variables then be $red$, $yellow$, and $green$.
 The environment specifications are $\varphi^e_i = \top$, $\varphi^e_t = \top$, $\varphi^e_l = \always \eventually tick$, i.e.  
 $tick$ can be true or false in the initial state and has no constraints on how it transitions from state to state, but it must be true infinitely often.
@@ -215,10 +214,11 @@ the light starts as red but should infinitely often be green. The system transit
 \end{align}
 }
 
-
 \noindent That is, the light should only be one color at a time \eqnref{eq:mutex}; 
 the color should change from red $\rightarrow$ green $\rightarrow$ yellow $\rightarrow$ red $\rightarrow \ldots$ whenever $tick$ is true \eqnref{eq:change}; 
 and the color should remain the same whenever $tick$ is false \eqnref{eq:same}.
+
+\renewcommand{\floatpagefraction}{.8}%
 
 \begin{figure}
 \begin{lstlisting}[language={Ada}, basicstyle=\scriptsize, numbers=left]
@@ -266,17 +266,17 @@ end TrafficLight;
   \label{fig:trafficLightSpec}
 \end{figure}
 
-\sloppy{
-In SPARK, subunits consist of a specification and a body. 
-For each synthesized controller, Salty automatically generates both a specification and body for a package named according to the Salty specification. 
+In SPARK, subunits consist of a specification and a body, 
+which Salty generates. 
+% For each synthesized controller, Salty automatically generates both a specification and body for a package named according to the Salty specification. 
 The package specification for this traffic light example is shown in \figref{fig:trafficLightSpec}.
-Type \lstinline{Controller} encodes a Moore machine suitable for representing the state of a synthesized controller. 
-In the public part of the specification, \lstinline{Controller} (line 2) is declared as a private type so that the user cannot arbitrarily manipulate its state 
-(possibly violating the controller's GR(1) specification). 
+Type \lstinline{Controller} encodes a Moore machine representing the synthesized controller. 
+In the public part of the specification, \lstinline{Controller} (line 2) is declared as a private type so that the user cannot arbitrarily manipulate its state.  
+% (possibly violating the controller's GR(1) specification). 
 In the private part of the specification, \lstinline{Controller} (lines 33-37) is a record that stores the controller's internal state number, 
 current input value(s), and the current output value(s). 
 Its initial state is always the last possible state number. 
-Each input and output is of type \lstinline{Boolean}.
+Each input and output is of type \lstinline{Boolean}. 
 When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{Environment} or \lstinline{System} (lines 4-6), respectively. 
 Here, there is only one input, so it is not wrapped in a record. 
 Since \lstinline{Controller} is a Moore machine, for each internal state, 
@@ -284,23 +284,26 @@ there is exactly one set of output values produced in that state.
 Furthermore, controllers synthesized from GR(1) specifications have the additional property that 
 there is exactly one set of input values that brought the controller into that state. 
 Therefore, \lstinline{Controller} includes a type invariant (lines 36-37) that captures this property, 
-where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} state whether the controller has the corresponding state number and input or output value(s), respectively.
-They use lookup tables, \lstinline{State_To_Input_Equivalence} and \lstinline{State_To_Output_Equivalence}, defined in the package body, to do so.
-Both of the functions used as invariants are declared (lines 26-29) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
+where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} state whether the controller has the corresponding state number and input or output value(s), respectively. 
+% They use lookup tables, \lstinline{State_To_Input_Equivalence} and \lstinline{State_To_Output_Equivalence}, defined in the package body, to do so.
+Both of these functions are declared (lines 26-29) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
 i.e. they will create verification conditions related to type \lstinline{Controller} but will not be executed in the actual program, 
 unless it is specified with a certain switch during compilation that they should be.
 Executing ghost code is often used for debugging, e.g. to check whether an unproved property is actually true. 
 In this case, removing the ghost code can save significant memory, 
-especially on bigger examples where the tables encoded for functions  \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
-would have to store information on thousands of states.
-The logic for these functions is given in the body (not shown here), but for instance in state 1, \lstinline{State_To_Input_Equivalence} returns \lstinline{False}, 
-since \lstinline{tick = False} as the system enters state 1, and \lstinline{State_To_Output_Equivalence} returns \lstinline{System'(red => True, yellow => False, green => False)}, 
-since $red$ is True and $yellow$ and $green$ are false as the system enters state 1.
- }
+since \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
+internally encode large lookup tables that have to store information on every state of the controller, 
+which is often thousands of states or even millions of states for the largest example in our database.
+The logic for these functions is given in the body (not shown here), but for instance when \lstinline{C.State = 1}, 
+\lstinline{State_To_Input_Mapping} returns \lstinline{True} if and only if \lstinline{C.tick = False} and 
+\lstinline{State_To_Input_Mapping} returns \lstinline{True} if and only if 
+\sloppy{\lstinline{C.S = System'(red => True, yellow => False, green => False)}}, 
+since \lstinline{tick = False} brings the system into state 1 and $red$ is true and $yellow$ and $green$ are false in state 1.
+ 
 
 The public function \lstinline{Is_Init} (line 8) checks whether the controller is in its initial state, i.e. no inputs have yet been received. 
 The public function \lstinline{Env_Init} (line 9) checks whether input(s) satisfy $\varphi_e^i$. 
-It is implemented as an expression function, i.e. the implementation is given directly in the specification and not the body, 
+It is implemented as an expression function, i.e. the implementation is given directly in the specification, 
 because all terms needed to define it are visible in the public part of the specification. 
 In this example, since $\varphi_e^i = \top$ as pulled from the Salty specification, this function always simply returns \lstinline{True}. 
 The public function \lstinline{Sys_Init} (lines 10-11) checks whether outputs(s) satisfy $\varphi_s^i$. 
@@ -370,9 +373,9 @@ inputs must satisfy $\varphi_e^i$; otherwise they must satisfy $\varphi_e^t$.
 The aspect \lstinline{Contract_Cases} specifies additional sets of preconditions paired with postconditions, 
 where the set of all preconditions must be mutually exclusive and exhaustively cover the entire input space.
 The \lstinline{others} keyword can be used to cover the set of all input conditions not covered in any explicit cases of the contract. 
-Note that for the left-hand side of each case (left of the \lstinline{=>}), variable names refer to variable values before evaluation of the subprogram; 
-for the right-hand side, they refer to variable values after evaluation.
-For the right-hand side, the aspect \lstinline{Old} can therefore be used to reference the value of a variable before evaluation of the subprogram. 
+Note that for the left-hand side of each case (left of the \lstinline{=>}), variable names refer to values before evaluation of the subprogram; 
+for the right-hand side, they refer to values after evaluation.
+Therefore, the aspect \lstinline{Old} can be used on the right to reference the value of a variable before evaluation of the subprogram. 
 Combined with the previous precondition, \lstinline{Contract_Cases} asserts that if the controller is in its initial state, then after execution of \lstinline{Move}, 
 the first set of output value(s) produced should satisfy $\varphi_s^i$ and the controller should no longer be in its initial state; 
 if it is not in its initial state, then the output value(s) produced should satisfy $\varphi_s^t$, 
@@ -385,9 +388,9 @@ Note that there are cases that can lead to \lstinline{Program_Error}.
 This is because case statements require all possible cases to be covered, so 
 we programmatically use \lstinline{others} to cover all possible input combinations 
 that would not be allowed due to $\varphi_e^i$ or $\varphi_e^t$. 
-In the traffic light example, they are unnecessary because all possible combinations of input values are 
+In the traffic light example, these are unnecessary because all possible combinations of input values are 
 allowed out of each state. 
-In any case, SPARK will prove that these cases are not reachable. 
+In any case, SPARK will prove that such cases are not reachable. 
 
 We briefly note that Salty includes language features that can result in different constructs being used 
 to represent inputs and outputs in synthesized controllers, 
