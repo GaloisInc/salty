@@ -407,17 +407,32 @@ In such cases, enumerations or integers can make both specifications and code mo
 
 To check whether our approach has the potential to produce SPARK controllers that can be automatically verified to satisfy their original system initial and transition specifications, 
 we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, and Salty, all of which make their examples publicly available for download. 
-These examples -- including GR(1) specifications, synthesized SPARK packages, and SPARK analysis results -- are now all available in Salty format on the 
+These examples -- including GR(1) specifications in Salty format, synthesized SPARK packages, and SPARK analysis results -- are all available on the 
 Salty GitHub repository\footnote{https://github.com/GaloisInc/salty/}, including the traffic light example of the previous section. 
+We note that while some examples are small and simple, e.g. demos along the lines of the traffic light example, 
+there are many in our collection that are more realistic. 
+For instance, Anzu has controller specifications for a generalized IBM buffer and an AMBA bus. 
+LTLMoP and TuLiP have specifications for robot controllers that have been demonstrated on simulated and/or real robots. 
+And Salty has specifications for controllers to coordinate the actions of teams of vehicles that have been demonstrated in simulation. 
 
-\figref{fig:timingResults} shows the amount of time needed to analyze examples as a function of number of transitions in the Moore machine representing the controller, with examples that could not be analyzed due to memory errors set to -10.
-Results were generated on a Linux VM given 24 GB RAM and 4 processors on a MacBook Pro with a 2.9 GHz Intel Core i9 with 32GB RAM.
-On most examples in which the Moore machine encoding the controller had less than 4000 transitions, 
+\figref{fig:timingResults} shows the amount of time needed to analyze examples as a function of total number of transitions 
+in the Moore machine representing the controller, 
+with examples that could not be analyzed due to memory errors set to 1. 
+Results were generated on a Linux VM given 24GB RAM and 4 processors on a MacBook Pro with a 2.9 GHz Intel Core i9 with 32GB RAM.
+We ran 40 examples in total. 
+Results for 33 examples are plotted. 
+On most examples with less than 4000 transitions, 
 SPARK was able to completely verify or prove the generated code complies with its specification. 
-Examples that had more than 4000 transitions required too much memory to analyze, resulting in errors when attempting to verify them in SPARK. 
+Examples that had more than 4000 transitions (the 7 unplotted examples) required too much memory to analyze, 
+resulting in errors when attempting to verify them in SPARK. 
+
 Of examples with less than 4000 transitions, two resulted in errors. 
-These two examples had abnormally large specifications consisting of approximately 1000 terms each, whereas most other examples had 500 or less.
-Two could only be partially proven. 
+These two examples had abnormally large specifications consisting of approximately 1000 atomic propositions each, 
+whereas most other examples with a similar number of transitions had 500 or less. 
+Such cases occur, e.g. when systems include a large number of inputs and/or outputs but have very tight specifications on 
+how they can transition, leading to large specifications and therefore lengthy pre- and postconditions but relatively small controllers.
+
+Two examples with less than 4000 transitions could only be partially proven. 
 One was relatively large, with about 2000 transitions. 
 The other had arithmetic terms in its specification (Salty and Slugs support integer inputs and outputs); 
 we are investigating why this example does not fully prove, 
@@ -426,8 +441,8 @@ since we feel that SPARK should be capable of fully proving this example.
 
 
 \begin{figure}
-\includegraphics[width=\textwidth]{salty.eps}
-\caption{Timing results for example controllers in SPARK as a function of number of transitions in the Moore machine representing the controller. Examples marked ``proven'' were fully verified, examples marked ``partial'' were partially verified, and examples marked ``error'' were too big to analyze.}
+\includegraphics[width=\textwidth]{salty_log.eps}
+\caption{Timing results for example SPARK controllers as a function of number of transitions in the controller. ``Proven'' examples were fully verified, ``partial'' examples were partially verified, and ``error'' examples were too big to analyze.}
 \label{fig:timingResults}
 \end{figure}
 
@@ -445,8 +460,8 @@ In terms of encoding SPARK controllers for verification, we originally tried to
 mirror the approach taken in other Salty language targets by building a static lookup table for state transitions. 
 To do this, we tried to create an array of \lstinline{Formal_Hashed_Maps} indexed by \lstinline{State_Num}, where keys 
 were derived from environment input values and used to look up the next \lstinline{State_Num} and corresponding system output values. 
-Ghost functions consisting of nested quantified expressions were used to check that in each state, initial and transition properties held 
-according to values stored in the current state's hashed map and the outputs of next states. 
+Ghost functions consisting of nested quantified expressions were used to check that in each state, specification properties held 
+using input and output values encoded by the current state and all states reachable as contained in the hashed maps.
 These functions comprised the post-condition of a function that initialized the controller's lookup table. 
 The body of the \lstinline{Move} procedure simply retrieved the outputs and next state from the lookup table 
 using its stored \lstinline{State_Num} and \lstinline{Environment} input.
@@ -454,7 +469,7 @@ The public portion of the SPARK specification was largely unchanged.
 This approach was only able to prove the smallest of examples in a reasonable amount of time. 
 
 While the use of formal containers was intuitive, they are more complex to reason about with respect to proof 
-because they require reasoning about models of the containers and the effects of container operations. 
+because they require reasoning about models of the containers. 
 Encoding the lookup table as a case statement is more straightforward, because for instance, 
 it is ``obvious'' to the underlying solvers that state transitions are static and that a transition exists for every possible input, since 
 case statements must be exhaustive. 
@@ -469,22 +484,28 @@ A solution to both problems could be to split the \lstinline{Move} procedure int
 This would allow SPARK to apply its modular analysis on several smaller procedures, thus enabling the proof on larger files. 
 We are currently investigating ways to split up the procedure that does not accidentally create more difficulties for the solvers.
 
-Analysis with SPARK did reveal unexpected behaviors in two controllers synthesized from our corpus of examples. 
+Analysis with SPARK did reveal unexpected behaviors in two example controllers. 
 In particular, these controllers contained empty case statements in the \lstinline{Move} procedure. 
 Upon inspection of the Slugs output, these corresponded to states with no successors. 
 Upon inspection of the specifications, we found that these two examples\footnote{Salty's vip\_orig.salt and Anzu's arbiter.salt} had 
-environment transition terms that allowed the environment to produce an input that would always cause 
+environment transition terms that allowed the environment to produce an input that would cause 
 the environment to violate its own specification on the next time step. 
-These specifications had the form $\always \lnot p$ instead of $\always \lnext \lnot p$. 
-The distinction is important. 
-In the former case, the environment can choose $p$ for its next input and not violate the specification on the current time step. 
-However, it violates it on the next time step when $p$ becomes the ``current'' value instead of the ``next'' value. 
-The latter case does not allow $p$ on the next time step, and so it also cannot hold on future ``current'' steps. 
-Generally, specifications should follow the latter form, 
+To explain, suppose $p$ is an input. 
+Then these specifications had the form $\always \lnot p$ instead of $\always \lnext \lnot p$. 
+The distinction is important.
+In GR(1), specifications are interpreted in the context of a two-player game in which transition specifications 
+are over the current state and the next state. 
+In the former case, the environment can choose $p$ for the ``next'' time step, and this does not violate $\always \lnot p$ 
+in the ``current'' time step, since the new ``current'' time step is only constructed once the environment and system have both taken their turn. 
+However, once the next state is reached, $p$ becomes the new ``current'' value, and $\always \lnot p$ 
+will now be violated no matter what the environment chooses.
+Generally, specifications should follow the latter form $\always \lnext \lnot p$, 
 and this was indeed an error in these specifications, so we fixed them.
-However, we also modified Salty to put \lstinline{raise Program_Error} for such cases and checked 
+However, we also modified Salty to \lstinline{raise Program_Error} for such cases and checked 
 that we were still able to prove $\varphi_e \limplies \varphi_s$ for these examples  
-(since reaching these cases would require violating the precondition $\varphi_e$ on the environment). 
+(since reaching these cases would require violating the precondition $\varphi_e$). 
+Such cases amount to instances in which the precondition on \lstinline{Move} is violated, which is why we allow the user to execute \lstinline{Env_Trans} 
+as discussed in \sectref{sec:implementation}. 
 We found that in other Salty language targets, procedures equivalent to \lstinline{Move} would have raised random runtime exceptions 
 in such cases due to empty entries in their lookup tables.
 
@@ -494,9 +515,9 @@ In those cases, we had specifications for a non-existent environment that were v
 and this was causing SPARK to take an abnormally long amount of time to verify these controllers, given their relatively small size. 
 These controllers were did not have errors per se, 
 but they were inefficiently encoded. 
-We modified Salty to handle such cases by removing the environment, functions over the environment, and
+We plan to modify Salty to handle such cases by removing the environment, functions over the environment, and
 all references to the environment in all pre- and postconditions.
-This greatly decreased verification time and also reduced the size and increased the efficiency of the code.
+This greatly decreases verification time and also reduces the size and increases the efficiency of the code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CONCLUSIONS
@@ -505,10 +526,13 @@ This greatly decreased verification time and also reduced the size and increased
 \label{sec:conclusions}
 
 We were able to successfully use SPARK to verify safety and transition properties of moderately sized controllers 
-synthesized from GR(1) specifications by the tool Salty. 
-Encoding the controllers and all of the annotations necessary for these controllers to prove automatically was relatively straighforward. 
-The act of performing ``end-to-end'' verification with SPARK on such controllers was valuable because (1) it revealed implementation errors for certain 
+synthesized by Salty from GR(1) specifications. 
+Encoding the controllers and all of the annotations necessary for these controllers to prove automatically was relatively straighforward, 
+and it was satisfying to be able to generate proofs using a single tool rather than having to use mulitple tools to perform verification.
+Furthermore, the act of performing ``end-to-end'' verification with SPARK on such controllers was valuable because (1) it revealed implementation errors for certain 
 types of specifications that result in random runtime errors in other Salty target languages, and (2) it revealed cases in which controllers were inefficiently encoded, i.e. when there is no environment.
+
+
 
 In terms of future work, we can potentially improve the scalability of our approach by decomposing the \lstinline{Move} procedure 
 into several subprocedures, as discussed in the previous section. 
