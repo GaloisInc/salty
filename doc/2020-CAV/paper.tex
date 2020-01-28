@@ -273,25 +273,25 @@ The package specification for this traffic light example is shown in \figref{fig
 Type \lstinline{Controller} encodes a Moore machine suitable for representing the state of a synthesized controller. 
 In the public part of the specification, \lstinline{Controller} (line 2) is declared as a private type so that the user cannot arbitrarily manipulate its state 
 (possibly violating the controller's GR(1) specification). 
-In the private part of the specification, \lstinline{Controller} (lines 34-39) is a record that stores the controller's internal state number, 
+In the private part of the specification, \lstinline{Controller} (lines 33-37) is a record that stores the controller's internal state number, 
 current input value(s), and the current output value(s). 
 Its initial state is always the last possible state number. 
 Each input and output is of type \lstinline{Boolean}.
-When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{System} (lines 4-6) or \lstinline{Environment}, respectively. 
+When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{Environment} or \lstinline{System} (lines 4-6), respectively. 
 Here, there is only one input, so it is not wrapped in a record. 
 Since \lstinline{Controller} is a Moore machine, for each internal state, 
 there is exactly one set of output values produced in that state. 
 Furthermore, controllers synthesized from GR(1) specifications have the additional property that 
 there is exactly one set of input values that brought the controller into that state. 
-Therefore, \lstinline{Controller} includes a type invariant (lines 38-39) that captures this property, 
-where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
-encode lookup tables specifying the input and output value(s) for each state, respectively.
-Both of these are declared (lines 26-29) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
+Therefore, \lstinline{Controller} includes a type invariant (lines 36-37) that captures this property, 
+where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} state whether the controller has the corresponding state number and input or output value(s), respectively.
+They use lookup tables, \lstinline{State_To_Input_Equivalence} and \lstinline{State_To_Output_Equivalence}, defined in the package body, to do so.
+Both of the functions used as invariants are declared (lines 26-29) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
 i.e. they will create verification conditions related to type \lstinline{Controller} but will not be executed in the actual program, 
 unless it is specified with a certain switch during compilation that they should be.
 Executing ghost code is often used for debugging, e.g. to check whether an unproved property is actually true. 
 In this case, removing the ghost code can save significant memory, 
-especially on bigger examples where the tables encoded by functions  \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
+especially on bigger examples where the tables encoded for functions  \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
 would have to store information on thousands of states.
 The logic for these functions is given in the body (not shown here), but for instance in state 1, \lstinline{State_To_Input_Equivalence} returns \lstinline{False}, 
 since \lstinline{tick = False} as the system enters state 1, and \lstinline{State_To_Output_Equivalence} returns \lstinline{System'(red => True, yellow => False, green => False)}, 
@@ -311,7 +311,7 @@ But unlike \lstinline{Is_Init} and \lstinline{Env_Init}, it is marked with aspec
 \lstinline{Is_Init} and \lstinline{Env_Init} are used for proof but are also callable in functional code. 
 We chose to make these non-ghost functions for reasons related to the meaning of GR(1) specifications. 
 Recall that GR(1) specifications have the form $\varphi_e \limplies \varphi_s$. 
-If $\varphi_e$ ever becomes false, i.e. if the environment produces input value(s) that violate $\varphi_e$, then the specification as whole 
+If $\varphi_e$ ever becomes false, i.e. if the environment produces input value(s) that violate $\varphi_e$, then the specification as a whole 
 is satisfied regardless of whether the system produces output value(s) that satisfy $\varphi_s$. 
 In theory, the system in this case could produce arbitrary outputs and still satisfy the overall specification. 
 In practice, we believe a user would generally want to know that the environment violated its specification, 
@@ -407,9 +407,8 @@ we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, and 
 These examples -- including GR(1) specifications, synthesized SPARK packages, and SPARK analysis results -- are now all available in Salty format on the 
 Salty GitHub repository\footnote{https://github.com/GaloisInc/salty/}, including the traffic light example of the previous section. 
 
-\figref{fig:timingResults} shows the amount of time needed to analyze examples as a function of approximate number of states, 
-with examples with unproved functional contracts marked in red and examples that could not be analyzed set to -10 in red.
-Results were generated on a Linux VM given 24 MB RAM and 4 processors on a MacBook Pro with a 2.9 GHz Intel Core i9 with 32GB RAM.
+\figref{fig:timingResults} shows the amount of time needed to analyze examples as a function of number of transitions in the Moore machine representing the controller, with examples that could not be analyzed due to memory errors set to -10.
+Results were generated on a Linux VM given 24 GB RAM and 4 processors on a MacBook Pro with a 2.9 GHz Intel Core i9 with 32GB RAM.
 On most examples in which the Moore machine encoding the controller had less than 4000 transitions, 
 SPARK was able to completely verify or prove the generated code complies with its specification. 
 Examples that had more than 4000 transitions required too much memory to analyze, resulting in errors when attempting to verify them in SPARK. 
@@ -417,8 +416,8 @@ Of examples with less than 4000 transitions, two resulted in errors.
 These two examples had abnormally large specifications consisting of approximately 1000 terms each, whereas most other examples had 500 or less.
 Two could only be partially proven. 
 One was relatively large, with about 2000 transitions. 
-The other had arithmetic terms in its specification (Salty and Slugs support integer inputs and outputs). 
-We are investigating why this example does not fully prove, 
+The other had arithmetic terms in its specification (Salty and Slugs support integer inputs and outputs); 
+we are investigating why this example does not fully prove, 
 since we feel that SPARK should be capable of fully proving this example.
 
 
@@ -443,7 +442,7 @@ In terms of encoding SPARK controllers for verification, we originally tried to
 mirror the approach taken in other Salty language targets by building a static lookup table for state transitions. 
 To do this, we tried to create an array of \lstinline{Formal_Hashed_Maps} indexed by \lstinline{State_Num}, where keys 
 were derived from environment input values and used to look up the next \lstinline{State_Num} and corresponding system output values. 
-Ghost functions consisting of nested quantified expressions were used to assert that in each state, initial and transition properties held 
+Ghost functions consisting of nested quantified expressions were used to check that in each state, initial and transition properties held 
 according to values stored in the current state's hashed map and the outputs of next states. 
 These functions comprised the post-condition of a function that initialized the controller's lookup table. 
 The body of the \lstinline{Move} procedure simply retrieved the outputs and next state from the lookup table 
@@ -453,7 +452,7 @@ This approach was only able to prove the smallest of examples in a reasonable am
 
 While the use of formal containers was intuitive, they are more complex to reason about with respect to proof 
 because they require reasoning about models of the containers and the effects of container operations. 
-Encoding the the lookup table as a case statement is more straightforward, because for instance, 
+Encoding the lookup table as a case statement is more straightforward, because for instance, 
 it is ``obvious'' to the underlying solvers that state transitions are static and that a transition exists for every possible input, since 
 case statements must be exhaustive. 
 %When building a lookup table represented as a formal container, one can imagine the provers would have to do additional reasoning 
