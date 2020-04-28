@@ -8,6 +8,7 @@
 % If you use the hyperref package, please uncomment the following line
 % to display URLs in blue roman font according to Springer's eBook style:
 % \renewcommand\UrlFont{\color{blue}\rmfamily}
+\allowdisplaybreaks
 
 % OUR MACROS
 \input{macros}
@@ -19,29 +20,42 @@
 % TITLE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\title{\large Experience Report: End-to-End Verification of Initial and Transition Properties of GR(1) Designs in SPARK\thanks{Supported by AFRL contract FA8650-16-C-2642 and AFOSR grant RQCOR20-35.}}
+\title{\large End-to-End Verification of Initial and Transition Properties of GR(1) Designs in SPARK}
+
+%\thanks{Supported by AFRL contract FA8650-16-C-2642 and AFOSR grant RQCOR20-35.}}
 %
 \titlerunning{End-to-End Verification of GR(1) Designs in SPARK}
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-%\author{Laura Humphrey\inst{1}\orcidID{0000-1111-2222-3333} \and
-%James Hamil\inst{2}\orcidID{1111-2222-3333-4444} \and
-%Joffrey Huguet\inst{3}\orcidID{2222--3333-4444-5555}}
-\author{Laura Humphrey\inst{1} \and
-James Hamil\inst{2} \and
-Joffrey Huguet\inst{3}}
+\author{Author 1\inst{1} \and
+Author 2\inst{2} \and
+Author 3\inst{3}}
+
+%\author{Laura Humphrey\inst{1} \and
+%James Hamil\inst{2} \and
+%Joffrey Huguet\inst{3}}
 %
-\authorrunning{L. Humphrey et al.}
+
+% \authorrunning{L. Humphrey et al.}
+\authorrunning{Author 1 et al.}
+
 % First names are abbreviated in the running head.
 % If there are more than two authors, 'et al.' is used.
 %
-\institute{Air Force Research Laboratory, WPAFB, OH 45433, USA \\
-\email{laura.humphrey@us.af.mil} \and
-LinQuest Corp., Beavercreek, OH 45431, USA \\
-\email{james.hamil.ctr@us.af.mil}  \and
-AdaCore, F-75009 Paris, France \\
- \email{huguet@adacore.com}}
+\institute{Institute 1 \\
+\email{author1@email.com} \and
+Institute 2 \\
+\email{author2@email.com}  \and
+Institute 3 \\
+ \email{author3@email.com}}
+%
+%\institute{Air Force Research Laboratory, WPAFB, OH 45433, USA \\
+%\email{laura.humphrey@us.af.mil} \and
+%LinQuest Corp., Beavercreek, OH 45431, USA \\
+%\email{james.hamil.ctr@us.af.mil}  \and
+%AdaCore, F-75009 Paris, France \\
+% \email{huguet@adacore.com}}
 %
 \maketitle              % typeset the header of the contribution
 %
@@ -157,33 +171,88 @@ Slugs
 %(SmalL bUt Complete GROne Synthesizer) 
 \cite{Ehlers2016} is architected to allow users to tailor synthesis algorithms,
  e.g. to optimize criteria such as quick response, cost-optimality, and error-resilience, and it produces mathematical representations of controller designs.
+ %% -- TODO: put more details about input types that Salty allows? About what optimizations it does?
 Salty \cite{elliott2019salty} provides a front-end to Slugs that makes specifications easier to write and debug and 
-a back-end that turns controller designs into executable software implementations in a variety of programming languages.
+a back-end that turns controller designs into executable software implementations in a variety of programming languages, 
+including Python, C++, Java, and now SPARK.
 
 Though these tools implement synthesis algorithms that are theoretically ``correct-by-construction,'' 
 tool implementation errors could still result in errors in synthesized controllers. 
 We are therefore interested in ``end-to-end'' verification of synthesized controllers. % with respect to their original GR(1) specifications. 
 Toward this end, we have extended Salty to produce software implementations of synthesized controller designs in SPARK. 
 SPARK is both a programming language with a specification language and associated verification toolset \cite{hoang2015spark}. 
+SPARK translates code to the Why language for processing by Why3, 
+and Why3 uses other automated provers -- including Z3, CVC4, and Alt-Ergo -- to discharge verification conditions.
 Though SPARK aims to perform fully automated verification, often the user must help guide the underlying provers by
 annotating the code, e.g. with assertions and loop invariants. 
 However, since controller designs synthesized from GR(1) specifications follow a regular structure, it was our hope that we could 
 synthesize both the controller logic and the annotations necessary to automatically prove that controllers meet their GR(1) specifications in SPARK. 
 To date, we have achieved this goal for a subset of properties comprising GR(1) specifications, 
 i.e. system initial and transition properties, for moderately-sized controllers.
-In what follows, in \sectref{sec:implementation} we discuss the SPARK implementation. 
-In \sectref{sec:caseStudies}, we discuss our results on examples pulled from various sources.
-In \sectref{sec:lessonsLearned}, we discuss lessons learned, including how to structure synthesized controllers for proof, 
-examples in which SPARK revealed unexpected controller behaviors, and caveats related to GR(1) specifications. 
+
+In what follows, in \sectref{sec:implementation} we describe the structure of synthesized controller implementations in SPARK 
+by walking through a simple example involving a traffic light. 
+To evaluate whether verification of synthesized SPARK controllers is feasible and has utility, 
+we pulled in a large body of examples from various sources. 
+In \sectref{sec:vipExample}, we take a detailed look at one of these examples, a controller that coordinates the actions of 
+a team of unmanned air vehicles (UAVs) performing an escort mission, 
+and we describe how SPARK revealed an error in the controller's specification. 
+In \sectref{sec:caseStudies}, we give an overview of results for the rest of the examples, with a focus on scalability. 
+In \sectref{sec:lessonsLearned}, we discuss lessons learned, including how to structure synthesized controllers for proof.  
+% examples in which SPARK revealed unexpected controller behaviors, and caveats related to GR(1) specifications. 
 We end with concluding remarks in \sectref{sec:conclusions}, including a discussion of future work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % IMPLEMENTATION and Verification in SPARK
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Implementation and Verification in SPARK}
+\section{Implementation and Verification of Synthesized Controllers in SPARK}
 \label{sec:implementation}
 
-To explain the structure of our synthesized SPARK controllers, consider a simple example of a traffic light controller. 
+We have extended the open source tool Salty\footnote{https://github.com/GaloisInc/salty/} to produce software implementations of controllers synthesized from GR(1) specifications in SPARK. 
+Given a GR(1) specification in Salty format, Salty does some preprocessing to sanity check, optimize, and translate the specification to Slugs format. 
+Salty then calls Slugs to synthesize a controller design from the processed specification. 
+Slugs provides the option of returning the controller design as a Moore machine expressed in text format, 
+which is what Salty uses to create an executable software implementation of the controller. 
+This Moore machine encodes all the states of the controller, including a single initial state. 
+It also encodes the transition relation between states, i.e. the controller's next state given the current state 
+and the next set of input values. 
+Note that this transition relation is deterministic, i.e. there is at most one possible next state for each state and set of input values. 
+Every state then encodes a set of output values to be produced each time the controller transitions to that state. 
+As in all Moore machines, each state produces exactly one set of output values. 
+Controllers synthesized from GR(1) specifications have the additional property that for each state, 
+the set of input values that brings the controller into that state is the same, regardless of what the previous state was.
+% there is exactly one set of input values that brings the controller into that state.
+
+If SPARK is chosen as the target progamming language, Salty translates this textual Moore machine representation 
+of the controller to an implementation in SPARK. 
+To give a brief overview, the Moore machine representing the controller is encoded as a record (analogous to a struct in C) 
+that stores the controller's current state and a copy of the current input and output values, 
+i.e. the inputs and outputs associated with the most recent transition. 
+There is then a ``move'' procedure that implements the transition relation. 
+This procedure changes the controller's state based on the next set of input values, produces the next set of output values, 
+and updates its internal copy of current input and output values based on these most recent input and output values. 
+Salty also synthesizes all of the annotations necessary to encode the specifications of interest 
+and verify that the controller satisfies those specifications. 
+In terms of specifications, we seek to prove that the controller satisfies the system initial properties $\varphi^s_i$ 
+and system transition properties $\varphi^s_t$. 
+Recall that GR(1) specifications take the form 
+$(\varphi^e_i \land \varphi^e_t \land \varphi^e_l)  \limplies (\varphi^s_i \land \varphi^s_t \land \varphi^s_l)$. 
+Note however that for controllers synthesized from GR(1) specifications,
+system initial and transition properties should hold regardless of whether environment liveness properties hold. 
+We are therefore interested in showing that 
+$(\varphi^e_i \land \varphi^e_t)  \limplies (\varphi^s_i \land \varphi^s_t)$. 
+For the SPARK implementation, Salty therefore generates functions corresponding to $\varphi^e_i$ and $\varphi^e_t$,
+which are used as a precondition for the move procedure. 
+It also generates functions corresponding to $\varphi^s_i$ and $\varphi^s_t$, 
+which are used as a postcondition for the move procedure. 
+If SPARK can verify that the move function satisfies the postcondition given the precondition, 
+this verifies that $(\varphi^e_i \land \varphi^e_t)  \limplies (\varphi^s_i \land \varphi^s_t)$. 
+In terms of additional annotations needed to prove this property in SPARK, Salty generates 
+``state to input mapping'' and ``state to output mapping'' functions that encode which input values 
+and output values are associated with each state; these are used to define an invariant for the controller.  
+This is essentially all this is required to prove system initial and system transition properties of synthesized controllers in SPARK.
+
+To explain synthesized SPARK controllers and annotations in more detail, we consider a simple example involving a traffic light controller. 
 Let the controller's single input be $tick$. 
 Color changes occur in every state in which $tick$ is true.
 The traffic light's color cycles infinitely over the sequence red $\rightarrow$ green $\rightarrow$ yellow $\rightarrow$ red $\rightarrow$ $\ldots$.
@@ -266,37 +335,35 @@ end TrafficLight;
   \label{fig:trafficLightSpec}
 \end{figure}
 
-
-In SPARK, subunits consist of a specification and a body, 
-which Salty generates. 
+In SPARK, subunits consist of a specification and a body.
 % For each synthesized controller, Salty automatically generates both a specification and body for a package named according to the Salty specification. 
 The package specification for this traffic light example is shown in \figref{fig:trafficLightSpec}.
 Type \lstinline{Controller} encodes a Moore machine representing the synthesized controller. 
 In the public part of the specification, \lstinline{Controller} (line 2) is declared as a private type so that the user cannot arbitrarily manipulate its state.  
 % (possibly violating the controller's GR(1) specification). 
 In the private part of the specification, \lstinline{Controller} (lines 33-37) is a record that stores the controller's internal state number, 
-current input value(s), and the current output value(s). 
+current input value(s), and current output value(s). 
 Its initial state is always the last possible state number. 
 In this example, each input and output is of type \lstinline{Boolean} (Salty also allows for enumerations and integers, to be discussed later). 
 When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{Environment} or \lstinline{System} (lines 4-6), respectively. 
 Here, there is only one input, so it is not wrapped in a record. 
 Since \lstinline{Controller} is a Moore machine, for each internal state, 
 there is exactly one set of output values produced in that state. 
-Furthermore, controllers synthesized from GR(1) specifications have the additional property that 
+Furthermore, recall that controllers synthesized from GR(1) specifications have the additional property that 
 there is exactly one set of input values that brought the controller into that state. 
 Therefore, \lstinline{Controller} includes a type invariant (lines 36-37) that captures this property, 
 where functions \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} state whether the controller has the corresponding state number and input or output value(s), respectively. 
 % They use lookup tables, \lstinline{State_To_Input_Equivalence} and \lstinline{State_To_Output_Equivalence}, defined in the package body, to do so.
 Both of these functions are declared (lines 26-29) with aspect \lstinline{Ghost}, indicating that they are intended mainly for proof purposes, 
 i.e. they will create verification conditions related to type \lstinline{Controller} but will not be executed in the actual program, 
-unless it is specified with a certain switch during compilation that they should be.
+unless it is specified during compilation that they should be.
 Executing ghost code is often used for debugging, e.g. to check whether an unproved property is actually true. 
 In this case, removing the ghost code can save significant memory, 
 since \lstinline{State_To_Input_Mapping} and \lstinline{State_To_Output_Mapping} 
 internally encode large lookup tables that have to store information on every state of the controller, 
 which is often thousands of states or even millions of states for the largest example in our database.
 The logic for these functions is given in the body (not shown here), but for instance when \lstinline{C.State = 1}, 
-\lstinline{State_To_Input_Mapping(C)} returns \lstinline{True} if and only if \lstinline{C.tick = False} and 
+\lstinline{State_To_Input_Mapping(C)} returns \lstinline{True} if and only if \lstinline{C.tick = False}, and 
 \lstinline{State_To_Output_Mapping(C)} returns \lstinline{True} if and only if 
 \sloppy{\lstinline{C.S = System'(red => True, yellow => False, green => False)}}, 
 since \lstinline{tick = False} brings the system into state 1 and $red$ is true and $yellow$ and $green$ are false in state 1.
@@ -306,7 +373,7 @@ The public function \lstinline{Is_Init} (line 8) checks whether the controller i
 The public function \lstinline{Env_Init} (line 9) checks whether input(s) satisfy $\varphi_e^i$. 
 It is implemented as an expression function, i.e. the implementation is given directly in the specification, 
 because all terms needed to define it are visible in the public part of the specification. 
-In this example, since $\varphi_e^i = \top$ as pulled from the Salty specification, this function always simply returns \lstinline{True}. 
+In this example, since $\varphi_e^i = \top$ in the Salty specification, this automatically generated function always simply returns \lstinline{True}. 
 The public function \lstinline{Sys_Init} (lines 10-11) checks whether outputs(s) satisfy $\varphi_s^i$. 
 It is implemented as an expression function for the same reason.  
 As pulled from the Salty specification, $\varphi^s_i = red \land \lnot yellow \land \lnot green$, so this function returns the value of
@@ -394,22 +461,158 @@ allowed out of each state.
 In any case, SPARK will prove that such cases are not reachable. 
 
 We briefly note that Salty includes language features that can result in different constructs being used 
-to represent inputs and outputs in synthesized controllers, 
-including enumerations and integers. 
-For instance, enumerations encode that an enumerated input or output can have exactly one of a set of values, 
+to represent inputs and outputs in synthesized controllers, including enumerations and integers.
+For instance, enumerations encode that an enumerated input or output can have exactly one of a set of values at a time, 
 as in the traffic light being exactly one color as expressed in $\varphi_s^i$ and part \eqnref{eq:mutex} of $\varphi_s^t$. 
-In such cases, enumerations or integers can make both specifications and code more compact and easier to read and understand.
+In such cases, enumerations or integers can make both specifications and code more compact and easier to read and understand. 
+As a technical aside, during synthesis, enumerations and integers are translated to a bit vector representation along with the necessary 
+initial and transition specifications to encode properties such as values being mutually exclusive and rules for addition and subtraction over integers. 
+Once synthesis is complete, values are translated back to their original enumeration or integer representation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPLEMENTATION and Verification in SPARK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example Controller for a Team of UAVs}
+\label{sec:vipExample}
+
+In order to evaluate the feasibility and utility of our approach, we collected GR(1) specifications from a variety of sources. 
+This includes the Salty repository, which contains examples of GR(1) specifications for control of UAV teams performing different missions. 
+One of these encodes the rules for a ``VIP Escort'' mission, 
+in which one UAV is designated as a ``very important person'' (VIP) that must always be ``escorted'' by a friendly surveillance UAV when it moves
+and protected from an ``enemy'' UAV. 
+The VIP and surveillance UAVs are controlled by the system, while the enemy UAV is controlled by the environment.
+The mission map contains regions that the UAVs can move between.  
+``Escorting'' consists of ensuring that 1) the VIP only enters regions previously visited by a surveillance UAV 
+and 2) whenever the VIP changes regions, a surveillance UAV ``tracks'' it, i.e. moves with it between regions. 
+``Protection'' consists of ensuring that the VIP is never in the same region as the enemy UAV. 
+Additional rules include constraints and liveness requirements on how the UAVs can move between regions and which regions they start in. 
+
+\begin{figure}
+  \includegraphics[width=\textwidth]{smallMission}
+  \caption{A VIP escort multi-UAV mission as simulated in OpenAMASE using a Salty-synthesized controller that issues commands to the UAVs through OpenUxAS.}
+  \label{fig:vipEscort}
+\end{figure}
+
+A particular instantiation of this mission is shown in \figref{fig:vipEscort}, as depicted in 
+the open source Aerospace Multi-Agent Simulation Environment (OpenAMASE)\footnote{https://github.com/afrl-rq/OpenAMASE}. 
+It includes the VIP, two surveillance UAVs numbered 1 and 2, one enemy UAV, and five regions numbered 1 to 5. 
+Environment inputs include integer variable $loc_e \in \{1 \dots 5\}$, which encodes the current region of the enemy UAV, 
+and Boolean variables $sr_i$ for $i = \{1 \ldots 5\}$, where $sr_i$ is true if and only if region $i$ has been visited at some point by a surveillance UAV. 
+% Note that here, we assume surveillance of a region occurs if and only if a surveillance UAV has been in that region. 
+System outputs include integer variables $loc_v, loc_{s1}, loc_{s2} \in \{1 \dots 5\}$, which indicate the current region of the 
+VIP and surveillance UAVs 1 and 2, and Boolean variables $vTrack_1$ and $vTrack_2$, which indicate whether surveillance UAVs 1 and 2 
+are executing a behavior to follow the VIP. 
+Note that low-level control, e.g. waypoint planning and sensor steering, 
+is implemented by the open source Unmanned Systems Autonomy Services (OpenUxAS)\footnote{https://github.com/afrl-rq/OpenUxAS}. 
+The controller synthesized by Salty implements high-level decision logic, 
+and OpenUxAS monitors the state of the controller and translates its current output values to a set of UAV commands that are simulated in OpenAMASE.
+For example, when $loc_v$ changes value to 2, OpenUxAS commands the VIP to follow a path from its current region to region 2, 
+or when $vTrack_1$ changes from false to true, OpenUxAS commands surveillance UAV 1 to fly next to the VIP. 
+The high-level controller synthesized by Salty makes some assumptions about the behaviors implemented by OpenUxAS, 
+in this case, mainly that all UAVs move at the same speed and transition to new regions at the same time. 
+A workflow for connecting Salty-implemented controllers with OpenUxAS and OpenAmase is described in \cite{elliott2019salty}, 
+and all of the scripts, configuration files, etc. needed to run this example are available on the Salty repository.
+
+
+%Note that all UAVs are assumed to move synchronously, 
+%i.e. if any change regions, the change happens at the same time.
+
+For this mission, the GR(1) specifications for the environment are:
+%
+{\small
+\begin{align}
+\varphi_e^i  = & \;\; (loc_e = 4) \land \lnot sr_1 \land \lnot sr_2 \land sr_3 \land \lnot sr_4 \land sr_5  \label{eq:vipEnvInit} \\
+\varphi_e^t  = & \bigwedge_{i = \{1 \ldots 5\}} \always \Big((loc_{s1} = i) \lor  (loc_{s2} = i) \limplies \lnext sr_i \Big) \land \mbox{} \label{eq:srSet} \\
+ & \bigwedge_{i = \{1 \ldots 5\}} \always \Big(\big(\lnot (loc_{s1} = i) \land  \lnot (loc_{s2} = i) \land \lnot sr_i \limplies \lnext \lnot sr_i\big) \land \mbox{} \label{eq:vipEnvNoSp} \\
+ & \quad\quad\quad\quad\quad \big(sr_i \limplies \lnext sr_i\big)\Big) \land \mbox{} \label{eq:vipEnvSetSp} \\
+% &  \bigwedge_{i = \{1 \ldots 5\}} \always  \big(sr_i \limplies \lnext sr_i\big) \land \mbox{} \label{eq:vipEnvSetSp} \\
+ & \;\; \always \lnot (loc_e = 1) \land \always \lnot (loc_e = 2) \label{eq:vipEnvDisallowedRegions} \\
+\varphi_e^l = & \;\; \always \eventually \lnot (loc_e = 3) \land \always \eventually \lnot (loc_e = 4) \land \always \eventually \lnot (loc_e = 5). \label{eq:vipEnvLiveness}
+\end{align}
+}
+\noindent These express \eqnref{eq:vipEnvInit} that the enemy UAV starts in region 4; 
+\eqnref{eq:srSet} that a region is considered to be surveilled after either one of the surveillance UAVs is in it; 
+\eqnref{eq:vipEnvNoSp} that a previously unsurveilled region remains unsurveilled if neither surveillance UAV is in it; 
+\eqnref{eq:vipEnvSetSp} that once a region is surveilled, it remains surveilled; 
+\eqnref{eq:vipEnvDisallowedRegions} that the enemy UAV cannot go to regions 1 or 2; and
+\eqnref{eq:vipEnvLiveness} that the enemy UAV must infinitely often go to regions 3, 4, and 5. 
+
+
+GR(1) specifications for the system are:
+{\small
+\begin{align}
+\varphi_s^i  = & \;\; (loc_v = 2) \land (loc_{s1} = 3) \land (loc_{s2} = 5) \land \lnot vTrack_1 \land \lnot vTrack_2 \label{eq:vipSysInit} \\
+\varphi_s^t  =  & \quad\quad\quad\;\; \always \Big( \lnot(loc_v = \lnext loc_v) \limplies (\lnext vTrack_1 \lor \lnext vTrack_2) \Big)  \land \mbox{} \label{eq:vipNoMoveUnlessTracked} \\
+ & \bigwedge_{i = \{1 \ldots 2\}} \always \Big(vTrack_i \limplies (sloc_i = loc_v)\Big) \land \mbox{} \label{eq:vipSysVtrack} \\
+& \bigwedge_{i = \{1 \ldots 5\}} \always \Big((loc_v = i) \limplies \lnot(loc_e = i)\Big) \land \mbox{} \label{eq:vipSysNoEloc} \\
+ & \bigwedge_{i = \{v, s1, s2\}} \always \Big(\big( \lnext(loc_i = 1) \limplies (loc_i = 1) \lor (loc_i = 2) \lor (loc_i = 3)   \big) \land \mbox{} \label{eq:vipSysTrans1} \\
+ & \quad\quad\quad\quad\quad\;\;\; \big(\lnext (loc_i = 2) \limplies (loc_i = 1) \lor (loc_i = 2) \lor (loc_i = 3)   \big) \land \mbox{} \label{eq:vipSysTrans2} \\
+  & \quad\quad\quad\quad\quad\;\;\; \big(\lnext (loc_i = 3) \limplies \bigvee_{j=\{1\ldots5\}} (loc_i = j) \big) \land \mbox{}  \label{eq:vipSysTrans3} \\
+%  & \quad\quad\quad\quad\quad\;\;\; \big((loc_i = 3) \limplies (loc_i = 1) \lor (loc_i = 2) \lor (loc_i = 3) \lor \mbox{} \nonumber \\ 
+%  & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad     (loc_i = 4) \lor (loc_i = 5)   \big) \land \mbox{} \nonumber \\
+  & \quad\quad\quad\quad\quad\;\;\; \big(\lnext (loc_i = 4) \limplies (loc_i = 3) \lor (loc_i = 4) \lor (loc_i = 5)   \big) \land \mbox{} \label{eq:vipSysTrans4} \\
+  & \quad\quad\quad\quad\quad\;\;\; \big(\lnext (loc_i = 5) \limplies (loc_i = 3) \lor (loc_i = 4) \lor (loc_i = 5)  \big)  \Big) \land \mbox{} \label{eq:vipSysTrans5} \\
+\varphi_s^l = & \;\; \always \eventually (loc_v = 1) \land \always \eventually (loc_v = 5). \label{eq:vipSysLiveness}
+\end{align}
+}
+\noindent These express \eqnref{eq:vipSysInit} that the VIP starts in region 2, surveillance UAV 1 in region 3, and surveillance UAV 2 in region 5; 
+\eqnref{eq:vipNoMoveUnlessTracked} that the VIP does not change regions unless a surveillance UAV is tracking it; 
+\eqnref{eq:vipSysVtrack} that a surveillance UAV can only track the VIP if they are in the same region at the same time; 
+\eqnref{eq:vipSysNoEloc} that the VIP cannot be in the same region as the enemy UAV at the same time; 
+\eqnref{eq:vipSysTrans1} and \eqnref{eq:vipSysTrans2} that the VIP and surveillance UAVs can move from regions 1 or 2 to regions 1, 2, or 3;
+\eqnref{eq:vipSysTrans3} that the VIP and surveillance UAVs can move from region 3 to any other region; 
+\eqnref{eq:vipSysTrans4} and \eqnref{eq:vipSysTrans5} that the VIP and surveillance UAVs can move from regions 4 or 5 to regions 3, 4, or 5; 
+and \eqnref{eq:vipSysLiveness} that the VIP must go to regions 1 and 5 infinitely often.
+
+We have chosen to describe this particular example in detail because during the process of extending Salty to produce SPARK translations, 
+analysis with SPARK revealed a previously undetected problem with this example's specification. 
+As written, the specification is synthesizable and produces what appears at a glance to be a reasonable controller with 97 states. 
+In fact, we had previously run this example with OpenAMASE, OpenUxAS, and a Python controller synthesized by Salty. 
+However, we did not notice that 34 of the controller's 97 states do not actually have successors. 
+In SPARK, this resulted in empty case statements in the \lstinline{Move} procedure. 
+For example, for state 2 the case alternative statement is simply \lstinline{when 2 =>}, i.e. there are no other statements associated with this case. 
+Attempting to execute this case alternative would result in a runtime error, which SPARK detected. 
+In Python, this error went undetected; 
+the transition relation for the controller is encoded as a map, and entries corresponding to states without successors 
+simply had an empty list of ``next state'' values. 
+If the system had attempted to transition states based on an empty list, the result would have been an unhandled runtime error. 
+
+The reason for this has to do with a subtlety the semantics of GR(1) specifications. 
+Recall that GR(1) specifications take the form $\varphi_e \limplies \varphi_s$. 
+Obviously a specification of this form is satisfied if $\varphi_e$ and $\varphi_s$ are both true, 
+but it is also satisfied if $\varphi_e$ is false. 
+Also recall from the introduction that GR(1) specifications are interpreted in the context of a two-player game 
+in which the environment takes its turn first and the system takes its turn second. 
+The issue here is that the environment is able to take transitions that will necessarily cause it to violate $\varphi_e^t$. 
+Note that $\varphi_e^t$ contains terms of the form $\always \lnot p$, specifically $\always \lnot (loc_e = i)$ for $i = \{1, 2\}$  \eqnref{eq:vipEnvDisallowedRegions}. 
+Note that a term of the form $\always \lnot p$ is not the same as a term of the form $\always \lnext \lnot p$. 
+The distinction is important. 
+In the former case, the environment can choose $p$ for the ``next'' time step, and this does not violate $\always \lnot p$ 
+in the ``current'' time step, since the new ``current'' time step is only constructed once the environment and system have both taken their turn. 
+However, once the next state is reached, $p$ becomes the new ``current'' value, and $\always \lnot p$ 
+will now be violated no matter what the environment chooses.
+Generally, specifications should follow the latter form $\always \lnext \lnot p$, 
+and this was indeed an error in these specifications, so we changed $\always \lnot (loc_e = 1) \land \always \lnot (loc_e = 2)$
+ to $\always \lnext \lnot (loc_e = 1) \land \always \lnext \lnot (loc_e = 2)$ in \eqnref{eq:vipEnvDisallowedRegions}.
+However, we also modified Salty to \lstinline{raise Program_Error} for such cases and checked 
+that we were still able to prove $\varphi_e \limplies \varphi_s$ for these examples  
+(since reaching these cases would require violating the precondition $\varphi_e$). 
+Such cases amount to instances in which the precondition on \lstinline{Move} is violated, which is why we allow the user to execute \lstinline{Env_Trans} 
+as discussed in \sectref{sec:implementation}. 
+We also plan to have Salty issue a warning when there are states with no successors, 
+as such cases are likely unintended by the user.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CASE STUDIES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Case Studies}
+\section{Results}
 \label{sec:caseStudies}
 
-To check whether our approach has the potential to produce SPARK controllers that can be automatically verified to satisfy their original system initial and transition specifications, 
-we pulled examples of GR(1) specifications from Anzu, LTLMoP, TuLiP, Slugs, and Salty, all of which make their examples publicly available for download. 
+To further evaluate the utility and feasibility of our approach, we pulled additional example GR(1) specifications from a variety of sources including 
+Anzu, LTLMoP, TuLiP, Slugs, and Salty, all of which make their examples publicly available for download. 
 These examples -- including GR(1) specifications in Salty format, synthesized SPARK packages, and SPARK analysis results -- are all available on the 
-Salty GitHub repository\footnote{https://github.com/GaloisInc/salty/}, including the traffic light example of the previous section. 
+Salty GitHub repository, including the traffic light example of the previous section. 
 We note that while some examples are small and simple, e.g. demos along the lines of the traffic light example, 
 there are many in our collection that are more realistic. 
 For instance, Anzu has controller specifications for a generalized IBM buffer and an AMBA bus. 
@@ -486,32 +689,14 @@ A solution to both problems could be to split the \lstinline{Move} procedure int
 This would allow SPARK to apply its modular analysis on several smaller procedures, thus enabling the proof on larger files. 
 We are currently investigating ways to split up the procedure that does not accidentally create more difficulties for the solvers.
 
-Analysis with SPARK did reveal unexpected behaviors in two example controllers. 
-In particular, these controllers contained empty case statements in the \lstinline{Move} procedure. 
-Upon inspection of the Slugs output, these corresponded to states with no successors. 
-Upon inspection of the specifications, we found that these two examples\footnote{Salty's vip\_orig.salt and Anzu's arbiter.salt} had 
-environment transition terms that allowed the environment to produce an input that would cause 
-the environment to violate its own specification on the next time step. 
-To explain, suppose $p$ is an input. 
-Then these specifications had the form $\always \lnot p$ instead of $\always \lnext \lnot p$. 
-The distinction is important.
-In GR(1), specifications are interpreted in the context of a two-player game in which transition specifications 
-are over the current state and the next state. 
-In the former case, the environment can choose $p$ for the ``next'' time step, and this does not violate $\always \lnot p$ 
-in the ``current'' time step, since the new ``current'' time step is only constructed once the environment and system have both taken their turn. 
-However, once the next state is reached, $p$ becomes the new ``current'' value, and $\always \lnot p$ 
-will now be violated no matter what the environment chooses.
-Generally, specifications should follow the latter form $\always \lnext \lnot p$, 
-and this was indeed an error in these specifications, so we fixed them.
-However, we also modified Salty to \lstinline{raise Program_Error} for such cases and checked 
-that we were still able to prove $\varphi_e \limplies \varphi_s$ for these examples  
-(since reaching these cases would require violating the precondition $\varphi_e$). 
-Such cases amount to instances in which the precondition on \lstinline{Move} is violated, which is why we allow the user to execute \lstinline{Env_Trans} 
-as discussed in \sectref{sec:implementation}. 
-We found that in other Salty language targets, procedures equivalent to \lstinline{Move} would have raised random runtime exceptions 
-in such cases due to empty entries in their lookup tables.
+Analysis with SPARK did reveal some unexpected behaviors. 
+As discussed in \sectref{sec:vipExample}, there were two example controllers\footnote{Salty's vip\_orig.salt and Anzu's arbiter.salt} 
+with specifications that resulted in states with no successors. 
+As a result, these controllers contained empty case statements in the \lstinline{Move} procedure. 
+We had previously run the Salty-synthesized controller in Python for the example in \sectref{sec:vipExample} and not noticed the error, 
+though it would have resulted in an unhandled runtime exception if one of the states without successors had been reached.  
 
-Based on our first round of SPARK analysis, we also found some examples in our database that did not have any inputs, 
+A meta-analysis of SPARK timing results also revealed that other examples in our database that did not have any inputs, 
 i.e. they amounted to synthesizing a system independent of an environment. 
 In those cases, we had specifications for a non-existent environment that were vacuous, 
 and this was causing SPARK to take an abnormally long amount of time to verify these controllers, given their relatively small size. 
