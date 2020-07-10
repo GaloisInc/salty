@@ -28,34 +28,26 @@
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-\author{Author 1\inst{1} \and
-Author 2\inst{2} \and
-Author 3\inst{3}}
+% \author{Author 1\inst{1} \and
+% Author 2\inst{2} \and
+% Author 3\inst{3}}
 
-%\author{Laura Humphrey\inst{1} \and
-%James Hamil\inst{2} \and
-%Joffrey Huguet\inst{3}}
+\author{Laura R. Humphrey\inst{1} \and
+James Hamil\inst{2} \and
+Joffrey Huguet\inst{3}}
 %
 
-% \authorrunning{L. Humphrey et al.}
-\authorrunning{Author 1 et al.}
+\authorrunning{L. Humphrey et al.}
 
 % First names are abbreviated in the running head.
 % If there are more than two authors, 'et al.' is used.
 %
-\institute{Institute 1 \\
-\email{author1@email.com} \and
-Institute 2 \\
-\email{author2@email.com}  \and
-Institute 3 \\
- \email{author3@email.com}}
-%
-%\institute{Air Force Research Laboratory, WPAFB, OH 45433, USA \\
-%\email{laura.humphrey@us.af.mil} \and
-%LinQuest Corp., Beavercreek, OH 45431, USA \\
-%\email{james.hamil.ctr@us.af.mil}  \and
-%AdaCore, F-75009 Paris, France \\
-% \email{huguet@adacore.com}}
+\institute{Air Force Research Laboratory, WPAFB, OH 45433, USA \\
+\email{laura.humphrey@us.af.mil} \and
+LinQuest Corp., Beavercreek, OH 45431, USA \\
+\email{james.hamil.ctr@us.af.mil}  \and
+AdaCore, F-75009 Paris, France \\
+ \email{huguet@adacore.com}}
 %
 \maketitle              % typeset the header of the contribution
 %
@@ -79,6 +71,7 @@ a subset of properties comprising GR(1) specifications, namely system initial an
 We also discuss lessons learned about how to best encode controllers synthesized from GR(1) specifications in SPARK for verification, 
 examples in which verification found unexpected controller behaviors, and 
 caveats related to the interpretation of GR(1) specifications.
+
 
 %In this paper, we discuss our experience to date using SPARK to implement controllers and to verify them against 
 %a subset of properties comprising their original GR(1) specifications, in this case system initial and transition properties. 
@@ -111,11 +104,12 @@ More specifically, \emph{reactive synthesis} approaches generate designs in the 
 assumptions about which are encoded in the specification.
 Reactive synthesis approaches tend to have high computational complexity,  
 so there is particular interest in synthesis from Generalized Reactivity(1) or GR(1) specifications, 
-the complexity of which is only polynomial in the size of the game graph encoded by the specification \cite{bloem2012}.
+the complexity of which is only polynomial in the size of the game graph encoded by the specification \cite{bloem2012}. 
 Synthesis from GR(1) specifications has been used to generate digital circuits \cite{ehlers2012symbolically} 
 and controllers for teams of unmanned vehicles \cite{apker2016}, ground robots \cite{kress2007s}, 
 software-defined networks \cite{wang2013automated}, and aircraft power distribution systems \cite{xu2012case}, to name a few.
 
+GR(1) is a fragment of linear temporal logic. 
 A GR(1) specification $\varphi$ takes the form $\varphi = \varphi^e \limplies \varphi^s$, 
 where $\varphi^e$ encodes assumptions about the \emph{environment} in which a system is to operate,
 and $\varphi^s$ encodes guarantees the \emph{system} should make under those assumptions \cite{Ehlers2016}. 
@@ -154,7 +148,10 @@ $\eventually b$ holds if $b$ is eventually true at some future time step,
 $\always \eventually b$ holds if $b$ is true infinitely often in the future, 
 and $\lnext b$ holds if $b$ is true at the next time step. 
 It is assumed that at each time step, the environment chooses an input from $\inputs$, then the system chooses an output from $\outputs$ in response. 
-The result of synthesis is a \emph{control protocol} or \emph{strategy} that can be expressed as a Moore machine. 
+Synthesis from GR(1) specifications can therefore be viewed as a two-player game between the system and the environment, 
+where the goal is for the system to satisfy $\varphi^s$ as long as the environment satisfies $\varphi^e$. 
+If this goal is achievable, then we say the specification is realizable, 
+and the result is a \emph{control protocol} or \emph{strategy} for the system that can be expressed as a Moore machine. 
 %Note that in the case of GR(1), synthesized Moore machines not only produce a single set of system output values in each state, 
 %there is a unique set of environment input values that brings the controller into each state.
 
@@ -195,16 +192,16 @@ Formal verification of user-specified properties also requires manually writing 
 form of contracts, e.g. preconditions and postconditions that summarize the assumptions and guarantees provided by individual subprograms.
 There are different levels to which one can use SPARK to verify a program \cite{moy2019climbing}. 
 Generally, the level of verification performed during development is incremental, going from lowest to highest. 
-Verification at the lowest level, colloquially referred to as ``stone level,'' is achieved when code is accepted by SPARK, 
+Verification at the lowest level, colloquially referred to as \emph{stone level}, is achieved when code is accepted by SPARK, 
 since the SPARK language has stricter legality rules than Ada. 
-Verification at the next level, ``bronze level,'' is achieved when flow analysis returns with no error; 
+Verification at the next level, \emph{bronze level}, is achieved when flow analysis returns with no error; 
 flow analysis checks for errors such as reads of uninitialized data or violations of user-specified data flow contracts. 
-Verification at the next level, ``silver level,'' ensures that no runtime errors will be encountered when executing the program, 
+Verification at the next level, \emph{silver level}, ensures that no runtime errors will be encountered when executing the program, 
 e.g. division by zero or numeric overflow/underflow. 
-Verification at the next level, ``gold level,''  consists of verifying key user specifications, such as 
+Verification at the next level, \emph{gold level}, consists of verifying key user specifications, such as 
 type invariants and subprogram preconditions and postconditions; 
 however, at this level, the specifications only partially specify the desired behavior of the code.  
-Verification at the next level, ``platinum level,'' consists of verifying a complete set of specifications.
+Verification at the next level, \emph{platinum level}, consists of verifying a complete set of specifications.
 At the moment, the SPARK code generated by Salty proves at gold level.
 In particular, SPARK is able to prove the system initial and system transition portions the original GR(1) specification. 
 Proof of system transition properties in turn requires proving a type invariant on the underlying Moore machine representation of the controller; 
@@ -217,7 +214,7 @@ by walking through a simple example involving a traffic light.
 To evaluate whether verification of synthesized SPARK controllers is feasible and has utility, 
 we collected a corpus of examples from various sources. 
 In \sectref{sec:vipExample}, we take a detailed look at one of these examples, a controller that coordinates the actions of 
-a team of unmanned air vehicles (UAVs) performing an escort mission, 
+a team of unmanned air vehicles performing an escort mission, 
 and we describe how SPARK revealed an error in the controller's specification. 
 In \sectref{sec:caseStudies}, we give an overview of results for the rest of the examples, with a focus on scalability. 
 In \sectref{sec:lessonsLearned}, we discuss lessons learned, including how to best structure synthesized controllers for proof.  
@@ -366,11 +363,11 @@ In the public part of the specification, \lstinline{Controller} (line 2) is decl
 % (possibly violating the controller's GR(1) specification). 
 In the private part of the specification, \lstinline{Controller} (lines 33-37) is a record that stores the controller's internal state number, 
 current input value(s), and current output value(s). 
-The internal state number is always initialized to the last possible state number; 
+The internal state number is always initialized to the last possible state number, i.e. the largest value for \lstinline{State_Num}; 
 this ``controller initialization'' state encodes the status of the controller before any inputs are received, and the only transition(s) out of this state are those allowed by $\varphi_i^e$.
 In this example, each input and output is of type \lstinline{Boolean} (Salty also allows for enumerations and integers, to be discussed later). 
-When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{Environment} or \lstinline{System} (lines 4-6), respectively. 
-Here, there is only one input, so it is not wrapped in a record. 
+When there are multiple inputs or outputs, they are wrapped in a record of type \lstinline{Environment} (not used here) or \lstinline{System} (lines 4-6), respectively. 
+There is only one input in this example, so it is not wrapped in a record, which is why there is no \lstinline{Environment} record in \figref{fig:trafficLightSpec}. 
 Since \lstinline{Controller} is a Moore machine, for each internal state, 
 there is exactly one set of output values produced in that state. 
 Furthermore, recall that controllers synthesized from GR(1) specifications have the additional property that 
@@ -503,9 +500,11 @@ Once synthesis is complete, values are translated back to their original enumera
 \label{sec:vipExample}
 
 In order to evaluate the feasibility and utility of our approach, we collected GR(1) specifications from a variety of sources. 
-This includes the Salty repository, which contains examples of GR(1) specifications for control of teams of UAVs performing different missions. 
+This includes the Salty repository, which contains examples of GR(1) specifications 
+for control of teams of unmanned air vehicles (UAVs) performing different missions. 
 One of these encodes the rules for a ``VIP Escort'' mission, 
-in which one UAV is designated as a ``very important person'' (VIP) that must always be ``escorted'' by a friendly surveillance UAV when it moves, 
+in which one UAV is designated as a ``very important person'' (VIP) 
+that must always be ``escorted'' by a friendly surveillance UAV when it moves, 
 and it must also be protected from an ``enemy'' UAV. 
 The VIP and surveillance UAVs are controlled by the system, while the enemy UAV is controlled by the environment.
 The mission map contains regions that the UAVs can move between.  
@@ -627,7 +626,8 @@ This was indeed an error in these specifications, so we changed $\always \lnot (
 However, we also modified Salty to \lstinline{raise Program_Error} in cases with no successors 
 and checked that we were still able to prove $\varphi_e \limplies \varphi_s$ 
 (since reaching these cases would require violating the precondition $\varphi_e$). 
-Such cases amount to instances in which the precondition on \lstinline{Move} is would have to be violated, which is why we allow the user to execute \lstinline{Env_Trans} 
+Such cases amount to instances in which the precondition on \lstinline{Move} would have to be violated, 
+which is why we allow the user to execute \lstinline{Env_Trans} 
 as discussed in \sectref{sec:implementation}. 
 We also plan to have Salty issue a warning when there are states with no successors, 
 since such cases are likely unintended by the user.
