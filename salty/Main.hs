@@ -51,6 +51,9 @@ main  =
 
      (fsm, cont) <- genFSM opts input
 
+     unless (and (checkHasSuccessors fsm)) $
+       putStrLn "Warning: there exist states with no successors"
+
      case optJava opts of
        Just pkg -> writePackage opts (javaFSM pkg fsm)
        Nothing  -> return ()
@@ -160,6 +163,10 @@ genFSM opts (InpSlugsOut path) =
        Just fsm -> return (fsm,Nothing)
        Nothing  -> do putStrLn "Failed to parse slugs output"
                       exitFailure
+
+checkHasSuccessors :: FSM -> [Bool]
+checkHasSuccessors FSM { fsmNodes } =
+  [ not (null nodeTrans) | (_, Node { nodeTrans }) <- Map.toList fsmNodes ]
 
 -- | Used to dump messages and AST to stderr.
 output :: Doc -> IO ()
