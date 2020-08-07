@@ -166,7 +166,7 @@ genFSM opts (InpSlugsOut path) =
 
 checkHasSuccessors :: FSM -> [Bool]
 checkHasSuccessors FSM { fsmNodes } =
-  [ not (null nodeTrans) | (_, Node { nodeTrans }) <- Map.toList fsmNodes ]
+  map (not . null . nodeTrans) (Map.elems fsmNodes)
 
 -- | Used to dump messages and AST to stderr.
 output :: Doc -> IO ()
