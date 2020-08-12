@@ -418,7 +418,11 @@ mkNested :: Map.Map Int Node -> Doc -> Doc -> SpecVar -> SpecVar -> Doc
 mkNested ns cntlrName stName env sys =
   vcat [ text "case" <+> qualify (Just cntlrName) stName <+> text "is"
        , indent 2 $ vcat [ vcat [ text "when" <+> pp (s+1) <+> text "=>"
-                                , indent 2 $ mkNested' ns cntlrName stName env sys (sort nodeTrans) [] False PP.empty ]
+                                , indent 2 $
+                                    case nodeTrans of
+                                      [] -> statement $ text "raise Program_Error"
+                                      _  -> mkNested' ns cntlrName stName env sys (sort nodeTrans) [] False PP.empty
+                                ]
                            | (s, Node { nodeTrans }) <- Map.toList ns ]
        , statement $ text "end case" ]
   where
