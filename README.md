@@ -33,16 +33,17 @@ changes from the `language-slugs` repository.
 You will need to build and install the [slugs `GR(1)` synthesis tool][slugs].
 Once installed, you can tell salty where to find the slugs executable by passing
 the `-s` or `--slugs` flag. There is no installation target in the slugs
-Makefile, however the `slugs` executable has no runtime dependencies, and can
-just be copied into your `$PATH`.
+Makefile. However, the `slugs` executable has no runtime dependencies, so 
+"installing" it by adding the executable's directory to your `$PATH` is 
+sufficient for building `salty`.
 
 #### Z3
 Salty will do some additional sanity checking of specifications before sending
-them to slugs. On linux, z3 is likely available in your package manager, and on
-OSX it's available through [homebrew][homebrew]
+them to slugs. On linux, z3 is likely available in your package manager (e.g. 
+`apt`) , and on OSX it's available through [homebrew][homebrew].
 
 ### Building
-Once `stack` and `slugs` are installed, salty can be built:
+Once `stack`, `z3`, and `slugs` are installed, salty can be built:
 
 ```shell
 $ stack build
@@ -50,7 +51,8 @@ $ stack exec -- salty -h
 ```
 
 Optionally, you can install salty globally using the `stack install` command,
-which will place the salty binary in `$HOME/.local/bin`.
+which will place the salty binary in `$HOME/.local/bin`. Add this directory to
+your `$PATH` if you want to be able to run `salty` from an arbitrary directory.
 
 Test examples can be built by running `make` in the `tests/` directory, and
 will place all of the generated Java code in the `tests/build` directory.
